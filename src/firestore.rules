@@ -1,0 +1,95 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 🏆 MASTER OVERRIDE - Highest Priority
+    match /{allPaths=**} {
+      allow read, write: if request.auth != null && (
+        request.auth.uid == "70vVkvBj0IQIwbxwdPaEAOj6LSu2" ||
+        request.auth.token.email == "mhmdsulimn.dev@gmail.com"
+      );
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.uid == "70vVkvBj0IQIwbxwdPaEAOj6LSu2" || 
+        request.auth.token.email == "mhmdsulimn.dev@gmail.com" ||
+        exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
+      );
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // 🏆 لوحة الصدارة: السماح بالاستعلامات الجماعية لترتيب الطلاب
+    match /{allPaths=**}/studentExams/{id} {
+      allow list: if isSignedIn();
+    }
+
+    match /users/{userId} {
+      allow get, list: if isSignedIn();
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if (isOwner(userId) || isAdmin()) && resource != null;
+      allow delete: if (isOwner(userId) || isAdmin()) && resource != null;
+
+      match /studentExams/{id} { 
+        allow list: if isSignedIn();
+        allow get: if isOwner(userId) || isAdmin(); 
+        allow write: if isOwner(userId); 
+      }
+      match /studentCourses/{id} { 
+        allow read: if isOwner(userId) || isAdmin(); 
+        allow create: if isOwner(userId);
+        allow update: if isOwner(userId) || isAdmin(); 
+      }
+      match /depositRequests/{id} { allow read: if isOwner(userId) || isAdmin(); allow create: if isOwner(userId); allow update: if isAdmin(); }
+      match /notifications/{id} { 
+        allow read, update, delete: if isOwner(userId); 
+        allow create: if isOwner(userId) || isAdmin(); 
+      }
+      
+      match /studentCourses/{courseId}/progress/{contentId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+    
+    match /exams/{examId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+      match /questions/{questionId} {
+        allow get, list: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+      }
+    }
+
+    match /courses/{courseId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+      match /lectures/{lectureId} {
+        allow list, get: if isSignedIn();
+        allow create, update, delete: if isAdmin();
+        match /contents/{contentId} {
+           allow list: if isSignedIn();
+           allow get: if isAdmin() || exists(/databases/$(database)/documents/users/$(request.auth.uid)/studentCourses/$(courseId));
+           allow create, update, delete: if isAdmin();
+        }
+      }
+    }
+
+    match /roles_admin/{userId} {
+      allow get, list: if isSignedIn();
+      allow create, update, delete: if isAdmin();
+    }
+    
+    match /announcements/{id} { allow list, get: if isSignedIn(); allow create, update, delete: if isAdmin(); }
+    match /settings/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+    match /platform_reset_requests/{id} { allow read, write: if isAdmin(); }
+    match /students_to_delete/{id} { allow read, write: if isAdmin(); }
+    match /curriculum/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
+  }
+}

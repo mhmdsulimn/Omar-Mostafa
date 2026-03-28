@@ -1,0 +1,48 @@
+{
+  "entities": {
+    "Student": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Student",
+      "type": "object",
+      "description": "Represents a student in the ExamPrep application.",
+      "properties": {
+        "id": { "type": "string" },
+        "firstName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
+        "photoURL": { "type": "string", "format": "uri" },
+        "isBanned": { "type": "boolean" },
+        "balance": { "type": "number" },
+        "theme": { "type": "object", "properties": { "primaryColor": { "type": "string" } } },
+        "rewardedExams": { "type": "array", "items": { "type": "string" } },
+        "fcmTokens": { "type": "array", "items": { "type": "string" } },
+        "currentSessionId": { "type": "string" },
+        "readAnnouncements": { "type": "array", "items": { "type": "string" } }
+      },
+      "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
+    },
+    "Exam": {
+      "title": "Exam",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "duration": { "type": "number" },
+        "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
+        "allowRetakes": { "type": "boolean" },
+        "questionCount": { "type": "number" },
+        "rewardThreshold": { "type": "number" },
+        "rewardAmount": { "type": "number" }
+      }
+    }
+  },
+  "auth": { "providers": ["google.com"] },
+  "firestore": {
+    "structure": [
+      { "path": "/users/{userId}", "definition": { "entityName": "Student", "schema": { "$ref": "#/backend/entities/Student" }, "collections": [] } },
+      { "path": "/exams/{examId}", "definition": { "entityName": "Exam", "schema": { "$ref": "#/backend/entities/Exam" } } }
+    ]
+  }
+}

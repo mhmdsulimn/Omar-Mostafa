@@ -1,0 +1,26 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // وظيفة للتحقق من تسجيل الدخول
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // السماح برفع الصور لمجلدات الكورسات والأسئلة للمستخدمين المسجلين فقط
+    match /courses/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+    
+    match /questions/{allPaths=**} {
+      allow read: if true;
+      allow write: if isSignedIn();
+    }
+
+    // المنع الافتراضي لأي مكان آخر
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

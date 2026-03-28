@@ -1,0 +1,58 @@
+{
+  "placeholderImages": [
+    {
+      "id": "exam-card-1",
+      "description": "Abstract colorful background for an exam card.",
+      "imageUrl": "https://images.unsplash.com/photo-1659905323699-7d7c8e0328d5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGNvbG9yZnVsfGVufDB8fHx8MTc2NjY5OTk4Nnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "physics abstract"
+    },
+    {
+      "id": "exam-card-2",
+      "description": "Abstract geometric pattern for an exam card.",
+      "imageUrl": "https://images.unsplash.com/photo-1533135091724-62cc5402aa20?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhYnN0cmFjdCUyMGdlb21ldHJpY3xlbnwwfHx8fDE3NjY2NDM3MzZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "science abstract"
+    },
+    {
+      "id": "exam-card-3",
+      "description": "Minimalist texture for an exam card.",
+      "imageUrl": "https://images.unsplash.com/photo-1577809868179-138e3ec929b3?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWluaW1hbGlzdCUyMHRleHR1cmV8ZW58MHx8fHwxNzY2NjY4Nzg1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "minimalist physics"
+    },
+    {
+      "id": "user-avatar-1",
+      "description": "User avatar placeholder of a cartoon student.",
+      "imageUrl": "https://storage.googleapis.com/studio-hosting-assets/studio-prod/images/c234a946-b072-40f4-904c-334346a06650",
+      "imageHint": "student illustration"
+    },
+    {
+      "id": "user-avatar-2",
+      "description": "Avatar of a young man with glasses.",
+      "imageUrl": "https://storage.googleapis.com/studio-hosting-assets/studio-prod/images/b0a50157-1993-4e41-a3f2-e4293f9c3dd2",
+      "imageHint": "man glasses"
+    },
+    {
+      "id": "user-avatar-3",
+      "description": "Avatar of a young woman with curly hair.",
+      "imageUrl": "https://storage.googleapis.com/studio-hosting-assets/studio-prod/images/e6f2b6a0-38e5-4a73-ab9a-24256a422b40",
+      "imageHint": "woman curly hair"
+    },
+    {
+      "id": "user-avatar-4",
+      "description": "Avatar of a person with a headset.",
+      "imageUrl": "https://storage.googleapis.com/studio-hosting-assets/studio-prod/images/3f3e1a8a-e9c8-4e8f-9a74-13c5a7a8b321",
+      "imageHint": "person headset"
+    },
+    {
+      "id": "auth-form-image-1",
+      "description": "An illustrative image for a Physics learning platform.",
+      "imageUrl": "https://i.postimg.cc/ncBCy7rY/Chat-GPT-Image-Dec-29-2025-10-07-00-AM.png",
+      "imageHint": "physics education"
+    },
+    {
+      "id": "site-logo",
+      "description": "A placeholder image for the site logo.",
+      "imageUrl": "https://images.unsplash.com/photo-1762329386486-f38ef2077a06?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxlZHVjYXRpb24lMjBsb2dvfGVufDB8fHx8MTc2Njg5MDQ0OXww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "physics logo"
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+diff --git a/node_modules/next-themes/dist/index.js b/node_modules/next-themes/dist/index.js
+index 5a7457a..1114251 100644
+--- a/node_modules/next-themes/dist/index.js
++++ b/node_modules/next-themes/dist/index.js
+@@ -1,8 +1,8 @@
+ 'use strict';
+ 
+ var React = require('react');
+-var react = require('react');
++var reactDom = require('react-dom');
+ 
+-var import_react = __toESM(require("react"));
++var import_react = __toESM(require("react"), 1);
+ var e = (0, import_react.createContext)(void 0);
+ var n = () => {
+   let o = (0, import_react.useContext)(e);
+@@ -118,7 +118,7 @@
+   var g, m;
+   let y = (0, import_react.useContext)(e), [w, b] = (0, import_react.useState)(() => y ? y.themes : h ? [h] : k), [E, C] = (0, import_react.useState)(() => y ? y.theme : h), [S, T] = (0, import_react.useState)(() => y ? y.resolvedTheme : h);
+   (0, import_react.useEffect)(() => {
+-    let a = (r, t) => {
++    let a = reactDom.flushSync ? (r, t) => {
+       try {
+         let s = t();
+         return r(s), s;
+@@ -126,6 +126,8 @@
+         if (d.then)
+           throw new Error("Cannot suspend in `use-sync-external-store`.");
+         throw d;
+       }
+-    };
++    } : (r, t) => {
++      let s = t();
++      return r(s), s;
++    };
+     y || u(a, T, E, w, l, c);
+   }, []);
+   let [I, x] = (0, import_react.useSyncExternalStore)(a.subscribe, a.getSnapshot, a.getSnapshot);
+diff --git a/node_modules/next-themes/package.json b/node_modules/next-themes/package.json
+index d92d77d..0f2526e 100644
+--- a/node_modules/next-themes/package.json
++++ b/node_modules/next-themes/package.json
+@@ -29,7 +29,7 @@
+   "peerDependencies": {
+     "next": ">= 9",
+-    "react": "^16.8 || ^17 || ^18"
++    "react": "^16.8 || ^17 || ^18 || ^19"
+   },
+   "peerDependenciesMeta": {
+     "next": {
