@@ -1,0 +1,163 @@
+
+'use client';
+
+import * as React from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import {
+  Button,
+} from '@/components/ui/button';
+import { 
+  Maximize, 
+  FlaskConical, 
+  AlertCircle, 
+  ChevronRight,
+  Minimize,
+} from 'lucide-react';
+import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { LabExperiment } from '@/lib/data';
+import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+
+/**
+ * صفحة معاينة التجربة للمسؤول:
+ * توفر تجربة غامرة كاملة للمسؤول لاختبار التجارب قبل اعتمادها للطلاب.
+ */
+export default function AdminLabPreviewPage() {
+  const params = useParams();
+  const router = useRouter();
+  const labId = params.id as string;
+  const firestore = useFirestore();
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
+
+  const labDocRef = useMemoFirebase(
+    () => (firestore && labId ? doc(firestore, 'labs', labId) : null),
+    [firestore, labId]
+  );
+  const { data: lab, isLoading } = useDoc<LabExperiment>(labDocRef);
+
+  const toggleFullscreen = () => {
+    if (containerRef.current) {
+      if (!document.fullscreenElement) {
+        containerRef.current.requestFullscreen().catch(err => {
+          console.error(`Error enabling full-screen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+    router.back();
+  };
+
+  React.useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex h-screen w-full items-center justify-center">
+        <LoadingAnimation size="lg" />
+      </div>
+    );
+  }
+
+  if (!lab) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
+        <AlertCircle className="h-16 w-16 text-destructive opacity-50" />
+        <h2 className="text-2xl font-bold">التجربة غير موجودة</h2>
+        <Button onClick={() => router.back()}>الرجوع للمعمل</Button>
+      </div>
+    );
+  }
+
+  return (
+    <div 
+      ref={containerRef}
+      className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 -mb-3 md:-mb-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page"
+    >
+      <style jsx global>{`
+        main {
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+        }
+        main::-webkit-scrollbar {
+          display: none !important;
+        }
+        :fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
+      `}</style>
+      
+      {/* Immersive Top Header */}
+      <div className={cn(
+        "absolute top-0 left-0 right-0 z-30 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent transition-all duration-500",
+        isFullscreen 
+          ? "group-hover/page:translate-y-0 -translate-y-full opacity-0 group-hover/page:opacity-100" 
+          : "translate-y-0 opacity-100"
+      )}>
+        <div className="flex items-center gap-3">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            onClick={handleBack} 
+            className="rounded-full bg-black/40 border-white/10 text-white hover:bg-white/20 backdrop-blur-md h-10 w-10"
+          >
+            <ChevronRight className="h-6 w-6" />
+          </Button>
+          <div className="flex flex-col text-right">
+            <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="bg-amber-500/20 text-amber-500 border-amber-500/30 text-[9px] font-black h-5">وضع المعاينة</Badge>
+                <h1 className="text-sm md:text-xl font-black text-white drop-shadow-md line-clamp-1">{lab.title}</h1>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={toggleFullscreen}
+            className="rounded-full bg-white/10 border-white/10 text-white hover:bg-white/20 backdrop-blur-md h-10 w-10"
+          >
+            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Main Experiment Iframe */}
+      <div className="flex-1 w-full h-full bg-black relative group/sim overflow-hidden">
+        <iframe
+          src={lab.embedUrl}
+          className="absolute inset-0 w-full h-full border-none"
+          allowFullScreen
+          title={lab.title}
+          sandbox="allow-scripts allow-same-origin allow-popups"
+          width="100%"
+          height="100%"
+        ></iframe>
+
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/sim:opacity-100 transition-opacity duration-700 pointer-events-none">
+          <Badge className="bg-black/60 backdrop-blur-xl border-white/10 text-[10px] font-black px-4 py-2 rounded-full uppercase tracking-tighter shadow-2xl">
+            وضع الإدارة: اختبر التجربة الآن 🧪
+          </Badge>
+        </div>
+      </div>
+
+      <div className="absolute inset-0 pointer-events-none opacity-[0.02] mix-blend-overlay" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '32px 32px' }}></div>
+    </div>
+  );
+}

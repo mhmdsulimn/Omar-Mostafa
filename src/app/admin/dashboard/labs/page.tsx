@@ -27,6 +27,7 @@ import {
   ExternalLink,
   Loader2,
   Search,
+  Eye,
 } from 'lucide-react';
 import {
   Dialog,
@@ -68,6 +69,7 @@ import { collection, doc, query, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import type { LabExperiment } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { useRouter } from 'next/navigation';
 
 const gradeMap: Record<string, string> = {
   all: 'كل الصفوف',
@@ -78,6 +80,7 @@ const gradeMap: Record<string, string> = {
 
 export default function AdminLabsPage() {
   const firestore = useFirestore();
+  const router = useRouter();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
@@ -215,6 +218,15 @@ export default function AdminLabsPage() {
                       <TableCell>{gradeMap[lab.grade]}</TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="text-primary hover:text-primary hover:bg-primary/10"
+                            title="معاينة التجربة"
+                            onClick={() => router.push(`/admin/dashboard/labs/${lab.id}`)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => handleOpenEdit(lab)}>
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -312,7 +324,7 @@ export default function AdminLabsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
-              سيتم حذف هذه التجربة من قائمة المعمل نهائياً.
+              سيؤدي هذا إلى حذف هذه التجربة من قائمة المعمل نهائياً.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="gap-2 sm:justify-start">
