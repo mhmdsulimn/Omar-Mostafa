@@ -9,7 +9,7 @@ import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 /**
  * الصفحة الرئيسية: بوابة التوجيه الذكية.
- * تعالج حالات تسجيل الدخول، الأدوار، وتطرد الجلسات المحذوفة أو المحظورة فوراً.
+ * تقوم بفحص حالة المستخدم (مسؤول أم طالب) وتوجيهه للمكان الصحيح.
  */
 export default function Home() {
   const router = useRouter();
@@ -29,7 +29,7 @@ export default function Home() {
         if (!firestore || !auth) return;
         
         try {
-            // 1. فحص المسؤولين
+            // 1. فحص إذا كان المستخدم مسؤولاً
             const adminRoleDoc = doc(firestore, 'roles_admin', user.uid);
             const adminDocSnap = await getDoc(adminRoleDoc);
 
@@ -38,22 +38,23 @@ export default function Home() {
                 return;
             }
 
-            // 2. فحص الطلاب والحالة (حظر/حذف)
+            // 2. فحص الطلاب والحالة (حظر أو حذف)
             const userDocRef = doc(firestore, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
 
             if (!userDocSnap.exists() || userDocSnap.data()?.isBanned) {
-                // تنظيف فوري للجلسات غير الصالحة
+                // تسجيل خروج فوري للحسابات غير الصالحة
                 await signOut(auth);
                 localStorage.removeItem('exam_prep_session');
                 router.replace('/login');
                 return;
             }
 
-            // 3. توجيه الطالب النشط
-            router.replace('/dashboard/courses');
+            // 3. توجيه الطالب إلى لوحة التحكم الخاصة به
+            router.replace('/dashboard/exams');
             
         } catch (e) {
+            console.error("Redirect logic error:", e);
             router.replace('/login');
         }
     };
