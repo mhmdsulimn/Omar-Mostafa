@@ -24,8 +24,8 @@ import {
 import { PlusCircle, Pencil, Trash2, Clock, HelpCircle, BookText, Loader2, GraduationCap, RefreshCw, EyeOff, Search, Award } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useCollection, useMemoFirebase, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, useAuth, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { collection, doc, getDocs, writeBatch, query, collectionGroup, where } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -66,22 +66,37 @@ export default function AdminExamsPage() {
     setIsProcessing(true);
     
     try {
+      // 1. جلب جميع الأسئلة التابعة للاختبار
       const questionsSnap = await getDocs(collection(firestore, `exams/${exam.id}/questions`));
+      
+      // 2. جلب جميع نتائج الطلاب المرتبطة بهذا الاختبار من كافة الحسابات
+      // نستخدم استعلام المجموعة (collectionGroup) للوصول للنتائج في جميع مسارات المستخدمين
+      const submissionsSnap = await getDocs(query(
+        collectionGroup(firestore, 'studentExams'),
+        where('examId', '==', exam.id)
+      ));
+
       const batch = writeBatch(firestore);
       
+      // إضافة الأسئلة للحذف
       questionsSnap.docs.forEach(q => batch.delete(q.ref));
+      
+      // إضافة نتائج الطلاب للحذف (هذا سيقوم بتحديث لوحة الصدارة تلقائياً)
+      submissionsSnap.docs.forEach(s => batch.delete(s.ref));
+      
+      // حذف وثيقة الاختبار الرئيسية
       batch.delete(doc(firestore, 'exams', exam.id));
       
       batch.commit()
         .then(() => {
           toast({ 
             title: 'تم الحذف بنجاح', 
-            description: 'تم حذف الاختبار وجميع الأسئلة المرتبطة به.' 
+            description: `تم حذف الاختبار (${exam.title}) وعدد ${submissionsSnap.size} من نتائج الطلاب المرتبطة به.` 
           });
         })
         .catch(async (e) => {
           const permissionError = new FirestorePermissionError({
-            path: `exams/${exam.id}`,
+            path: `exams/${exam.id} or collectionGroup(studentExams)`,
             operation: 'delete',
           });
           errorEmitter.emit('permission-error', permissionError);
@@ -247,7 +262,7 @@ export default function AdminExamsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
-              سيؤدي هذا إلى حذف الاختبار وجميع أسئلته بشكل دائم. لا يمكن التراجع عن هذا الإجراء.
+              سيؤدي هذا إلى حذف الاختبار وجميع أسئلته ونتائج الطلاب المرتبطة به بشكل دائم من المنصة ولوحة الصدارة. لا يمكن التراجع عن هذا الإجراء.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-row-reverse gap-2">
