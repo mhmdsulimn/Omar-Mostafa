@@ -86,7 +86,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 flex flex-col items-center select-none transition-colors duration-500 pb-10">
+    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 min-h-[calc(100vh-80px)] md:min-h-[calc(100vh-108px)] flex flex-col items-center select-none transition-colors duration-500 pb-10">
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none !important;
