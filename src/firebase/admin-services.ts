@@ -4,10 +4,10 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 /**
  * @fileOverview تهيئة خدمات Firebase Admin.
- * تم تعديل التهيئة لتكون أكثر مرونة وتوافقاً مع بيئة التشغيل.
+ * تم تحديث الـ PROJECT_ID ليتطابق مع مشروع المستخدم.
  */
 
-const PROJECT_ID = 'studio-9564799523-9f92f';
+const PROJECT_ID = 'studio-8343614197-d2c5b';
 
 function getAdminApp(): App {
   const existingApps = getApps();
@@ -16,10 +16,10 @@ function getAdminApp(): App {
   }
   
   // محاولة الحصول على التهيئة من متغيرات البيئة أو استخدام المعرف الثابت
-  const firebaseConfig = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : null;
+  const firebaseConfigEnv = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : null;
 
   return initializeApp({
-    projectId: firebaseConfig?.projectId || PROJECT_ID,
+    projectId: firebaseConfigEnv?.projectId || PROJECT_ID,
   });
 }
 
