@@ -10,7 +10,7 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Play, Beaker, Library } from 'lucide-react';
+import { FlaskConical, Play, Beaker, Library, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, doc, orderBy } from 'firebase/firestore';
@@ -24,18 +24,21 @@ export default function StudentLabsPage() {
   const { user } = useUser();
 
   const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
-  const { data: studentData } = useDoc<Student>(userDocRef);
+  const { data: studentData, isLoading: isStudentLoading } = useDoc<Student>(userDocRef);
 
   const labsQuery = useMemoFirebase(() => {
-    if (!firestore || !studentData) return null;
+    // التأكد من أن بيانات الطالب والصف الدراسي متاحة قبل تشغيل الاستعلام
+    if (!firestore || !studentData || !studentData.grade) return null;
     return query(
       collection(firestore, 'labs'),
       where('grade', 'in', ['all', studentData.grade]),
       orderBy('createdAt', 'desc')
     );
-  }, [firestore, studentData]);
+  }, [firestore, studentData?.grade]);
 
-  const { data: labs, isLoading } = useCollection<LabExperiment>(labsQuery);
+  const { data: labs, isLoading: isLabsLoading } = useCollection<LabExperiment>(labsQuery);
+
+  const isLoading = isStudentLoading || isLabsLoading;
 
   if (isLoading) {
     return (
@@ -110,7 +113,7 @@ export default function StudentLabsPage() {
   );
 }
 
-function Badge({ children, variant, className }: any) {
+function Badge({ children, className }: any) {
   return (
     <div className={cn("px-2 py-0.5 rounded-full text-xs font-bold border", className)}>
       {children}
