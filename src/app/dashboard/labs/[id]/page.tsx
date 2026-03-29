@@ -10,6 +10,7 @@ import {
   FlaskConical, 
   AlertCircle, 
   ChevronRight,
+  Minimize
 } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -23,6 +24,7 @@ export default function LabDetailPage() {
   const labId = params.id as string;
   const firestore = useFirestore();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = React.useState(false);
 
   const labDocRef = useMemoFirebase(
     () => (firestore && labId ? doc(firestore, 'labs', labId) : null),
@@ -33,12 +35,20 @@ export default function LabDetailPage() {
   const toggleFullscreen = () => {
     if (containerRef.current) {
       if (!document.fullscreenElement) {
-        containerRef.current.requestFullscreen();
+        containerRef.current.requestFullscreen().catch(err => {
+          console.error(`Error enabling full-screen mode: ${err.message}`);
+        });
       } else {
         document.exitFullscreen();
       }
     }
   };
+
+  React.useEffect(() => {
+    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', handleFsChange);
+    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+  }, []);
 
   if (isLoading) {
     return (
@@ -59,7 +69,20 @@ export default function LabDetailPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] overflow-hidden bg-black flex flex-col group/page">
+    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
+      {/* 
+          Force hide scrollbar on the main dashboard container when this page is active.
+          This ensures the immersive lab feel.
+      */}
+      <style jsx global>{`
+        main {
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+        }
+        main::-webkit-scrollbar {
+          display: none !important;
+        }
+      `}</style>
       
       {/* Immersive Top Header - Floating Style */}
       <div className="absolute top-0 left-0 right-0 z-30 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pointer-events-none transition-transform duration-500 group-hover/page:translate-y-0 -translate-y-full md:translate-y-0">
@@ -88,7 +111,7 @@ export default function LabDetailPage() {
             onClick={toggleFullscreen}
             className="rounded-full bg-white/10 border-white/10 text-white hover:bg-white/20 backdrop-blur-md h-10 w-10"
           >
-            <Maximize className="h-5 w-5" />
+            {isFullscreen ? <Minimize className="h-5 w-5" /> : <Maximize className="h-5 w-5" />}
           </Button>
         </div>
       </div>
