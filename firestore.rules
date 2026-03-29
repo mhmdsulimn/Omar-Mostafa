@@ -1,4 +1,3 @@
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -12,7 +11,6 @@ service cloud.firestore {
     function isAdmin() {
       return isSignedIn() && (
         request.auth.uid == "70vVkvBj0IQIwbxwdPaEAOj6LSu2" || 
-        request.auth.token.email == "mhmdsulimn.dev@gmail.com" ||
         exists(/databases/$(database)/documents/roles_admin/$(request.auth.uid))
       );
     }
@@ -21,23 +19,38 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // 🏆 MASTER OVERRIDE - الصلاحية القصوى
-    // تسمح لأي مسؤول (سواء بالـ UID أو الإيميل أو الـ Roles) بالوصول الكامل لكل شيء
+    // 🏆 MASTER OVERRIDE - الصلاحية القصوى للمسؤولين
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- قواعد البيانات التفصيلية (للمستخدمين والطلاب) ---
+    // --- قواعد البيانات التفصيلية ---
 
+    // الإعدادات العامة
     match /settings/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    match /{allPaths=**}/studentExams/{id} {
-      allow list: if isSignedIn();
+    // تجارب المعمل
+    match /labs/{labId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
     }
 
+    // المنهج الدراسي
+    match /curriculum/{id} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    // الإعلانات العامة
+    match /announcements/{id} { 
+      allow list, get: if isSignedIn(); 
+      allow create, update, delete: if isAdmin(); 
+    }
+
+    // المستخدمين والطلاب
     match /users/{userId} {
       allow get: if isSignedIn(); 
       allow list: if isAdmin(); 
@@ -70,6 +83,7 @@ service cloud.firestore {
       }
     }
     
+    // الاختبارات والأسئلة
     match /exams/{examId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
@@ -79,6 +93,7 @@ service cloud.firestore {
       }
     }
 
+    // الكورسات والمحاضرات
     match /courses/{courseId} {
       allow get, list: if isSignedIn();
       allow create, update, delete: if isAdmin();
@@ -93,24 +108,15 @@ service cloud.firestore {
       }
     }
 
-    match /labs/{labId} {
-      allow read: if isSignedIn();
-      allow write: if isAdmin();
-    }
-
+    // أدوار المسؤولين
     match /roles_admin/{userId} {
       allow get: if isSignedIn();
       allow list: if isAdmin();
       allow create, update, delete: if isAdmin();
     }
     
-    match /announcements/{id} { 
-      allow list, get: if isSignedIn(); 
-      allow create, update, delete: if isAdmin(); 
-    }
-    
+    // طلبات النظام
     match /platform_reset_requests/{id} { allow read, write: if isAdmin(); }
     match /students_to_delete/{id} { allow read, write: if isAdmin(); }
-    match /curriculum/{id} { allow read: if isSignedIn(); allow write: if isAdmin(); }
   }
 }

@@ -1,71 +1,25 @@
-
 {
   "entities": {
     "Student": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "Student",
       "type": "object",
-      "description": "Represents a student in the ExamPrep application.",
+      "description": "Represents a student in the platform.",
       "properties": {
         "id": { "type": "string" },
         "firstName": { "type": "string" },
         "lastName": { "type": "string" },
         "email": { "type": "string", "format": "email" },
         "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
-        "photoURL": { "type": "string", "format": "uri" },
-        "isBanned": { "type": "boolean" },
         "balance": { "type": "number" },
-        "theme": { "type": "object", "properties": { "primaryColor": { "type": "string" } } },
-        "rewardedExams": { "type": "array", "items": { "type": "string" } },
-        "fcmTokens": { "type": "array", "items": { "type": "string" } },
-        "currentSessionId": { "type": "string" },
-        "readAnnouncements": { "type": "array", "items": { "type": "string" } }
+        "isBanned": { "type": "boolean" },
+        "currentSessionId": { "type": "string" }
       },
       "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
-    },
-    "Curriculum": {
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "title": "Curriculum",
-      "type": "object",
-      "description": "Stores the academic curriculum for a specific grade.",
-      "properties": {
-        "id": { "type": "string", "description": "The grade ID (e.g., first_secondary)" },
-        "gradeTitle": { "type": "string" },
-        "story": { "type": "string" },
-        "units": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "id": { "type": "number" },
-              "title": { "type": "string" },
-              "grammar": { "type": "string" },
-              "writing": { "type": "string" }
-            }
-          }
-        },
-        "lastUpdated": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "gradeTitle", "units"]
-    },
-    "Exam": {
-      "title": "Exam",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "duration": { "type": "number" },
-        "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
-        "allowRetakes": { "type": "boolean" },
-        "questionCount": { "type": "number" },
-        "rewardThreshold": { "type": "number" },
-        "rewardAmount": { "type": "number" }
-      }
     },
     "LabExperiment": {
       "title": "LabExperiment",
       "type": "object",
+      "description": "Virtual physics laboratory experiment.",
       "properties": {
         "id": { "type": "string" },
         "title": { "type": "string" },
@@ -75,22 +29,31 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "title", "embedUrl", "grade"]
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "type": "object",
+      "properties": {
+        "isMaintenanceMode": { "type": "boolean" },
+        "isLeaderboardEnabled": { "type": "boolean" },
+        "supportPhoneNumber": { "type": "string" },
+        "vodafoneCashNumber": { "type": "string" }
+      }
     }
   },
   "auth": { "providers": ["google.com"] },
   "firestore": {
-    "structure": [
-      {
-        "path": "/curriculum/{gradeId}",
-        "definition": {
-          "entityName": "Curriculum",
-          "schema": { "$ref": "#/backend/entities/Curriculum" },
-          "description": "Stores curriculum data for each grade level."
-        }
-      },
-      { "path": "/users/{userId}", "definition": { "entityName": "Student", "schema": { "$ref": "#/backend/entities/Student" }, "description": "Student profiles." } },
-      { "path": "/exams/{examId}", "definition": { "entityName": "Exam", "schema": { "$ref": "#/backend/entities/Exam" }, "description": "Exams data." } },
-      { "path": "/labs/{labId}", "definition": { "entityName": "LabExperiment", "schema": { "$ref": "#/backend/entities/LabExperiment" }, "description": "Virtual lab experiments (PhET)." } }
-    ]
+    "/users/{userId}": {
+      "schema": { "$ref": "#/backend/entities/Student" },
+      "description": "Student profiles and data."
+    },
+    "/labs/{labId}": {
+      "schema": { "$ref": "#/backend/entities/LabExperiment" },
+      "description": "Virtual lab experiments catalog."
+    },
+    "/settings/global": {
+      "schema": { "$ref": "#/backend/entities/AppSettings" },
+      "description": "Global application configuration."
+    }
   }
 }
