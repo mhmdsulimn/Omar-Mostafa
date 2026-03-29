@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -98,10 +97,6 @@ export default function LabDetailPage() {
           </Button>
           <div className="flex flex-col text-right">
             <h1 className="text-sm md:text-xl font-black text-white drop-shadow-md line-clamp-1">{lab.title}</h1>
-            <div className="flex items-center justify-end gap-2 text-[10px] text-primary-foreground/70 font-bold uppercase">
-              <span>PhET Interactive Simulation</span>
-              <FlaskConical className="h-3 w-3" />
-            </div>
           </div>
         </div>
 
