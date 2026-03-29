@@ -11,8 +11,8 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Bot, Loader2, Trash2, SendHorizontal, Timer, Volume2, PauseCircle, Copy, Check, X, Paperclip } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useUser, useFirestore, useDoc, useMemoFirebase, useCollection } from '@/firebase';
-import { doc, collection } from 'firebase/firestore';
-import type { Student, StudentExam } from '@/lib/data';
+import { doc, collection, query, orderBy, limit } from 'firebase/firestore';
+import type { Student, StudentExam, Question } from '@/lib/data';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useToast } from '@/hooks/use-toast';
@@ -154,10 +154,18 @@ export default function AssistantPage() {
   const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
+  const { data: studentData } = useDoc<Student>(userDocRef);
 
-  const studentExamsQuery = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'studentExams') : null, [user, firestore]);
-  const { data: exams } = useCollection<StudentExam>(studentExamsQuery);
+  // جلب آخر 5 اختبارات مع التفاصيل لإرسالها للذكاء الاصطناعي
+  const studentExamsQuery = useMemoFirebase(() => user ? query(
+    collection(firestore, 'users', user.uid, 'studentExams'),
+    orderBy('submissionDate', 'desc'),
+    limit(5)
+  ) : null, [user, firestore]);
+  const { data: recentExams } = useCollection<StudentExam>(studentExamsQuery);
+
+  const allExamsQuery = useMemoFirebase(() => (firestore && user) ? collection(firestore, 'exams') : null, [firestore, user]);
+  const { data: allExamsList } = useCollection<any>(allExamsQuery);
 
   React.useEffect(() => {
     if (cooldown > 0) {
@@ -168,18 +176,33 @@ export default function AssistantPage() {
 
   const studentContextInfo = React.useMemo(() => {
     if (!studentData) return undefined;
-    let performance = "لا توجد نتائج مسجلة.";
-    if (exams && exams.length > 0) {
-        const sortedExams = [...exams].sort((a,b) => new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime()).slice(0, 3);
-        performance = sortedExams.map(e => `${e.score}% بتاريخ ${new Date(e.submissionDate).toLocaleDateString('ar-EG')}`).join('، ');
-    }
+
+    // تحويل سجل الاختبارات لشكل يفهمه الذكاء الاصطناعي
+    const examHistory = recentExams?.map(submission => {
+      const examInfo = allExamsList?.find((e: any) => e.id === submission.examId);
+      
+      const analysis = submission.questions?.map(q => ({
+        questionText: q.text,
+        isCorrect: submission.answers[q.id] === q.correctAnswer,
+        studentAnswer: q[submission.answers[q.id] as keyof Question] || "لم يجب",
+        correctAnswer: q[q.correctAnswer as keyof Question] || "غير محدد"
+      }));
+
+      return {
+        examTitle: examInfo?.title || "اختبار فيزياء",
+        score: submission.score,
+        submissionDate: submission.submissionDate,
+        analysis
+      };
+    });
+
     return {
         name: studentData.firstName,
         grade: studentData.grade,
-        recentPerformance: performance,
-        balance: studentData.balance
+        balance: studentData.balance,
+        examHistory
     };
-  }, [studentData, exams]);
+  }, [studentData, recentExams, allExamsList]);
 
   React.useEffect(() => {
     if (messages.length === 0 && studentData) {
@@ -187,7 +210,7 @@ export default function AssistantPage() {
       setIsTyping(true);
       setMessages([{ 
         role: 'model', 
-        content: `أهلاً بيك يا ${name}، أنا تسلا المساعد الذكي بتاعك. قولي أقدر أساعدك إزاي النهاردة؟ تقدر تسألني أي حاجة أو تبعتلي صورة سؤال واقف قدامك! 😊` 
+        content: `أهلاً بيك يا ${name}، أنا تسلا المساعد الذكي بتاعك. قولي أقدر أساعدك إزاي النهاردة؟ راداري دلوقتي شايف كل مجهودك في الاختبارات وجاهز أقولك إيه النقط اللي محتاج نركز عليها سوا! 😊` 
       }]);
     }
   }, [messages.length, !!studentData]);
@@ -255,7 +278,7 @@ export default function AssistantPage() {
 
     try {
       const response = await chatWithMohamed({
-        message: userMessage || "شرح هذه الصورة",
+        message: userMessage || "أريد تحليلاً لمستواي التعليمي ونصيحة منك",
         photoDataUri: currentImage || undefined,
         history: messages.slice(-6).map(m => ({ role: m.role, content: m.content })),
         studentInfo: studentContextInfo
@@ -279,11 +302,11 @@ export default function AssistantPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold md:text-2xl">المساعد الذكي (تسلا)</h1>
-            <p className="text-xs text-muted-foreground">صديقك الذكي في رحلة التفوق</p>
+            <p className="text-xs text-muted-foreground">محلل الأداء والمدرب الشخصي الخاص بك</p>
           </div>
         </div>
         <Button variant="ghost" size="icon" onClick={() => {
-          setMessages([{ role: 'model', content: `أهلاً بك مجدداً. كيف يمكنني مساعدتك؟` }]);
+          setMessages([{ role: 'model', content: `أهلاً بك مجدداً. كيف يمكنني مساعدتك اليوم في رحلة تفوقك؟` }]);
           textareaRef.current?.focus();
         }}>
           <Trash2 className="h-5 w-5" />
@@ -341,7 +364,7 @@ export default function AssistantPage() {
                   <Avatar className="h-9 w-9 bg-primary/10 flex items-center justify-center border-2 border-primary/20"><Bot className="h-5 w-5 text-primary" /></Avatar>
                   <div className="bg-muted/50 border border-border/50 rounded-2xl rounded-tl-none px-4 py-2 flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                    <span className="text-xs text-muted-foreground italic">تسلا بيفكر...</span>
+                    <span className="text-xs text-muted-foreground italic">تسلا يحلل سجل اختباراتك...</span>
                   </div>
                 </div>
               )}
@@ -369,7 +392,7 @@ export default function AssistantPage() {
               <Textarea
                 ref={textareaRef}
                 rows={1}
-                placeholder={cooldown > 0 ? `استنى ${cooldown}ث...` : "اسأل تسلا..."}
+                placeholder={cooldown > 0 ? `استنى ${cooldown}ث...` : "اسأل تسلا عن مستواك أو مسألة..."}
                 value={input}
                 onChange={handleInputChange}
                 disabled={isLoading || isTyping || cooldown > 0}
