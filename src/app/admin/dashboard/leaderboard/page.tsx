@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -164,19 +165,20 @@ export default function AdminLeaderboardPage() {
   const [activeTab, setActiveTab] = React.useState('all');
 
   const adminsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'roles_admin') : null), [firestore, user]);
-  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery);
+  // Using ignorePermissionErrors to avoid student-to-admin redirect glitches
+  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery, { ignorePermissionErrors: true });
 
   const allSubmissionsQuery = useMemoFirebase(
     () => (firestore && user ? query(collectionGroup(firestore, 'studentExams')) : null),
     [firestore, user]
   );
-  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery);
+  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
 
   const allUsersQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, 'users') : null),
     [firestore, user]
   );
-  const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery);
+  const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
 
   const isLoading = isLoadingAdmins || isLoadingSubmissions || isLoadingUsers;
 

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -606,13 +607,14 @@ export default function AdminStudentsPage() {
     () => (firestore && user ? collection(firestore, 'roles_admin') : null),
     [firestore, user]
   );
-  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<{id: string}>(adminsQuery);
+  // Using ignorePermissionErrors to prevent redirection triggering global errors
+  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<{id: string}>(adminsQuery, { ignorePermissionErrors: true });
   
   const allUsersQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, 'users') : null),
     [firestore, user]
   );
-  const { data: allUsersData, isLoading: isLoadingStudents } = useCollection<Student>(allUsersQuery);
+  const { data: allUsersData, isLoading: isLoadingStudents } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
   
   const isLoading = isLoadingStudents || isLoadingAdmins;
 

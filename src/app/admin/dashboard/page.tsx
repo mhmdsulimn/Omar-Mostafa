@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -102,19 +103,19 @@ export default function AdminDashboardPage() {
     const { user } = useUser();
 
     const adminsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'roles_admin') : null), [firestore, user]);
-    const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery);
+    const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery, { ignorePermissionErrors: true });
 
     const allUsersQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users') : null), [firestore, user]);
-    const { data: allUsersData, isLoading: isLoadingStudents } = useCollection<Student>(allUsersQuery);
+    const { data: allUsersData, isLoading: isLoadingStudents } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
     
     const allExamsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'exams') : null), [firestore, user]);
-    const { data: allExamsData, isLoading: isLoadingExams } = useCollection<Exam>(allExamsQuery);
+    const { data: allExamsData, isLoading: isLoadingExams } = useCollection<Exam>(allExamsQuery, { ignorePermissionErrors: true });
 
     const allSubmissionsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'studentExams')) : null), [firestore, user]);
-    const { data: allSubmissionsData, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery);
+    const { data: allSubmissionsData, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
     
     const allCoursesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'courses') : null), [firestore, user]);
-    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery);
+    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery, { ignorePermissionErrors: true });
     
     const isLoading = isLoadingAdmins || isLoadingStudents || isLoadingExams || isLoadingSubmissions || isLoadingCourses;
     

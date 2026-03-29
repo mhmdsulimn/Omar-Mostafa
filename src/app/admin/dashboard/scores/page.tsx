@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -67,7 +68,8 @@ export default function AdminScoresPage() {
 
   // Data fetching
   const allSubmissionsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'studentExams')) : null), [firestore, user]);
-  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery);
+  // Using ignorePermissionErrors to avoid crashes when unauthorized users hit this page
+  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
   
   const studentIds = React.useMemo(() => {
     if (!allSubmissions) return [];
@@ -78,10 +80,10 @@ export default function AdminScoresPage() {
     if (!firestore || !user || studentIds.length === 0) return null;
     return query(collection(firestore, 'users'), where(documentId(), 'in', studentIds));
   }, [firestore, user, studentIds]);
-  const { data: usersForSubmissions, isLoading: isLoadingUsers } = useCollection<Student>(usersQuery);
+  const { data: usersForSubmissions, isLoading: isLoadingUsers } = useCollection<Student>(usersQuery, { ignorePermissionErrors: true });
   
   const allExamsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'exams') : null), [firestore, user]);
-  const { data: allExams, isLoading: isLoadingExams } = useCollection<Exam>(allExamsQuery);
+  const { data: allExams, isLoading: isLoadingExams } = useCollection<Exam>(allExamsQuery, { ignorePermissionErrors: true });
 
   const isLoading = isLoadingSubmissions || (studentIds.length > 0 && isLoadingUsers) || isLoadingExams;
 

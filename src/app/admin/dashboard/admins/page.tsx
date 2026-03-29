@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -291,13 +292,13 @@ export default function AdminAdminsPage() {
     () => (firestore && user ? collection(firestore, 'roles_admin') : null),
     [firestore, user]
   );
-  const { data: adminsRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsCollection);
+  // Using ignorePermissionErrors to prevent student redirection triggering global errors
+  const { data: adminsRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsCollection, { ignorePermissionErrors: true });
   
   const adminIds = React.useMemo(() => adminsRoles?.map(role => role.id).filter(id => !!id) || [], [adminsRoles]);
   
   const adminsQuery = useMemoFirebase(
     () => {
-      // **GUARD CLAUSE:** Only create the query if adminIds is not empty and firestore/user is available.
       if (!firestore || !user || adminIds.length === 0) {
         return null;
       }
@@ -305,7 +306,7 @@ export default function AdminAdminsPage() {
     },
     [firestore, user, adminIds]
   );
-  const { data: allAdminsData, isLoading: isLoadingDetails } = useCollection<Student>(adminsQuery);
+  const { data: allAdminsData, isLoading: isLoadingDetails } = useCollection<Student>(adminsQuery, { ignorePermissionErrors: true });
   
   const filteredAdmins = React.useMemo(() => {
     if (!allAdminsData) {
@@ -321,7 +322,6 @@ export default function AdminAdminsPage() {
     );
   }, [searchTerm, allAdminsData]);
 
-  // Loading is true if we are still fetching the roles, or if we have roles but are still fetching their details.
   const isLoading = isLoadingAdmins || (adminIds.length > 0 && isLoadingDetails);
   
     if (isLoading) {

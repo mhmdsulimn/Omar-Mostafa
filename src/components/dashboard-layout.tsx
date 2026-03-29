@@ -85,6 +85,14 @@ export function DashboardLayout({
   );
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
+  // Admin status check to prevent students from hitting permission-denied queries in admin pages
+  const adminDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'roles_admin', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: adminRole, isLoading: isCheckingAdmin } = useDoc(adminDocRef);
+  const isAdmin = !!adminRole;
+
   const announcementsQuery = useMemoFirebase(
     () => (firestore && studentData && layoutType === 'student') ? query(
       collection(firestore, 'announcements'),
@@ -165,6 +173,13 @@ export function DashboardLayout({
       router.replace('/login');
     }
   }, [user, isUserLoading, router]);
+
+  // Route protection logic
+  React.useEffect(() => {
+    if (!isUserLoading && !isCheckingAdmin && layoutType === 'admin' && !isAdmin) {
+      router.replace('/dashboard/courses');
+    }
+  }, [isAdmin, isCheckingAdmin, isUserLoading, layoutType, router]);
 
   React.useEffect(() => {
     setOptimisticPath(null);
@@ -252,6 +267,7 @@ export function DashboardLayout({
   
   if (!isMounted) return null;
   const isStudentInMaintenance = layoutType === 'student' && appSettings?.isMaintenanceMode;
+  const isAuthorizing = layoutType === 'admin' && (isUserLoading || isCheckingAdmin);
 
   return (
     <TooltipProvider>
@@ -365,7 +381,11 @@ export function DashboardLayout({
               </div>
             </header>
             <main className="flex-1 overflow-y-auto bg-sidebar/30 backdrop-blur-xl rounded-2xl border border-sidebar-border p-3 md:p-6 shadow-lg">
-              {isStudentInMaintenance ? (
+              {isAuthorizing ? (
+                <div className="flex h-full w-full items-center justify-center min-h-[400px]">
+                  <LoadingAnimation size="md" />
+                </div>
+              ) : isStudentInMaintenance ? (
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden text-center p-4">
                   <div className="relative z-10 flex flex-col items-center gap-4 animate-fade-in">
                       <HardHat className="h-16 w-16 text-primary" />
