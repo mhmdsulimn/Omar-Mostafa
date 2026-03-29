@@ -67,7 +67,10 @@ service cloud.firestore {
       allow write: if isSignedIn() && request.auth.uid == userId;
 
       // السماح بـ read للنتائج لحساب ترتيب لوحة الصدارة
-      match /studentExams/{id} { allow read: if isSignedIn(); allow write: if isSignedIn() && request.auth.uid == userId; }
+      match /studentExams/{id} { 
+        allow read: if isSignedIn(); 
+        allow write: if isSignedIn() && request.auth.uid == userId; 
+      }
       
       // الحفاظ على خصوصية المحفظة والإشعارات
       match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }

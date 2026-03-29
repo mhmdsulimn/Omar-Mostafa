@@ -62,10 +62,17 @@ service cloud.firestore {
     // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
 
     match /users/{userId} {
-      allow get: if isSignedIn();
+      // السماح بـ read (get & list) للطلاب لعرض الأسماء في لوحة الصدارة
+      allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == userId;
 
-      match /studentExams/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      // السماح بـ read للنتائج لحساب ترتيب لوحة الصدارة
+      match /studentExams/{id} { 
+        allow read: if isSignedIn(); 
+        allow write: if isSignedIn() && request.auth.uid == userId; 
+      }
+      
+      // الحفاظ على خصوصية المحفظة والإشعارات
       match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       match /depositRequests/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       match /notifications/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
@@ -75,8 +82,13 @@ service cloud.firestore {
       }
     }
 
+    // السماح باستعلامات المجموعات (collectionGroup) للنتائج - ضروري للوحة الصدارة
+    match /{allPaths=**}/studentExams/{id} {
+      allow read: if isSignedIn();
+    }
+
     match /roles_admin/{userId} {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
     }
   }
 }
