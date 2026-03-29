@@ -423,7 +423,7 @@ function LectureContentForm({
                             <SelectContent>
                                 {examsForSelect.length > 0 ? examsForSelect.map(exam => (
                                     <SelectItem key={exam.id} value={exam.id}>{exam.title}</SelectItem>
-                                )) : <SelectItem value="" disabled>لا توجد اختبارات متاحة لهذا الصف</SelectItem>}
+                                )) : <SelectItem value="none" disabled>لا توجد اختبارات متاحة لهذا الصف</SelectItem>}
                             </SelectContent>
                         </Select>
                     </div>
