@@ -18,11 +18,12 @@ service cloud.firestore {
 
     // --- القواعد الأساسية ---
 
+    // 🏆 MASTER OVERRIDE - المسؤولين لهم صلاحيات كاملة
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- القواعد العامة للطلاب ---
+    // --- القواعد العامة للطلاب (متاحة لجميع المسجلين) ---
 
     match /settings/global {
       allow read: if isSignedIn();
@@ -58,14 +59,17 @@ service cloud.firestore {
       }
     }
 
-    // --- بيانات المستخدمين الخاصة ---
+    // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
 
     match /users/{userId} {
-      allow get: if isSignedIn();
-      // السماح للمالك بالتحكم الكامل (إنشاء، تحديث، حذف)
+      // السماح بـ read (get & list) للطلاب لعرض الأسماء في لوحة الصدارة
+      allow read: if isSignedIn();
       allow write: if isSignedIn() && request.auth.uid == userId;
 
-      match /studentExams/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      // السماح بـ read للنتائج لحساب ترتيب لوحة الصدارة
+      match /studentExams/{id} { allow read: if isSignedIn(); allow write: if isSignedIn() && request.auth.uid == userId; }
+      
+      // الحفاظ على خصوصية المحفظة والإشعارات
       match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       match /depositRequests/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       match /notifications/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }

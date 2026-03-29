@@ -22,6 +22,7 @@ import { collection, query, collectionGroup, doc } from 'firebase/firestore';
 import type { Student, StudentExam, AppSettings } from '@/lib/data';
 import { Loader2, Trophy } from 'lucide-react';
 import { cn, toArabicDigits } from '@/lib/utils';
+import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 type LeaderboardEntry = {
   student: Student;
@@ -169,20 +170,20 @@ export default function LeaderboardPage() {
   const { data: appSettings, isLoading: isLoadingSettings } = useDoc<AppSettings>(settingsDocRef);
   
   const adminsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'roles_admin') : null), [firestore, user]);
-  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery);
+  const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery, { ignorePermissionErrors: true });
 
 
   const allSubmissionsQuery = useMemoFirebase(
     () => (firestore && user ? query(collectionGroup(firestore, 'studentExams')) : null),
     [firestore, user]
   );
-  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery);
+  const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
 
   const allUsersQuery = useMemoFirebase(
     () => (firestore && user ? collection(firestore, 'users') : null),
     [firestore, user]
   );
-  const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery);
+  const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
 
   const isLoading = isLoadingAdmins || isLoadingSubmissions || isLoadingUsers || isLoadingSettings;
 
@@ -235,7 +236,7 @@ export default function LeaderboardPage() {
   if (isLoading) {
     return (
         <div className="flex h-full w-full items-center justify-center" style={{ minHeight: '50vh' }}>
-            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <LoadingAnimation size="md" />
         </div>
     );
   }
@@ -249,7 +250,7 @@ export default function LeaderboardPage() {
               <Trophy className="h-8 w-8 opacity-50" />
             </div>
             <CardTitle className="mt-4 text-xl">لوحة الصدارة غير متاحة</CardTitle>
-            <CardDescription className="text-sm">
+            <CardDescription className="text-sm font-bold mt-2">
               عذرًا، قام المسؤول بإخفاء لوحة الصدارة في الوقت الحالي. حاول العودة لاحقاً.
             </CardDescription>
           </CardHeader>
