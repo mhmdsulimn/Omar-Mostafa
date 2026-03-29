@@ -1,3 +1,4 @@
+
 {
   "entities": {
     "Student": {
@@ -62,28 +63,18 @@
         "rewardAmount": { "type": "number" }
       }
     },
-    "AppSettings": {
-      "title": "AppSettings",
-      "type": "object",
-      "properties": {
-        "isMaintenanceMode": { "type": "boolean" },
-        "isLeaderboardEnabled": { "type": "boolean" },
-        "supportPhoneNumber": { "type": "string" },
-        "vodafoneCashNumber": { "type": "string" },
-        "imgbbApiKey": { "type": "string" }
-      }
-    },
-    "Announcement": {
-      "title": "Announcement",
+    "LabExperiment": {
+      "title": "LabExperiment",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "message": { "type": "string" },
-        "isActive": { "type": "boolean" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "targetGrade": { "type": "string", "enum": ["all", "first_secondary", "second_secondary", "third_secondary"] },
-        "type": { "type": "string", "enum": ["normal", "congratulation", "warning"] }
-      }
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "embedUrl": { "type": "string" },
+        "grade": { "type": "string", "enum": ["all", "first_secondary", "second_secondary", "third_secondary"] },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "title", "embedUrl", "grade"]
     }
   },
   "auth": { "providers": ["google.com"] },
@@ -99,8 +90,7 @@
       },
       { "path": "/users/{userId}", "definition": { "entityName": "Student", "schema": { "$ref": "#/backend/entities/Student" }, "description": "Student profiles." } },
       { "path": "/exams/{examId}", "definition": { "entityName": "Exam", "schema": { "$ref": "#/backend/entities/Exam" }, "description": "Exams data." } },
-      { "path": "/settings/global", "definition": { "entityName": "AppSettings", "schema": { "$ref": "#/backend/entities/AppSettings" }, "description": "Global application settings." } },
-      { "path": "/announcements/{id}", "definition": { "entityName": "Announcement", "schema": { "$ref": "#/backend/entities/Announcement" }, "description": "Global announcements." } }
+      { "path": "/labs/{labId}", "definition": { "entityName": "LabExperiment", "schema": { "$ref": "#/backend/entities/LabExperiment" }, "description": "Virtual lab experiments (PhET)." } }
     ]
   }
 }

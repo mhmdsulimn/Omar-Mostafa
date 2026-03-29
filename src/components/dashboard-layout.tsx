@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -24,6 +25,7 @@ import {
   BrainCircuit,
   Headset,
   Wrench,
+  FlaskConical,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -120,6 +122,7 @@ export function DashboardLayout({
       { href: '/dashboard/courses', label: 'تصفح الكورسات', icon: Library },
       { href: '/dashboard/exams', label: 'الاختبارات', icon: BookOpen },
       { href: '/dashboard/my-courses', label: 'كورساتي', icon: BookMarked },
+      { href: '/dashboard/labs', label: 'المعمل', icon: FlaskConical },
       { href: '/dashboard/assistant', label: 'المساعد الذكي', icon: Bot },
       { href: '/dashboard/my-scores', label: 'درجاتي', icon: GraduationCap },
       { href: '/dashboard/leaderboard', label: 'لوحة الصدارة', icon: Trophy },
@@ -138,6 +141,7 @@ export function DashboardLayout({
       { href: '/admin/dashboard/assistant', label: 'المساعد الإداري', icon: BrainCircuit },
       { href: '/admin/dashboard/courses', label: 'الكورسات', icon: BookMarked },
       { href: '/admin/dashboard/exams', label: 'الاختبارات', icon: BookOpen },
+      { href: '/admin/dashboard/labs', label: 'المعمل', icon: FlaskConical },
       { href: '/admin/dashboard/students', label: 'الطلاب', icon: Users },
       { href: '/admin/dashboard/scores', label: 'الدرجات', icon: GraduationCap },
       { href: '/admin/dashboard/leaderboard', label: 'لوحة الصدارة', icon: Trophy },

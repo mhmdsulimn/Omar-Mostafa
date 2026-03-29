@@ -160,3 +160,12 @@ export type Notification = {
   fromAdmin?: boolean;
   studentName?: string;
 };
+
+export type LabExperiment = {
+  id: string;
+  title: string;
+  description: string;
+  embedUrl: string;
+  grade: 'all' | 'first_secondary' | 'second_secondary' | 'third_secondary';
+  createdAt: string;
+};
