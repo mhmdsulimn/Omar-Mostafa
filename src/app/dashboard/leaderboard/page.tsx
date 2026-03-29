@@ -20,7 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, collectionGroup, doc } from 'firebase/firestore';
 import type { Student, StudentExam, AppSettings } from '@/lib/data';
-import { Loader2, Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import { cn, toArabicDigits } from '@/lib/utils';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
@@ -185,15 +185,16 @@ export default function LeaderboardPage() {
   );
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
 
-  const isLoading = isLoadingAdmins || isLoadingSubmissions || isLoadingUsers || isLoadingSettings;
+  const isLoading = isLoadingSubmissions || isLoadingUsers || isLoadingSettings;
 
   const leaderboards = React.useMemo(() => {
-    if (isLoading || !allSubmissions || !allUsers || !adminRoles) {
+    // ننتظر تحميل البيانات الأساسية فقط. قائمة الإدارة اختيارية للفلترة.
+    if (isLoading || !allSubmissions || !allUsers) {
       return { all: [], first_secondary: [], second_secondary: [], third_secondary: [] };
     }
 
     const studentMap = new Map(allUsers.map(user => [user.id, user]));
-    const adminIds = new Set(adminRoles.map(r => r.id));
+    const adminIds = new Set(adminRoles?.map(r => r.id) || []);
     const nonAdminUsers = allUsers.filter(user => !adminIds.has(user.id));
     const nonBannedStudents = nonAdminUsers.filter(u => !u.isBanned);
 

@@ -79,8 +79,13 @@ service cloud.firestore {
       }
     }
 
+    // السماح باستعلامات المجموعات (collectionGroup) للنتائج - ضروري للوحة الصدارة
+    match /{allPaths=**}/studentExams/{id} {
+      allow read: if isSignedIn();
+    }
+
     match /roles_admin/{userId} {
-      allow get: if isSignedIn();
+      allow read: if isSignedIn();
     }
   }
 }

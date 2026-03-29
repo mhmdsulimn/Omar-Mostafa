@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -165,7 +164,6 @@ export default function AdminLeaderboardPage() {
   const [activeTab, setActiveTab] = React.useState('all');
 
   const adminsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'roles_admin') : null), [firestore, user]);
-  // Using ignorePermissionErrors to avoid student-to-admin redirect glitches
   const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<AdminRole>(adminsQuery, { ignorePermissionErrors: true });
 
   const allSubmissionsQuery = useMemoFirebase(
@@ -180,15 +178,15 @@ export default function AdminLeaderboardPage() {
   );
   const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(allUsersQuery, { ignorePermissionErrors: true });
 
-  const isLoading = isLoadingAdmins || isLoadingSubmissions || isLoadingUsers;
+  const isLoading = isLoadingSubmissions || isLoadingUsers;
 
   const leaderboards = React.useMemo(() => {
-    if (isLoading || !allSubmissions || !allUsers || !adminRoles) {
+    if (isLoading || !allSubmissions || !allUsers) {
       return { all: [], first_secondary: [], second_secondary: [], third_secondary: [] };
     }
 
     const studentMap = new Map(allUsers.map(user => [user.id, user]));
-    const adminIds = new Set(adminRoles.map(r => r.id));
+    const adminIds = new Set(adminRoles?.map(r => r.id) || []);
     const nonAdminUsers = allUsers.filter(user => !adminIds.has(user.id));
     const nonBannedStudents = nonAdminUsers.filter(u => !u.isBanned);
 
