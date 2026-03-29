@@ -2,13 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // 🏆 MASTER OVERRIDE - Highest Priority
-    match /{allPaths=**} {
-      allow read, write: if request.auth != null && (
-        request.auth.uid == "70vVkvBj0IQIwbxwdPaEAOj6LSu2" ||
-        request.auth.token.email == "mhmdsulimn.dev@gmail.com"
-      );
-    }
+    // --- الدوال المساعدة (Helper Functions) ---
 
     function isSignedIn() {
       return request.auth != null;
@@ -26,13 +20,19 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // 🏆 إعدادات المنصة: مسموح للقراءة للجميع المسجلين
+    // 🏆 MASTER OVERRIDE - الصلاحية القصوى
+    // تسمح لأي مسؤول (سواء بالـ UID أو الإيميل أو الـ Roles) بالوصول الكامل لكل شيء
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- قواعد البيانات التفصيلية ---
+
     match /settings/{id} {
       allow read: if isSignedIn();
       allow write: if isAdmin();
     }
 
-    // 🏆 لوحة الصدارة: السماح بالاستعلامات الجماعية لترتيب الطلاب
     match /{allPaths=**}/studentExams/{id} {
       allow list: if isSignedIn();
     }
