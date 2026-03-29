@@ -62,7 +62,8 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow create, update: if isSignedIn() && request.auth.uid == userId;
+      // السماح للمالك بالتحكم الكامل (إنشاء، تحديث، حذف)
+      allow write: if isSignedIn() && request.auth.uid == userId;
 
       match /studentExams/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }

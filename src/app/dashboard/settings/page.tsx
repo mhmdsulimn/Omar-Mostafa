@@ -17,7 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
-import { useUser, useFirestore, useDoc, useAuth, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { useUser, useFirestore, useDoc, useAuth, useMemoFirebase, setDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { deleteUser, EmailAuthProvider, reauthenticateWithCredential, GoogleAuthProvider, reauthenticateWithPopup } from 'firebase/auth';
 import { useToast } from '@/hooks/use-toast';
 import * as React from 'react';
@@ -93,7 +93,7 @@ export default function StudentSettingsPage() {
 
     setIsLoading(true);
     try {
-      // Step 1: Re-authenticate the user for security.
+      // المرحلة الأولى: إعادة المصادقة للتأكد من هوية المستخدم
       if (isGoogleSignIn) {
           const provider = new GoogleAuthProvider();
           await reauthenticateWithPopup(user, provider);
@@ -108,49 +108,79 @@ export default function StudentSettingsPage() {
           await reauthenticateWithCredential(user, credential);
       }
       
-      // Step 2: Delete all Firestore data associated with the user.
+      // المرحلة الثانية: جمع وحذف كافة البيانات المرتبطة بالطالب في Firestore
       const batch = writeBatch(firestore);
-      const studentExamsRef = collection(firestore, 'users', user.uid, 'studentExams');
-      const studentExamsSnap = await getDocs(studentExamsRef);
-      studentExamsSnap.forEach(doc => batch.delete(doc.ref));
+      const uid = user.uid;
 
-      const studentCoursesRef = collection(firestore, 'users', user.uid, 'studentCourses');
-      const studentCoursesSnap = await getDocs(studentCoursesRef);
-      studentCoursesSnap.forEach(doc => batch.delete(doc.ref));
+      // 1. حذف سجلات الاختبارات
+      const studentExamsSnap = await getDocs(collection(firestore, 'users', uid, 'studentExams'));
+      studentExamsSnap.docs.forEach(d => batch.delete(d.ref));
 
-      const userDocToDeleteRef = doc(firestore, 'users', user.uid);
-      batch.delete(userDocToDeleteRef);
-      await batch.commit();
-      
-      // Step 3: Delete the auth user.
-      await deleteUser(user);
+      // 2. حذف اشتراكات الكورسات وسجلات التقدم
+      const studentCoursesSnap = await getDocs(collection(firestore, 'users', uid, 'studentCourses'));
+      for (const courseDoc of studentCoursesSnap.docs) {
+          const progressSnap = await getDocs(collection(courseDoc.ref, 'progress'));
+          progressSnap.docs.forEach(p => batch.delete(p.ref));
+          batch.delete(courseDoc.ref);
+      }
 
-      toast({
-        title: 'تم حذف الحساب',
-        description: 'تم حذف حسابك وجميع بياناتك بنجاح. سنقوم بإعادة توجيهك.',
-      });
-      setIsDialogOpen(false);
-      window.location.href = '/login'; // Use full page reload for clean state.
+      // 3. حذف طلبات الشحن
+      const depositsSnap = await getDocs(collection(firestore, 'users', uid, 'depositRequests'));
+      depositsSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // 4. حذف الإشعارات
+      const notifsSnap = await getDocs(collection(firestore, 'users', uid, 'notifications'));
+      notifsSnap.docs.forEach(d => batch.delete(d.ref));
+
+      // 5. حذف وثيقة الملف الشخصي الرئيسية
+      batch.delete(doc(firestore, 'users', uid));
+
+      // تنفيذ عملية الحذف الجماعي في Firestore
+      batch.commit()
+        .then(async () => {
+            // المرحلة الثالثة: حذف حساب المستخدم من نظام المصادقة (Auth)
+            await deleteUser(user);
+            
+            toast({
+              title: 'تم حذف الحساب نهائياً',
+              description: 'تم مسح كافة بياناتك بنجاح. نتمنى لك التوفيق دائماً.',
+            });
+            setIsDialogOpen(false);
+            window.location.href = '/login'; 
+        })
+        .catch(async (err) => {
+            // معالجة أخطاء الصلاحيات سياقياً
+            const permissionError = new FirestorePermissionError({
+                path: `users/${uid}`,
+                operation: 'delete',
+            });
+            errorEmitter.emit('permission-error', permissionError);
+            setIsLoading(false);
+        });
 
     } catch (error: any) {
-      console.error('Failed to delete account:', error);
+      console.error('Account deletion process failed:', error);
+      let errorMsg = 'فشلت عملية إعادة المصادقة. يرجى المحاولة مرة أخرى.';
+      if (error.code === 'auth/wrong-password') {
+          errorMsg = 'كلمة المرور التي أدخلتها غير صحيحة.';
+      } else if (error.code === 'auth/requires-recent-login') {
+          errorMsg = 'يجب تسجيل الخروج والدخول مرة أخرى للقيام بهذا الإجراء الحساس.';
+      }
+
       toast({
         variant: 'destructive',
         title: 'فشل حذف الحساب',
-        description: error.code === 'auth/wrong-password'
-          ? 'كلمة المرور التي أدخلتها غير صحيحة.'
-          : 'فشلت عملية إعادة المصادقة. يرجى المحاولة مرة أخرى.',
+        description: errorMsg,
       });
-    } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
   
   const getReauthDescription = () => {
     if (isGoogleSignIn) {
-        return 'هذا الإجراء لا يمكن التراجع عنه. لتأكيد الحذف، سيتم إعادة توجيهك إلى Google لإعادة المصادقة.';
+        return 'هذا الإجراء سيؤدي لحذف كافة درجاتك واشتراكاتك فوراً ولا يمكن التراجع عنه. سيتم توجيهك لـ Google للتأكد من هويتك.';
     }
-    return 'هذا الإجراء لا يمكن التراجع عنه. لتأكيد الحذف، يرجى إدخل كلمة المرور الخاصة بك.';
+    return 'هذا الإجراء سيؤدي لحذف كافة درجاتك واشتراكاتك فوراً ولا يمكن التراجع عنه. يرجى إدخال كلمة المرور للتأكيد.';
   }
 
   return (
@@ -239,20 +269,20 @@ export default function StudentSettingsPage() {
       
       <Card className="mt-6 border-destructive">
         <CardHeader>
-          <CardTitle>حذف الحساب</CardTitle>
+          <CardTitle className="text-destructive">منطقة الخطر: حذف الحساب</CardTitle>
           <CardDescription>
-            الإجراء التالي لا يمكن التراجع عنه. يرجى المتابعة بحذر.
+            سيؤدي هذا الإجراء إلى مسح كافة بياناتك وسجلك الدراسي نهائياً من المنصة.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex justify-end p-4 pt-0">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button variant="destructive">حذف الحساب</Button>
+              <Button variant="destructive" className="font-bold">حذف الحساب والبيانات</Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="rounded-2xl">
               <DialogHeader>
-                <DialogTitle>هل أنت متأكد تمامًا؟</DialogTitle>
-                <DialogDescription>
+                <DialogTitle className="text-right">تأكيد الحذف النهائي</DialogTitle>
+                <DialogDescription className="text-right">
                  {getReauthDescription()}
                 </DialogDescription>
               </DialogHeader>
@@ -267,15 +297,15 @@ export default function StudentSettingsPage() {
                   />
                 </div>
               )}
-              <DialogFooter>
-                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading}>إلغاء</Button>
+              <DialogFooter className="gap-2 sm:justify-start">
+                 <Button variant="outline" onClick={() => setIsDialogOpen(false)} disabled={isLoading} className="rounded-xl">إلغاء</Button>
                 <Button
                   onClick={handleDeleteAccount}
                   variant="destructive"
+                  className="rounded-xl font-bold"
                   disabled={isLoading || (isPasswordSignIn && !password)}
                 >
-                  {isLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                  {isLoading ? 'جارِ الحذف...' : 'تأكيد الحذف'}
+                  {isLoading ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : 'تأكيد الحذف'}
                 </Button>
               </DialogFooter>
             </DialogContent>
