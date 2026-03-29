@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -8,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FlaskConical, Play, Beaker, Library } from 'lucide-react';
@@ -16,6 +16,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@
 import { collection, query, where, doc, orderBy } from 'firebase/firestore';
 import type { LabExperiment, Student } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { cn } from '@/lib/utils';
 
 export default function StudentLabsPage() {
   const router = useRouter();
