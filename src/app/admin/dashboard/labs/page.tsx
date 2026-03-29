@@ -70,6 +70,7 @@ import { useToast } from '@/hooks/use-toast';
 import type { LabExperiment } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { useRouter } from 'next/navigation';
+import { useNavigationLoader } from '@/hooks/use-navigation-loader';
 
 const gradeMap: Record<string, string> = {
   all: 'كل الصفوف',
@@ -82,6 +83,7 @@ export default function AdminLabsPage() {
   const firestore = useFirestore();
   const router = useRouter();
   const { toast } = useToast();
+  const { startLoader } = useNavigationLoader();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [editingLab, setEditingLab] = React.useState<LabExperiment | null>(null);
@@ -116,6 +118,11 @@ export default function AdminLabsPage() {
       grade: lab.grade,
     });
     setIsDialogOpen(true);
+  };
+
+  const handlePreviewLab = (labId: string) => {
+    startLoader();
+    router.push(`/admin/dashboard/labs/${labId}`);
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -223,7 +230,7 @@ export default function AdminLabsPage() {
                             size="icon" 
                             className="text-primary hover:text-primary hover:bg-primary/10"
                             title="معاينة التجربة"
-                            onClick={() => router.push(`/admin/dashboard/labs/${lab.id}`)}
+                            onClick={() => handlePreviewLab(lab.id)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>

@@ -21,6 +21,7 @@ import { cn, toArabicDigits } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
+import { useNavigationLoader } from '@/hooks/use-navigation-loader';
 
 const gradeMap: Record<string, string> = {
   all: 'كل الصفوف',
@@ -33,6 +34,7 @@ export default function StudentLabsPage() {
   const router = useRouter();
   const firestore = useFirestore();
   const { user } = useUser();
+  const { startLoader } = useNavigationLoader();
 
   const settingsDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
@@ -59,6 +61,11 @@ export default function StudentLabsPage() {
     if (!labs) return [];
     return [...labs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }, [labs]);
+
+  const handleStartLab = (labId: string) => {
+    startLoader();
+    router.push(`/dashboard/labs/${labId}`);
+  };
 
   if (isLoading) {
     return (
@@ -180,7 +187,7 @@ export default function StudentLabsPage() {
                   </div>
                   
                   <Button
-                    onClick={() => router.push(`/dashboard/labs/${lab.id}`)}
+                    onClick={() => handleStartLab(lab.id)}
                     className="w-full h-12 text-lg font-black rounded-2xl gap-3 shadow-xl shadow-primary/10 hover:shadow-primary/30 transition-all border-b-4 border-primary-shadow active:border-b-0 active:translate-y-1 active:scale-[0.98] relative overflow-hidden group/btn"
                   >
                     <Play className="h-5 w-5 group-hover/btn:scale-110 transition-transform" />
