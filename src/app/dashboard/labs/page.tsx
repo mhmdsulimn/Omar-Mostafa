@@ -9,14 +9,16 @@ import {
   CardFooter,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { FlaskConical, Play, Beaker, Library, Sparkles, MoveRight } from 'lucide-react';
+import { FlaskConical, Play, Beaker, Library, Sparkles, MoveRight, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
 import type { LabExperiment, Student } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
-import { cn } from '@/lib/utils';
+import { cn, toArabicDigits } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
+import { format } from 'date-fns';
+import { arSA } from 'date-fns/locale/ar-SA';
 
 const gradeMap: Record<string, string> = {
   all: 'كل الصفوف',
@@ -68,7 +70,7 @@ export default function StudentLabsPage() {
         <div className="text-right">
           <h1 className="text-3xl md:text-5xl font-black tracking-tight bg-clip-text text-transparent bg-gradient-to-l from-foreground to-foreground/70">المعمل الافتراضي</h1>
           <p className="text-muted-foreground text-sm md:text-lg font-bold mt-2 opacity-80">
-            اختبر قوانين الفيزياء بنفسك من خلال تجارب PhET التفاعلية المتطورة.
+            استكشف المفاهيم الفيزيائية بشكل تفاعلي وممتع من خلال تجارب PhET المتطورة.
           </p>
         </div>
       </div>
@@ -89,65 +91,76 @@ export default function StudentLabsPage() {
             </div>
         </Card>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 px-2">
+        <div className="flex flex-wrap gap-8 px-2">
           {sortedLabs.map((lab, index) => (
-            <Card
-              key={lab.id}
-              className="group relative overflow-hidden rounded-[2.8rem] border-primary/10 bg-card/40 backdrop-blur-2xl hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.15)] dark:hover:shadow-[0_30px_60px_-12px_rgba(var(--primary),0.1)] transition-all duration-500 hover:-translate-y-2 animate-slide-in-up border-2 flex flex-col"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Animated Glow Background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
+            <div key={lab.id} className="flex-1 min-w-[300px] sm:min-w-[350px] animate-slide-in-up" style={{ animationDelay: `${index * 100}ms`, animationFillMode: 'backwards' }}>
+              <Card className="group relative overflow-hidden h-full rounded-[2.5rem] border-primary/10 bg-card/40 backdrop-blur-2xl hover:shadow-[0_30px_60px_-12px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_30px_60px_-12px_rgba(var(--primary),0.1)] transition-all duration-500 hover:-translate-y-2 border-2 flex flex-col">
+                
+                {/* Animated Glow Background */}
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700 pointer-events-none" />
 
-              <CardHeader className="relative p-0 overflow-hidden shrink-0">
-                {/* Visual Header with Layered Gradients */}
-                <div className="h-44 w-full bg-gradient-to-b from-primary/10 to-transparent flex items-center justify-center relative">
-                  {/* Digital Grid Pattern */}
-                  <div className="absolute inset-0 opacity-[0.07] dark:opacity-[0.1]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
-                  
-                  {/* Icon Hub with Glow */}
-                  <div className="relative">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse group-hover:bg-primary/30 transition-colors" />
-                    <div className="relative z-10 p-6 rounded-[2.2rem] bg-background/80 backdrop-blur-md shadow-2xl border border-primary/10 transform transition-all duration-700 group-hover:scale-110 group-hover:rotate-6 group-hover:border-primary/30">
-                      <Beaker className="h-12 w-12 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                <CardHeader className="relative p-0 overflow-hidden shrink-0">
+                  {/* Visual Header with Layered Gradients */}
+                  <div className="h-40 w-full bg-gradient-to-b from-primary/10 to-transparent flex items-center justify-center relative">
+                    {/* Digital Grid Pattern */}
+                    <div className="absolute inset-0 opacity-[0.05] dark:opacity-[0.08]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '24px 24px' }}></div>
+                    
+                    {/* Icon Hub with Glow */}
+                    <div className="relative">
+                      <div className="absolute inset-0 bg-primary/20 rounded-full blur-2xl animate-pulse group-hover:bg-primary/30 transition-colors" />
+                      <div className="relative z-10 p-5 rounded-[1.8rem] bg-background/80 backdrop-blur-md shadow-2xl border border-primary/10 transform transition-all duration-700 group-hover:scale-110 group-hover:rotate-6">
+                        <Beaker className="h-10 w-10 text-primary drop-shadow-[0_0_8px_rgba(var(--primary),0.5)]" />
+                      </div>
+                    </div>
+
+                    {/* Top Level Badges */}
+                    <div className="absolute top-5 right-5 flex flex-col items-end gap-2">
+                      <Badge className="bg-primary/90 text-primary-foreground font-black px-3 py-1 rounded-full uppercase text-[9px] tracking-widest shadow-lg shadow-primary/20 backdrop-blur-sm border-none">عملي</Badge>
+                      {lab.grade !== 'all' && (
+                        <Badge variant="outline" className="bg-background/40 backdrop-blur-xl font-black border-white/10 px-3 text-[9px] shadow-sm">
+                          {gradeMap[lab.grade]}
+                        </Badge>
+                      )}
                     </div>
                   </div>
+                </CardHeader>
 
-                  {/* Top Level Badges */}
-                  <div className="absolute top-6 right-6 flex flex-col items-end gap-2">
-                    <Badge className="bg-primary/90 text-primary-foreground font-black px-4 py-1.5 rounded-full uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 backdrop-blur-sm border-none">عملي</Badge>
-                    {lab.grade !== 'all' && (
-                      <Badge variant="outline" className="bg-background/40 backdrop-blur-xl font-black border-white/10 px-3 text-[10px] shadow-sm">
-                        {gradeMap[lab.grade]}
-                      </Badge>
-                    )}
+                <CardContent className="p-6 text-right space-y-4 flex-grow">
+                  <CardTitle className="text-xl md:text-2xl font-black group-hover:text-primary transition-colors tracking-tight text-foreground/90">
+                    {lab.title}
+                  </CardTitle>
+                  <div className="relative">
+                      <p className="text-sm font-bold text-muted-foreground/80 leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity whitespace-pre-wrap">
+                        {lab.description || 'استكشف المفاهيم الفيزيائية بشكل تفاعلي وممتع من خلال هذه التجربة المعملية المتطورة من PhET.'}
+                      </p>
+                      <div className="absolute -right-3 top-0 w-1 h-full bg-primary/20 rounded-full scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500" />
                   </div>
-                </div>
-              </CardHeader>
+                </CardContent>
 
-              <CardContent className="p-8 text-right space-y-4 flex-grow">
-                <CardTitle className="text-2xl font-black line-clamp-1 group-hover:text-primary transition-colors tracking-tight text-foreground/90">
-                  {lab.title}
-                </CardTitle>
-                <div className="relative">
-                    <p className="text-sm font-bold text-muted-foreground/80 line-clamp-2 min-h-[48px] leading-relaxed opacity-90 group-hover:opacity-100 transition-opacity">
-                    {lab.description || 'استكشف المفاهيم الفيزيائية بشكل تفاعلي وممتع من خلال هذه التجربة المعملية المتطورة من PhET.'}
-                    </p>
-                    <div className="absolute -right-2 top-0 w-1 h-full bg-primary/20 rounded-full scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-500" />
+                <div className="px-6 pb-2">
+                   <div className="border-t border-primary/5 w-full"></div>
                 </div>
-              </CardContent>
 
-              <CardFooter className="p-8 pt-0 mt-auto">
-                <Button
-                  onClick={() => router.push(`/dashboard/labs/${lab.id}`)}
-                  className="w-full h-14 text-xl font-black rounded-[1.8rem] gap-3 shadow-xl shadow-primary/10 hover:shadow-primary/30 transition-all border-b-4 border-primary-shadow active:border-b-0 active:translate-y-1 active:scale-[0.98] relative overflow-hidden group/btn"
-                >
-                  <Play className="h-6 w-6 group-hover/btn:scale-110 transition-transform" />
-                  <span>بدء التجربة</span>
-                  <MoveRight className="h-5 w-5 mr-auto opacity-0 -translate-x-4 group-hover/btn:opacity-50 group-hover/btn:translate-x-0 transition-all duration-500" />
-                </Button>
-              </CardFooter>
-            </Card>
+                <CardFooter className="p-6 flex flex-col gap-4">
+                  <div className="flex w-full justify-between items-center text-[10px] md:text-xs text-muted-foreground/60 font-bold">
+                      <div className="flex items-center gap-1">
+                          <Clock className="h-3 w-3" />
+                          <span>{toArabicDigits(format(new Date(lab.createdAt), 'd MMMM yyyy', { locale: arSA }))}</span>
+                      </div>
+                      <span className="bg-muted/50 px-2 py-0.5 rounded-md">PhET Simulation</span>
+                  </div>
+                  
+                  <Button
+                    onClick={() => router.push(`/dashboard/labs/${lab.id}`)}
+                    className="w-full h-12 text-lg font-black rounded-2xl gap-3 shadow-xl shadow-primary/10 hover:shadow-primary/30 transition-all border-b-4 border-primary-shadow active:border-b-0 active:translate-y-1 active:scale-[0.98] relative overflow-hidden group/btn"
+                  >
+                    <Play className="h-5 w-5 group-hover/btn:scale-110 transition-transform" />
+                    <span>بدء التجربة</span>
+                    <MoveRight className="h-4 w-4 mr-auto opacity-0 -translate-x-4 group-hover/btn:opacity-50 group-hover/btn:translate-x-0 transition-all duration-500" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
           ))}
         </div>
       )}
