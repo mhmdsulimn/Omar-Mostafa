@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -69,7 +70,7 @@ export default function LabDetailPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
+    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
       {/* 
           Force hide scrollbar on the main dashboard container when this page is active.
           This ensures the immersive lab feel.
@@ -119,11 +120,11 @@ export default function LabDetailPage() {
       {/* Main Experiment Iframe - Full Dimension */}
       <div 
         ref={containerRef}
-        className="flex-1 w-full bg-black relative group/sim"
+        className="flex-1 w-full bg-black relative group/sim overflow-hidden"
       >
         <iframe
           src={lab.embedUrl}
-          className="w-full h-full border-none"
+          className="absolute inset-0 w-full h-full border-none"
           allowFullScreen
           title={lab.title}
           sandbox="allow-scripts allow-same-origin allow-popups"
