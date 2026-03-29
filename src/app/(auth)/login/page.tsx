@@ -36,12 +36,10 @@ export default function LoginPage() {
     const x = clientX - left;
     const y = clientY - top;
     
-    // Very Subtle 3D Tilt (4 degrees)
     const rotateX = ((y / height) - 0.5) * -4;
     const rotateY = ((x / width) - 0.5) * 4;
     cardRef.current.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
 
-    // Minimalist & Very Subtle Shine Effect (Reduced to 0.04 alpha)
     if (shineRef.current) {
       const px = (x / width) * 100;
       const py = (y / height) * 100;
@@ -101,8 +99,9 @@ export default function LoginPage() {
         let errorDescription = 'حدث خطأ أثناء الاتصال بـ Google.';
 
         if (error.code === 'auth/unauthorized-domain') {
+            const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
             errorTitle = 'دومين غير مصرح به';
-            errorDescription = 'يجب إضافة رابط هذا الموقع إلى Authorized Domains في Firebase Console لتتمكن من تسجيل الدخول.';
+            errorDescription = `يجب إضافة الدومين (${currentDomain}) إلى Authorized Domains في إعدادات Firebase Authentication ليعمل تسجيل الدخول.`;
         } else if (error.code === 'auth/popup-closed-by-user') {
             errorTitle = 'تم إغلاق النافذة';
             errorDescription = 'لقد قمت بإغلاق نافذة تسجيل الدخول قبل الإكمال.';
@@ -141,7 +140,6 @@ export default function LoginPage() {
             currentSessionId: newSessionId,
         }, { merge: true });
 
-        // Redirect NEW users to the welcome page instead of dashboard
         router.replace('/welcome');
     } catch (error) {
          toast({ variant: 'destructive', title: 'فشل حفظ البيانات' });
@@ -175,7 +173,6 @@ export default function LoginPage() {
           style={{ transformStyle: 'preserve-3d' }}
         >
           <Card className="relative z-10 bg-white/80 dark:bg-[#0a0f18]/40 backdrop-blur-3xl border-slate-200/50 dark:border-white/5 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_32px_64px_-12px_rgba(0,0,0,0.4)] rounded-[3rem] overflow-hidden animate-in fade-in zoom-in-95 duration-1000">
-              {/* Ultra-Subtle Shine Layer */}
               <div ref={shineRef} className="absolute inset-0 z-20 pointer-events-none opacity-0 transition-opacity duration-500" />
 
               <CardHeader className="text-center space-y-6 pt-14 pb-8">
@@ -215,7 +212,6 @@ export default function LoginPage() {
               </CardFooter>
           </Card>
 
-          {/* Decorative subtle aura behind the card */}
           <div className="absolute -z-10 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[110%] h-[110%] opacity-10 blur-[100px] pointer-events-none bg-gradient-to-tr from-primary to-cyan-500 rounded-full" />
         </div>
       </div>
