@@ -71,13 +71,13 @@ export function useCollection<T = any>(
               return;
             }
 
-            let path = 'collection_query';
+            let path = 'collection';
             try {
                 const target = memoizedTargetRefOrQuery as any;
                 if (target.path) {
                     path = target.path;
                 } else if (target._query && target._query.path) {
-                    path = target._query.path.toString();
+                    path = target._query.path.segments.join('/');
                 }
             } catch {}
 

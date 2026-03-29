@@ -13,6 +13,7 @@
         "balance": { "type": "number" },
         "isBanned": { "type": "boolean" },
         "currentSessionId": { "type": "string" },
+        "rewardedExams": { "type": "array", "items": { "type": "string" } },
         "fcmTokens": { "type": "array", "items": { "type": "string" } },
         "readAnnouncements": { "type": "array", "items": { "type": "string" } }
       },
@@ -53,6 +54,18 @@
         "vodafoneCashNumber": { "type": "string" },
         "imgbbApiKey": { "type": "string" }
       }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "message": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "targetGrade": { "type": "string" },
+        "type": { "type": "string", "enum": ["normal", "congratulation", "warning"] }
+      }
     }
   },
   "auth": { "providers": ["google.com"] },
@@ -72,6 +85,10 @@
     "/settings/global": {
       "schema": { "$ref": "#/backend/entities/AppSettings" },
       "description": "Global application configuration."
+    },
+    "/announcements/{id}": {
+      "schema": { "$ref": "#/backend/entities/Announcement" },
+      "description": "Global administrative announcements."
     }
   }
 }

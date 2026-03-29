@@ -20,14 +20,14 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // 🏆 MASTER OVERRIDE - الصلاحية القصوى للمسؤولين
+    // 🏆 MASTER OVERRIDE - المسؤولين لهم صلاحيات كاملة في كل مكان
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- قواعد البيانات العامة (القراءة للجميع المسجلين) ---
+    // --- قواعد البيانات العامة (القراءة لجميع المستخدمين المسجلين) ---
 
-    match /settings/{id} {
+    match /settings/global {
       allow read: if isSignedIn();
     }
 
@@ -55,32 +55,24 @@ service cloud.firestore {
       match /lectures/{lectureId} {
         allow read: if isSignedIn();
         match /contents/{contentId} {
-           // الوصول للمحتوى يتطلب اشتراك (إلا للأدمن)
+           // الوصول للمحتوى يتطلب اشتراك (أو أن يكون المستخدم أدمن)
            allow get: if isAdmin() || exists(/databases/$(database)/documents/users/$(request.auth.uid)/studentCourses/$(courseId));
            allow list: if isSignedIn();
         }
       }
     }
 
-    // --- قواعد بيانات المستخدمين (الخصوصية) ---
+    // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow create, update: if isOwner(userId);
 
-      match /studentExams/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /studentCourses/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /depositRequests/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /notifications/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
+      match /studentExams/{id} { allow read, write: if isOwner(userId); }
+      match /studentCourses/{id} { allow read, write: if isOwner(userId); }
+      match /depositRequests/{id} { allow read, write: if isOwner(userId); }
+      match /notifications/{id} { allow read, write: if isOwner(userId); }
+      
       match /studentCourses/{courseId}/progress/{contentId} {
         allow read, write: if isOwner(userId);
       }
@@ -89,9 +81,5 @@ service cloud.firestore {
     match /roles_admin/{userId} {
       allow get: if isSignedIn();
     }
-    
-    // قواعد خاصة بطلبات النظام
-    match /platform_reset_requests/{id} { allow read, write: if isAdmin(); }
-    match /students_to_delete/{id} { allow read, write: if isAdmin(); }
   }
 }
