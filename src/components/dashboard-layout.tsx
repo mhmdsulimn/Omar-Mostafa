@@ -130,8 +130,13 @@ export function DashboardLayout({
       { href: '/dashboard/wallet', label: 'المحفظة', icon: Wallet },
       { href: '/dashboard/support', label: 'الدعم الفني', icon: Headset },
   ].filter(item => {
-    if (layoutType === 'student' && item.href === '/dashboard/leaderboard') {
-        return appSettings?.isLeaderboardEnabled !== false;
+    if (layoutType === 'student') {
+        if (item.href === '/dashboard/leaderboard') {
+            return appSettings?.isLeaderboardEnabled !== false;
+        }
+        if (item.href === '/dashboard/labs') {
+            return appSettings?.isLabsEnabled !== false;
+        }
     }
     return true;
   });

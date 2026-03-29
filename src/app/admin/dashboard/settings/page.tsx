@@ -35,7 +35,7 @@ import { useToast } from '@/hooks/use-toast';
 import * as React from 'react';
 import { PasswordInput } from '@/components/ui/password-input';
 import { doc, onSnapshot, collection, getDocs, writeBatch, query, collectionGroup, deleteDoc } from 'firebase/firestore';
-import { Loader2, Sun, Moon, Monitor, AlertTriangle, Trophy, Key } from 'lucide-react';
+import { Loader2, Sun, Moon, Monitor, AlertTriangle, Trophy, Key, FlaskConical } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { Student, AppSettings } from '@/lib/data';
@@ -305,6 +305,17 @@ export default function AdminSettingsPage() {
       });
   };
 
+  const handleLabsToggle = (checked: boolean) => {
+    if (!settingsDocRef) return;
+    setDocumentNonBlocking(settingsDocRef, { isLabsEnabled: checked }, { merge: true })
+      .then(() => {
+        toast({
+            title: `تم ${checked ? 'تفعيل' : 'تعطيل'} قسم المعمل.`,
+            description: `قسم المعمل الآن ${checked ? 'متاح' : 'مخفي'} للطلاب.`,
+        });
+      });
+  };
+
   const handleSaveSupportSettings = () => {
     if (!settingsDocRef) return;
     setIsSavingSupport(true);
@@ -507,6 +518,23 @@ export default function AdminSettingsPage() {
               disabled={isLoadingSettings}
               checked={appSettings?.isLeaderboardEnabled !== false}
               onCheckedChange={handleLeaderboardToggle}
+            />
+          </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <Label htmlFor="labs-toggle" className="font-medium flex items-center gap-2">
+                <FlaskConical className="h-4 w-4" />
+                تفعيل قسم المعمل للطلاب
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                إظهار أو إخفاء أيقونة المعمل الافتراضي من واجهة الطالب.
+              </p>
+            </div>
+            <Switch
+              id="labs-toggle"
+              disabled={isLoadingSettings}
+              checked={appSettings?.isLabsEnabled !== false}
+              onCheckedChange={handleLabsToggle}
             />
           </div>
         </CardContent>

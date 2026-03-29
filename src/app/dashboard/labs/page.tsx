@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -7,13 +8,14 @@ import {
   CardHeader,
   CardTitle,
   CardFooter,
+  CardDescription,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { FlaskConical, Play, Beaker, Library, Sparkles, MoveRight, Clock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
 import { collection, query, where, doc } from 'firebase/firestore';
-import type { LabExperiment, Student } from '@/lib/data';
+import type { LabExperiment, Student, AppSettings } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { cn, toArabicDigits } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +34,12 @@ export default function StudentLabsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
 
+  const settingsDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
+    [firestore, user]
+  );
+  const { data: appSettings, isLoading: isLoadingSettings } = useDoc<AppSettings>(settingsDocRef);
+
   const userDocRef = useMemoFirebase(() => (user && firestore ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
   const { data: studentData, isLoading: isStudentLoading } = useDoc<Student>(userDocRef);
 
@@ -45,7 +53,7 @@ export default function StudentLabsPage() {
 
   const { data: labs, isLoading: isLabsLoading } = useCollection<LabExperiment>(labsQuery);
 
-  const isLoading = isStudentLoading || isLabsLoading;
+  const isLoading = isStudentLoading || isLabsLoading || isLoadingSettings;
 
   const sortedLabs = React.useMemo(() => {
     if (!labs) return [];
@@ -56,6 +64,27 @@ export default function StudentLabsPage() {
     return (
       <div className="flex h-full w-full items-center justify-center py-20">
         <LoadingAnimation size="md" />
+      </div>
+    );
+  }
+
+  if (appSettings?.isLabsEnabled === false) {
+    return (
+      <div className="flex h-[60vh] items-center justify-center text-center p-4">
+        <Card className="p-8 animate-fade-in max-w-sm mx-auto rounded-[2.5rem] shadow-xl border-primary/10">
+          <CardHeader>
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-muted text-muted-foreground">
+              <FlaskConical className="h-8 w-8 opacity-50" />
+            </div>
+            <CardTitle className="mt-4 text-xl">المعمل غير متاح حالياً</CardTitle>
+            <CardDescription className="text-sm font-bold mt-2">
+              عذرًا، قام المسؤول بإخفاء قسم المعمل في الوقت الحالي. حاول العودة لاحقاً.
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button className="w-full rounded-xl h-12" onClick={() => router.push('/dashboard/courses')}>العودة للرئيسية</Button>
+          </CardFooter>
+        </Card>
       </div>
     );
   }
