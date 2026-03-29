@@ -1,14 +1,12 @@
-
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Button,
 } from '@/components/ui/button';
 import { 
   Maximize, 
-  FlaskConical, 
   AlertCircle, 
   ChevronRight,
   Minimize,
@@ -20,14 +18,9 @@ import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-/**
- * صفحة معاينة التجربة للمسؤول:
- * توفر تجربة غامرة كاملة للمسؤول لاختبار التجارب قبل اعتمادها للطلاب.
- */
-export default function AdminLabPreviewPage() {
-  const params = useParams();
+export default function AdminLabPreviewPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: labId } = React.use(params);
   const router = useRouter();
-  const labId = params.id as string;
   const firestore = useFirestore();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);

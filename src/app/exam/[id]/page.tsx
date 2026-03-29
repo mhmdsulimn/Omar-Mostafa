@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect, useRef, Suspense } from 'react';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import * as React from 'react';
+import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import {
@@ -15,7 +16,7 @@ import {
 import { Progress } from '@/components/ui/progress';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { Clock, ArrowLeft, ArrowRight, Star, Loader2, Sparkles } from 'lucide-react';
+import { Clock, ArrowLeft, ArrowRight, Star, Sparkles } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,15 +34,8 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
-function ExamComponent() {
+function ExamComponent({ examId, courseId, lectureContentId }: { examId: string, courseId: string | null, lectureContentId: string | null }) {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
-
-  const examId = params.id as string;
-  const courseId = searchParams.get('courseId');
-  const lectureContentId = searchParams.get('lectureContentId');
-
   const firestore = useFirestore();
   const { user } = useUser();
 
@@ -379,7 +373,7 @@ function ExamComponent() {
               أنت على وشك إرسال إجاباتك. لا يمكنك تعديلها بعد هذه الخطوة. هل أنت متأكد؟
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="gap-2 sm:justify-start">
+          <AlertDialogFooter>
             <AlertDialogCancel className="rounded-2xl h-11 px-6">إلغاء</AlertDialogCancel>
             <AlertDialogAction onClick={handleSubmit} className="rounded-2xl h-11 px-8 font-black">تأكيد الإرسال</AlertDialogAction>
           </AlertDialogFooter>
@@ -389,14 +383,21 @@ function ExamComponent() {
   );
 }
 
-export default function ExamPage() {
+export default function ExamPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ courseId?: string, lectureContentId?: string }> }) {
+    const resolvedParams = React.use(params);
+    const resolvedSearchParams = React.use(searchParams);
+    
     return (
         <Suspense fallback={
             <div className="flex min-h-screen flex-col items-center justify-center bg-transparent p-4">
                 <LoadingAnimation size="lg" />
             </div>
         }>
-            <ExamComponent />
+            <ExamComponent 
+              examId={resolvedParams.id} 
+              courseId={resolvedSearchParams.courseId || null} 
+              lectureContentId={resolvedSearchParams.lectureContentId || null} 
+            />
         </Suspense>
     )
 }

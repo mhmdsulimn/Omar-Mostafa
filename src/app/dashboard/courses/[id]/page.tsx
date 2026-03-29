@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -9,11 +9,10 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Wallet, Book, FileText, Video, Award, LayoutList, Loader2, Link as LinkIcon } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, useAuth, setDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { ArrowLeft, Book, FileText, Video, Award, LayoutList, Loader2, Link as LinkIcon } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
 import { doc, collection, query, orderBy, writeBatch } from 'firebase/firestore';
-import type { Course, Lecture, LectureContent, Student, StudentCourse, StudentContentProgress } from '@/lib/data';
-import { Skeleton } from '@/components/ui/skeleton';
+import type { Course, Lecture, LectureContent, Student, StudentCourse } from '@/lib/data';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -27,7 +26,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { SecureVideoPlayer } from '@/components/common/secure-video-player';
-import { cn } from '@/lib/utils';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 
@@ -174,10 +172,9 @@ function UnsubscribedCourseContent() {
 }
 
 
-export default function CourseDetailsPage() {
-  const params = useParams();
+export default function CourseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: courseId } = React.use(params);
   const router = useRouter();
-  const courseId = params.id as string;
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();

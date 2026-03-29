@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -647,7 +647,7 @@ function CourseContentAccordion({ course }: { course: Course }) {
     };
 
     const handleDeleteLecture = async () => {
-        if (!firestore || dialogState.type !== 'deleteLecture') return;
+        if (!firestore) return;
         setIsSaving(true);
         try {
             await deleteDocumentNonBlocking(doc(firestore, `courses/${course.id}/lectures`, dialogState.lecture.id));
@@ -729,10 +729,9 @@ function CourseContentAccordion({ course }: { course: Course }) {
     );
 }
 
-export default function CourseDetailsPage() {
-  const params = useParams();
+export default function CourseDetailsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: courseId } = React.use(params);
   const router = useRouter();
-  const courseId = params.id as string;
   const firestore = useFirestore();
   const { user } = useUser();
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);

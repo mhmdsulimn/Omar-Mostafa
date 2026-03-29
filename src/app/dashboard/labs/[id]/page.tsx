@@ -1,17 +1,15 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Button,
 } from '@/components/ui/button';
 import { 
   Maximize, 
-  FlaskConical, 
   AlertCircle, 
   ChevronRight,
   Minimize,
-  X
 } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -20,10 +18,9 @@ import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 
-export default function LabDetailPage() {
-  const params = useParams();
+export default function LabDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: labId } = React.use(params);
   const router = useRouter();
-  const labId = params.id as string;
   const firestore = useFirestore();
   const containerRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);

@@ -1,25 +1,20 @@
 'use client';
 
+import * as React from 'react';
 import { Suspense } from 'react';
-import { useSearchParams, useRouter, useParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { CheckCircle2, XCircle, Award, BookOpen, Loader2 } from 'lucide-react';
+import { CheckCircle2, XCircle, Award, BookOpen } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase, useUser } from '@/firebase';
 import { doc } from 'firebase/firestore';
 import type { StudentExam, Exam } from '@/lib/data';
-import { Skeleton } from '@/components/ui/skeleton';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
-function Results() {
+function Results({ examId, studentExamId }: { examId: string, studentExamId: string | null }) {
   const router = useRouter();
-  const params = useParams();
-  const searchParams = useSearchParams();
   const { user } = useUser();
   const firestore = useFirestore();
-
-  const examId = params.id as string;
-  const studentExamId = searchParams.get('studentExamId');
 
   const studentExamDocRef = useMemoFirebase(
       () => user && studentExamId && firestore ? doc(firestore, 'users', user.uid, 'studentExams', studentExamId) : null,
@@ -125,10 +120,13 @@ function Results() {
   );
 }
 
-export default function ResultsPage() {
+export default function ResultsPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ studentExamId?: string }> }) {
+    const resolvedParams = React.use(params);
+    const resolvedSearchParams = React.use(searchParams);
+
     return (
         <Suspense fallback={<div className='flex h-screen w-full items-center justify-center'><LoadingAnimation size="lg" /></div>}>
-            <Results />
+            <Results examId={resolvedParams.id} studentExamId={resolvedSearchParams.studentExamId || null} />
         </Suspense>
     )
 }

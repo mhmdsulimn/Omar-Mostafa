@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -19,7 +19,6 @@ import { doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { 
   Loader2, 
-  Save, 
   ArrowRight,
   Type, 
   FileText, 
@@ -38,10 +37,9 @@ const gradeLabels: Record<string, string> = {
   third_secondary: 'الصف الثالث الثانوي',
 };
 
-export default function UnitEditorPage() {
-  const params = useParams();
+export default function UnitEditorPage({ params }: { params: Promise<{ gradeId: string; unitId: string }> }) {
+  const { gradeId, unitId } = React.use(params);
   const router = useRouter();
-  const { gradeId, unitId } = params;
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();

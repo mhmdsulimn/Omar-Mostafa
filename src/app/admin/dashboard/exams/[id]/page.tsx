@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -125,10 +125,9 @@ function EditExamForm({ exam }: { exam: Exam }) {
 }
 
 
-export default function EditExamPage() {
-  const params = useParams();
+export default function EditExamPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: examId } = React.use(params);
   const router = useRouter();
-  const examId = params.id as string;
   const firestore = useFirestore();
   const { user } = useUser();
 

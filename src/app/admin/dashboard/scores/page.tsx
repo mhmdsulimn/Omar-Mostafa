@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -32,7 +31,7 @@ import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Button } from '@/components/ui/button';
 import { BookOpen, Search } from 'lucide-react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 const gradeMap: Record<Student['grade'], string> = {
@@ -48,11 +47,11 @@ const formatTime = (seconds: number | undefined) => {
     return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 };
 
-export default function AdminScoresPage() {
+export default function AdminScoresPage({ searchParams }: { searchParams: Promise<{ email?: string }> }) {
   const firestore = useFirestore();
   const { user } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const sParams = React.use(searchParams);
 
   // Filters state
   const [studentNameFilter, setStudentNameFilter] = React.useState('');
@@ -60,15 +59,13 @@ export default function AdminScoresPage() {
   const [examFilter, setExamFilter] = React.useState('all');
 
   React.useEffect(() => {
-    const emailFromParams = searchParams.get('email');
-    if (emailFromParams) {
-        setStudentNameFilter(emailFromParams);
+    if (sParams.email) {
+        setStudentNameFilter(sParams.email);
     }
-  }, [searchParams]);
+  }, [sParams.email]);
 
   // Data fetching
   const allSubmissionsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'studentExams')) : null), [firestore, user]);
-  // Using ignorePermissionErrors to avoid crashes when unauthorized users hit this page
   const { data: allSubmissions, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
   
   const studentIds = React.useMemo(() => {
@@ -87,7 +84,6 @@ export default function AdminScoresPage() {
 
   const isLoading = isLoadingSubmissions || (studentIds.length > 0 && isLoadingUsers) || isLoadingExams;
 
-  // Memoized data processing
   const processedData = React.useMemo(() => {
     if (!allSubmissions || !usersForSubmissions || !allExams) {
       return [];

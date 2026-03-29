@@ -1,7 +1,6 @@
 'use client';
 
 import * as React from 'react';
-import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import {
   Card,
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import type { Question, Exam, AppSettings, Curriculum } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, ArrowLeft, Star, CheckCircle, Pencil, Trash2, Loader2, Link as LinkIcon, Sparkles, Wand2, RefreshCcw, Save } from 'lucide-react';
+import { PlusCircle, ArrowLeft, Star, CheckCircle, Pencil, Trash2, Loader2, RefreshCcw, Save, Sparkles, Wand2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -46,8 +45,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { generateAIQuestions } from '@/ai/flows/generate-questions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 
 type QuestionFormData = Omit<Question, 'id' | 'examId'>;
 
@@ -314,9 +313,8 @@ function QuestionForm({
   );
 }
 
-export default function ManageQuestionsPage() {
-  const params = useParams();
-  const examId = params.id as string;
+export default function ManageQuestionsPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: examId } = React.use(params);
   const firestore = useFirestore();
   const { toast } = useToast();
 

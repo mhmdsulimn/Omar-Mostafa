@@ -1,9 +1,10 @@
 'use client';
 
+import * as React from 'react';
 import { Suspense } from 'react';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
-import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -15,24 +16,16 @@ import {
 } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, ArrowRight, Star, Loader2, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Star, CheckCircle, XCircle } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import type { Exam, Question, StudentExam } from '@/lib/data';
-import { collection, doc } from 'firebase/firestore';
-import { Skeleton } from '@/components/ui/skeleton';
+import { doc } from 'firebase/firestore';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
-function ReviewComponent() {
+function ReviewComponent({ examId, studentExamId, studentIdFromParams }: { examId: string, studentExamId: string | null, studentIdFromParams: string | null }) {
     const router = useRouter();
-    const params = useParams();
-    const searchParams = useSearchParams();
-
-    const examId = params.id as string;
-    const studentExamId = searchParams.get('studentExamId');
-    const studentIdFromParams = searchParams.get('userId');
-
     const firestore = useFirestore();
     const { user, isUserLoading } = useUser();
 
@@ -193,10 +186,17 @@ function ReviewComponent() {
 }
 
 
-export default function ReviewPage() {
+export default function ReviewPage({ params, searchParams }: { params: Promise<{ id: string }>, searchParams: Promise<{ studentExamId?: string, userId?: string }> }) {
+    const resolvedParams = React.use(params);
+    const resolvedSearchParams = React.use(searchParams);
+
     return (
         <Suspense fallback={<div className='flex h-screen w-full items-center justify-center'><LoadingAnimation size="lg" /></div>}>
-            <ReviewComponent />
+            <ReviewComponent 
+              examId={resolvedParams.id} 
+              studentExamId={resolvedSearchParams.studentExamId || null} 
+              studentIdFromParams={resolvedSearchParams.userId || null} 
+            />
         </Suspense>
     )
 }
