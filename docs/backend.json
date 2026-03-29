@@ -22,6 +22,31 @@
       },
       "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
     },
+    "Curriculum": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Curriculum",
+      "type": "object",
+      "description": "Stores the academic curriculum for a specific grade.",
+      "properties": {
+        "id": { "type": "string", "description": "The grade ID (e.g., first_secondary)" },
+        "gradeTitle": { "type": "string" },
+        "story": { "type": "string" },
+        "units": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "number" },
+              "title": { "type": "string" },
+              "grammar": { "type": "string" },
+              "writing": { "type": "string" }
+            }
+          }
+        },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      },
+      "required": ["id", "gradeTitle", "units"]
+    },
     "Exam": {
       "title": "Exam",
       "type": "object",
@@ -36,13 +61,46 @@
         "rewardThreshold": { "type": "number" },
         "rewardAmount": { "type": "number" }
       }
+    },
+    "AppSettings": {
+      "title": "AppSettings",
+      "type": "object",
+      "properties": {
+        "isMaintenanceMode": { "type": "boolean" },
+        "isLeaderboardEnabled": { "type": "boolean" },
+        "supportPhoneNumber": { "type": "string" },
+        "vodafoneCashNumber": { "type": "string" },
+        "imgbbApiKey": { "type": "string" }
+      }
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "message": { "type": "string" },
+        "isActive": { "type": "boolean" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "targetGrade": { "type": "string", "enum": ["all", "first_secondary", "second_secondary", "third_secondary"] },
+        "type": { "type": "string", "enum": ["normal", "congratulation", "warning"] }
+      }
     }
   },
   "auth": { "providers": ["google.com"] },
   "firestore": {
     "structure": [
-      { "path": "/users/{userId}", "definition": { "entityName": "Student", "schema": { "$ref": "#/backend/entities/Student" }, "collections": [] } },
-      { "path": "/exams/{examId}", "definition": { "entityName": "Exam", "schema": { "$ref": "#/backend/entities/Exam" } } }
+      {
+        "path": "/curriculum/{gradeId}",
+        "definition": {
+          "entityName": "Curriculum",
+          "schema": { "$ref": "#/backend/entities/Curriculum" },
+          "description": "Stores curriculum data for each grade level."
+        }
+      },
+      { "path": "/users/{userId}", "definition": { "entityName": "Student", "schema": { "$ref": "#/backend/entities/Student" }, "description": "Student profiles." } },
+      { "path": "/exams/{examId}", "definition": { "entityName": "Exam", "schema": { "$ref": "#/backend/entities/Exam" }, "description": "Exams data." } },
+      { "path": "/settings/global", "definition": { "entityName": "AppSettings", "schema": { "$ref": "#/backend/entities/AppSettings" }, "description": "Global application settings." } },
+      { "path": "/announcements/{id}", "definition": { "entityName": "Announcement", "schema": { "$ref": "#/backend/entities/Announcement" }, "description": "Global announcements." } }
     ]
   }
 }

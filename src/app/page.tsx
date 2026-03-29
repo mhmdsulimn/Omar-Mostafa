@@ -29,7 +29,7 @@ export default function Home() {
         if (!firestore || !auth) return;
         
         try {
-            // 1. فحص إذا كان المستخدم مسؤولاً
+            // 1. فحص إذا كان المستخدم مسؤولاً (Accessing roles_admin requires isSignedIn)
             const adminRoleDoc = doc(firestore, 'roles_admin', user.uid);
             const adminDocSnap = await getDoc(adminRoleDoc);
 
@@ -38,12 +38,18 @@ export default function Home() {
                 return;
             }
 
-            // 2. فحص الطلاب والحالة (حظر أو حذف)
+            // 2. فحص الطلاب والحالة (Accessing users/UID requires isOwner)
             const userDocRef = doc(firestore, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
 
-            if (!userDocSnap.exists() || userDocSnap.data()?.isBanned) {
-                // تسجيل خروج فوري للحسابات غير الصالحة
+            if (!userDocSnap.exists()) {
+                // المستخدم مسجل في Auth ولكن ليس له بيانات في Firestore (حالة نادرة)
+                router.replace('/login');
+                return;
+            }
+
+            if (userDocSnap.data()?.isBanned) {
+                // تسجيل خروج فوري للحسابات المحظورة
                 await signOut(auth);
                 localStorage.removeItem('exam_prep_session');
                 router.replace('/login');
@@ -55,6 +61,7 @@ export default function Home() {
             
         } catch (e) {
             console.error("Redirect logic error:", e);
+            // في حالة خطأ الأذونات أو الشبكة، نعود لصفحة الدخول كإجراء احترازي
             router.replace('/login');
         }
     };
