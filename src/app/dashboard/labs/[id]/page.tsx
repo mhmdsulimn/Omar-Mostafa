@@ -146,11 +146,11 @@ export default function LabDetailPage() {
           <div className="absolute top-6 left-6 z-50 pointer-events-auto animate-in zoom-in-95 duration-300">
             <Button
               onClick={toggleFullscreen}
-              variant="destructive"
-              className="rounded-full h-12 px-6 font-black shadow-2xl border-2 border-white/20 gap-2 flex items-center"
+              variant="outline"
+              size="icon"
+              className="rounded-full h-10 w-10 bg-black/40 border-white/10 text-white hover:bg-white/20 backdrop-blur-md shadow-2xl"
             >
               <Minimize className="h-5 w-5" />
-              <span>إلغاء ملء الشاشة</span>
             </Button>
           </div>
         )}
