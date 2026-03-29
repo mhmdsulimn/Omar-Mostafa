@@ -12,7 +12,9 @@
         "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
         "balance": { "type": "number" },
         "isBanned": { "type": "boolean" },
-        "currentSessionId": { "type": "string" }
+        "currentSessionId": { "type": "string" },
+        "fcmTokens": { "type": "array", "items": { "type": "string" } },
+        "readAnnouncements": { "type": "array", "items": { "type": "string" } }
       },
       "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
     },
@@ -30,6 +32,17 @@
       },
       "required": ["id", "title", "embedUrl", "grade"]
     },
+    "Curriculum": {
+      "title": "Curriculum",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "gradeTitle": { "type": "string" },
+        "story": { "type": "string" },
+        "units": { "type": "array" },
+        "lastUpdated": { "type": "string", "format": "date-time" }
+      }
+    },
     "AppSettings": {
       "title": "AppSettings",
       "type": "object",
@@ -37,7 +50,8 @@
         "isMaintenanceMode": { "type": "boolean" },
         "isLeaderboardEnabled": { "type": "boolean" },
         "supportPhoneNumber": { "type": "string" },
-        "vodafoneCashNumber": { "type": "string" }
+        "vodafoneCashNumber": { "type": "string" },
+        "imgbbApiKey": { "type": "string" }
       }
     }
   },
@@ -50,6 +64,10 @@
     "/labs/{labId}": {
       "schema": { "$ref": "#/backend/entities/LabExperiment" },
       "description": "Virtual lab experiments catalog."
+    },
+    "/curriculum/{gradeId}": {
+      "schema": { "$ref": "#/backend/entities/Curriculum" },
+      "description": "Academic curriculum data."
     },
     "/settings/global": {
       "schema": { "$ref": "#/backend/entities/AppSettings" },

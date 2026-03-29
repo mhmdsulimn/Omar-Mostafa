@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -52,8 +51,6 @@ export function useCollection<T = any>(
     let isMounted = true;
     let unsubscribe: (() => void) | null = null;
 
-    // Small delay (10ms) allows the internal Firebase SDK Watch stream to cleanup 
-    // the previous target before adding a new one, preventing the ca9 assertion error.
     const timer = setTimeout(() => {
       if (!isMounted) return;
 
@@ -76,14 +73,11 @@ export function useCollection<T = any>(
 
             let path = 'collection_query';
             try {
-                if ('path' in (memoizedTargetRefOrQuery as any)) {
-                    path = (memoizedTargetRefOrQuery as any).path;
-                } else {
-                    // For collection group queries, fallback to providing the ID if available
-                    const internalQuery = (memoizedTargetRefOrQuery as any)._query;
-                    if (internalQuery && internalQuery.path) {
-                        path = `group/${internalQuery.path.toString()}`;
-                    }
+                const target = memoizedTargetRefOrQuery as any;
+                if (target.path) {
+                    path = target.path;
+                } else if (target._query && target._query.path) {
+                    path = target._query.path.toString();
                 }
             } catch {}
 
