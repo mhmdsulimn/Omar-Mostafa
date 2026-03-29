@@ -86,7 +86,7 @@ export default function WalletPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] flex flex-col items-center overflow-hidden bg-background select-none transition-colors duration-500">
+    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] flex flex-col items-center overflow-y-auto bg-background select-none transition-colors duration-500 pb-10">
       <style jsx global>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none !important;
@@ -95,17 +95,9 @@ export default function WalletPage() {
           -ms-overflow-style: none !important;
           scrollbar-width: none !important;
         }
-        
-        main {
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-        }
-        main::-webkit-scrollbar {
-          display: none !important;
-        }
       `}</style>
 
-      {/* Cinematic Background - Liquid Neon Style (Restored & Height Optimized) */}
+      {/* Cinematic Background - Liquid Neon Style */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none z-0">
         {/* Main Fluid Blobs */}
         <div className="absolute top-[10%] left-[5%] h-[25rem] w-[25rem] rounded-full bg-gradient-to-br from-blue-600 to-cyan-400 opacity-20 dark:opacity-40 filter blur-[80px] animate-blob"></div>
@@ -116,20 +108,16 @@ export default function WalletPage() {
         <div className="absolute top-[25%] left-[10%] w-48 h-48 opacity-10 dark:opacity-20 rotate-12 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,#06b6d4_10px,#06b6d4_11px)]"></div>
         <div className="absolute bottom-[20%] right-[15%] w-64 h-64 opacity-10 dark:opacity-15 -rotate-12 bg-[repeating-linear-gradient(-45deg,transparent,transparent_10px,#d946ef_10px,#d946ef_11px)]"></div>
 
-        {/* Floating accents */}
-        <div className="absolute top-[60%] left-[20%] h-12 w-12 rounded-full bg-cyan-500 opacity-20 dark:opacity-40 blur-xl animate-pulse"></div>
-        <div className="absolute bottom-[10%] left-[40%] h-8 w-8 rounded-full bg-pink-500 opacity-15 dark:opacity-30 blur-lg animate-bounce"></div>
-        
         {/* Subtle Grid Overlay */}
         <div className="absolute inset-0 opacity-[0.02] dark:opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '40px 40px' }}></div>
       </div>
 
-      <div className="relative z-10 w-full flex flex-col items-center p-6 gap-8 md:gap-10 overflow-hidden h-full scrollbar-hide">
-        <div className="w-full flex items-center justify-center mt-4 shrink-0">
+      <div className="relative z-10 w-full flex flex-col items-center p-6 gap-8 md:gap-10 shrink-0">
+        <div className="w-full flex items-center justify-center mt-4">
           <h1 className="text-xl font-bold md:text-3xl text-foreground drop-shadow-lg tracking-tight">المحفظة الإلكترونية</h1>
         </div>
 
-        <div className="w-full max-w-sm md:max-w-md mx-auto shrink-0">
+        <div className="w-full max-w-sm md:max-w-md mx-auto">
           <div 
             className="relative [perspective:1000px]"
             onMouseMove={handleMouseMove}
@@ -175,7 +163,7 @@ export default function WalletPage() {
           </div>
         </div>
 
-        <div className="w-full max-w-sm md:max-w-md mx-auto shrink-0">
+        <div className="w-full max-w-sm md:max-w-md mx-auto">
             <button
                 className="w-full h-12 md:h-14 text-lg md:text-xl font-bold rounded-xl shadow-2xl transition-transform transform active:translate-y-px border-b-4 border-primary-shadow active:border-b-2 bg-primary hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2"
                 onClick={() => router.push('/dashboard/wallet/charge')}
@@ -186,7 +174,7 @@ export default function WalletPage() {
         </div>
 
         {pendingRequests && pendingRequests.length > 0 && (
-          <div className="w-full max-w-2xl mx-auto animate-fade-in px-2 md:px-0 mt-4 overflow-y-auto scrollbar-hide flex-1">
+          <div className="w-full max-w-2xl mx-auto animate-fade-in px-2 md:px-0">
             <div className="rounded-2xl backdrop-blur-2xl border border-border dark:border-white/10 bg-card dark:bg-white/5 shadow-2xl overflow-hidden">
               <div className="p-4 border-b border-border dark:border-white/10 bg-muted/30 dark:bg-white/5">
                 <div className="flex items-center gap-2">
@@ -194,7 +182,7 @@ export default function WalletPage() {
                   <h2 className="text-lg font-bold text-foreground dark:text-white">عمليات شحن قيد الانتظار</h2>
                 </div>
               </div>
-              <div className="overflow-x-auto scrollbar-hide">
+              <div className="overflow-x-auto">
                 <Table>
                   <TableHeader className="bg-muted/20 dark:bg-white/5">
                     <TableRow className="hover:bg-transparent border-border dark:border-white/10">
