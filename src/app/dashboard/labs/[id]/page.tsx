@@ -10,7 +10,8 @@ import {
   FlaskConical, 
   AlertCircle, 
   ChevronRight,
-  Minimize
+  Minimize,
+  X
 } from 'lucide-react';
 import { useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { doc } from 'firebase/firestore';
@@ -44,6 +45,13 @@ export default function LabDetailPage() {
     }
   };
 
+  const handleBack = () => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    }
+    router.back();
+  };
+
   React.useEffect(() => {
     const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener('fullscreenchange', handleFsChange);
@@ -69,7 +77,10 @@ export default function LabDetailPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 -mb-3 md:-mb-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
+    <div 
+      ref={containerRef}
+      className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 -mb-3 md:-mb-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page"
+    >
       {/* 
           Force hide scrollbar on the main dashboard container when this page is active.
           This ensures the immersive lab feel.
@@ -82,6 +93,12 @@ export default function LabDetailPage() {
         main::-webkit-scrollbar {
           display: none !important;
         }
+        :fullscreen {
+          width: 100vw !important;
+          height: 100vh !important;
+          margin: 0 !important;
+          padding: 0 !important;
+        }
       `}</style>
       
       {/* Immersive Top Header - Floating Style */}
@@ -90,7 +107,7 @@ export default function LabDetailPage() {
           <Button 
             variant="outline" 
             size="icon" 
-            onClick={() => router.back()} 
+            onClick={handleBack} 
             className="rounded-full bg-black/40 border-white/10 text-white hover:bg-white/20 backdrop-blur-md h-10 w-10"
           >
             <ChevronRight className="h-6 w-6" />
@@ -113,10 +130,7 @@ export default function LabDetailPage() {
       </div>
 
       {/* Main Experiment Iframe - Full Dimension */}
-      <div 
-        ref={containerRef}
-        className="flex-1 w-full h-full bg-black relative group/sim overflow-hidden"
-      >
+      <div className="flex-1 w-full h-full bg-black relative group/sim overflow-hidden">
         <iframe
           src={lab.embedUrl}
           className="absolute inset-0 w-full h-full border-none"
@@ -126,6 +140,20 @@ export default function LabDetailPage() {
           width="100%"
           height="100%"
         ></iframe>
+
+        {/* Exit Full Screen Floating Button - Only visible in FS */}
+        {isFullscreen && (
+          <div className="absolute top-6 left-6 z-50 pointer-events-auto animate-in zoom-in-95 duration-300">
+            <Button
+              onClick={toggleFullscreen}
+              variant="destructive"
+              className="rounded-full h-12 px-6 font-black shadow-2xl border-2 border-white/20 gap-2 flex items-center"
+            >
+              <Minimize className="h-5 w-5" />
+              <span>إلغاء ملء الشاشة</span>
+            </Button>
+          </div>
+        )}
 
         {/* Floating Help Hint - Only visible briefly or on hover */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/sim:opacity-100 transition-opacity duration-700 pointer-events-none">
