@@ -18,6 +18,7 @@ import { doc } from 'firebase/firestore';
 import type { LabExperiment } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 export default function LabDetailPage() {
   const params = useParams();
@@ -102,7 +103,12 @@ export default function LabDetailPage() {
       `}</style>
       
       {/* Immersive Top Header - Floating Style */}
-      <div className="absolute top-0 left-0 right-0 z-30 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pointer-events-none transition-transform duration-500 group-hover/page:translate-y-0 -translate-y-full md:translate-y-0">
+      <div className={cn(
+        "absolute top-0 left-0 right-0 z-30 p-4 flex items-center justify-between bg-gradient-to-b from-black/80 to-transparent pointer-events-none transition-all duration-500",
+        isFullscreen 
+          ? "group-hover/page:translate-y-0 -translate-y-full opacity-0 group-hover/page:opacity-100" 
+          : "translate-y-0 opacity-100"
+      )}>
         <div className="flex items-center gap-3 pointer-events-auto">
           <Button 
             variant="outline" 
@@ -140,20 +146,6 @@ export default function LabDetailPage() {
           width="100%"
           height="100%"
         ></iframe>
-
-        {/* Exit Full Screen Floating Button - Only visible in FS */}
-        {isFullscreen && (
-          <div className="absolute top-6 left-6 z-50 pointer-events-auto animate-in zoom-in-95 duration-300">
-            <Button
-              onClick={toggleFullscreen}
-              variant="outline"
-              size="icon"
-              className="rounded-full h-10 w-10 bg-black/40 border-white/10 text-white hover:bg-white/20 backdrop-blur-md shadow-2xl"
-            >
-              <Minimize className="h-5 w-5" />
-            </Button>
-          </div>
-        )}
 
         {/* Floating Help Hint - Only visible briefly or on hover */}
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 opacity-0 group-hover/sim:opacity-100 transition-opacity duration-700 pointer-events-none">
