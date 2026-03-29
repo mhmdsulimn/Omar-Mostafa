@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Image as ImageIcon, Video, Layers, Camera, ArrowRight, Globe } from 'lucide-react';
+import { ExternalLink, Image as ImageIcon, Video, Layers, Camera, ArrowRight, Globe, FlaskConical } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const tools = [
@@ -14,6 +14,14 @@ const tools = [
     url: 'https://imgbb.com/',
     icon: ImageIcon,
     color: 'bg-blue-500/10 text-blue-600',
+  },
+  {
+    id: 'phet',
+    name: 'تجارب PhET',
+    description: 'المصدر الرئيسي لتجارب الفيزياء التفاعلية. اختر تجربة HTML5 وانسخ رابط الـ Embed لإضافته في قسم المعمل.',
+    url: 'https://phet.colorado.edu/en/simulations/filter?subjects=physics&type=html',
+    icon: FlaskConical,
+    color: 'bg-cyan-500/10 text-cyan-600',
   },
   {
     id: 'postimages',
