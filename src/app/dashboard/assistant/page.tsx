@@ -154,7 +154,7 @@ export default function AssistantPage() {
   const { toast } = useToast();
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
-  const { data: studentData } = useDoc<Student>(userDocRef);
+  const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
   const studentExamsQuery = useMemoFirebase(() => user ? collection(firestore, 'users', user.uid, 'studentExams') : null, [user, firestore]);
   const { data: exams } = useCollection<StudentExam>(studentExamsQuery);
@@ -190,7 +190,7 @@ export default function AssistantPage() {
         content: `أهلاً بيك يا ${name}، أنا تسلا المساعد الذكي بتاعك. قولي أقدر أساعدك إزاي النهاردة؟ تقدر تسألني أي حاجة أو تبعتلي صورة سؤال واقف قدامك! 😊` 
       }]);
     }
-  }, [messages.length, studentData]);
+  }, [messages.length, !!studentData]);
 
   const scrollToBottom = React.useCallback(() => {
     if (scrollRef.current) {
@@ -271,7 +271,7 @@ export default function AssistantPage() {
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-100rem)] max-w-4xl mx-auto">
+    <div className="flex flex-col h-[calc(100vh-8rem)] md:h-[calc(100vh-10rem)] max-w-4xl mx-auto">
       <div className="flex items-center justify-between mb-4 px-2">
         <div className="flex items-center gap-3">
           <div className="bg-primary/10 p-2 rounded-xl border border-primary/20">
