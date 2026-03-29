@@ -56,8 +56,8 @@ export default function Home() {
                 return;
             }
 
-            // 3. توجيه الطالب إلى لوحة التحكم الخاصة به
-            router.replace('/dashboard/exams');
+            // 3. توجيه الطالب إلى لوحة التحكم الخاصة به (تم التغيير لتصفح الكورسات)
+            router.replace('/dashboard/courses');
             
         } catch (e) {
             console.error("Redirect logic error:", e);

@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 /**
- * صفحة التوجيه: تقوم بتحويل الطالب تلقائياً إلى صفحة الاختبارات المخصصة.
+ * صفحة التوجيه: تقوم بتحويل الطالب تلقائياً إلى صفحة تصفح الكورسات.
  */
 export default function DashboardRedirect() {
   const router = useRouter();
 
   useEffect(() => {
-    // توجيه الطالب إلى الرابط الجديد للاختبارات
-    router.replace('/dashboard/exams');
+    // توجيه الطالب إلى الرابط الجديد لتصفح الكورسات كصفحة رئيسية
+    router.replace('/dashboard/courses');
   }, [router]);
 
   return (
