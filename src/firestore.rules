@@ -16,18 +16,14 @@ service cloud.firestore {
       );
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
-    }
-
-    // 🏆 MASTER OVERRIDE - الصلاحية القصوى للمسؤولين
+    // 🏆 MASTER OVERRIDE - المسؤولين لهم صلاحيات كاملة
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- قواعد البيانات العامة (القراءة للجميع المسجلين) ---
+    // --- القواعد العامة (متاحة لجميع المسجلين) ---
 
-    match /settings/{id} {
+    match /settings/global {
       allow read: if isSignedIn();
     }
 
@@ -55,33 +51,26 @@ service cloud.firestore {
       match /lectures/{lectureId} {
         allow read: if isSignedIn();
         match /contents/{contentId} {
+           // الوصول للمحتوى الفعلي يتطلب اشتراك (أو أدمن)
            allow get: if isAdmin() || exists(/databases/$(database)/documents/users/$(request.auth.uid)/studentCourses/$(courseId));
            allow list: if isSignedIn();
         }
       }
     }
 
-    // --- قواعد بيانات المستخدمين (الخصوصية) ---
+    // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow create: if isOwner(userId);
-      allow update: if isOwner(userId);
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
 
-      match /studentExams/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /studentCourses/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /depositRequests/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
-      match /notifications/{id} { 
-        allow read, write: if isOwner(userId); 
-      }
+      match /studentExams/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /depositRequests/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /notifications/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      
       match /studentCourses/{courseId}/progress/{contentId} {
-        allow read, write: if isOwner(userId);
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
     }
 
