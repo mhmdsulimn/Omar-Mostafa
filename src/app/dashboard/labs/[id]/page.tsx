@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -26,6 +25,7 @@ import { doc } from 'firebase/firestore';
 import type { LabExperiment } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
   SheetContent,
