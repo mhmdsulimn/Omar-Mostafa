@@ -18,6 +18,12 @@ export function NotificationPermissionManager() {
       return;
     }
     
+    // التحقق من وجود المفتاح قبل البدء لتجنب الأخطاء
+    const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY;
+    if (!vapidKey) {
+      return;
+    }
+
     initialized.current = true;
     
     const { messaging } = initializeFirebase();
@@ -34,16 +40,9 @@ export function NotificationPermissionManager() {
 
     const requestPermissionAndGetToken = async () => {
       try {
-        const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY;
-        if (!vapidKey) {
-            console.error("NEXT_PUBLIC_VAPID_KEY is not set in .env file. Push notifications will not work.");
-            return;
-        }
-
         if (Notification.permission === 'default') {
             const permission = await Notification.requestPermission();
             if (permission !== 'granted') {
-                console.log('Notification permission was not granted.');
                 return;
             }
         }
@@ -53,25 +52,21 @@ export function NotificationPermissionManager() {
             
             if (fcmToken) {
               const userDocRef = doc(firestore, 'users', user.uid);
-              // Check if token already exists before updating
               const userDoc = await getDoc(userDocRef);
               const existingTokens = userDoc.data()?.fcmTokens || [];
               if (!existingTokens.includes(fcmToken)) {
                 await updateDoc(userDocRef, {
                     fcmTokens: arrayUnion(fcmToken)
                 });
-                console.log('FCM token saved to Firestore.');
                  toast({
                   title: 'تم تفعيل الإشعارات',
                   description: 'ستتلقى الآن إشعارات مهمة على هذا الجهاز.',
                 });
-              } else {
-                 console.log('FCM token already exists for this device.');
               }
             }
         }
       } catch (error) {
-        console.error('An error occurred while setting up notifications. ', error);
+        // فشل صامت للاشعارات إذا كانت البيئة لا تدعمها
       }
     };
 

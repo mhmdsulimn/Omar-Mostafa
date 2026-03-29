@@ -7,12 +7,13 @@ import { signInWithPopup, GoogleAuthProvider, User, updateProfile, signOut } fro
 import { useToast } from '@/hooks/use-toast';
 import { SocialLoginButton } from '@/components/common/social-login-button';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { ShieldCheck, Sparkles } from 'lucide-react';
+import { ShieldCheck, Sparkles, Copy } from 'lucide-react';
 import { GradeSelectionDialog } from '@/components/common/grade-selection-dialog';
 import type { Student } from '@/lib/data';
 import { Logo } from '@/components/common/logo';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { Button } from '@/components/ui/button';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -96,12 +97,31 @@ export default function LoginPage() {
         console.error("Firebase Auth Error:", error);
         
         let errorTitle = 'فشل تسجيل الدخول';
-        let errorDescription = 'حدث خطأ أثناء الاتصال بـ Google.';
+        let errorDescription: React.ReactNode = 'حدث خطأ أثناء الاتصال بـ Google.';
 
         if (error.code === 'auth/unauthorized-domain') {
             const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
             errorTitle = 'دومين غير مصرح به';
-            errorDescription = `يجب إضافة الدومين (${currentDomain}) إلى Authorized Domains في إعدادات Firebase Authentication ليعمل تسجيل الدخول.`;
+            errorDescription = (
+              <div className="space-y-3 text-right">
+                <p>يجب إضافة هذا الدومين إلى Authorized Domains في Firebase Console:</p>
+                <div className="flex items-center gap-2 bg-muted p-2 rounded border font-mono text-[10px] break-all">
+                  <span className="flex-1">{currentDomain}</span>
+                  <Button 
+                    size="icon" 
+                    variant="ghost" 
+                    className="h-6 w-6" 
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentDomain);
+                      toast({ title: "تم النسخ!" });
+                    }}
+                  >
+                    <Copy className="h-3 w-3" />
+                  </Button>
+                </div>
+                <p className="text-[10px] text-muted-foreground">تأكد من نسخ الدومين بدون http أو أرقام المنافذ إذا لزم الأمر.</p>
+              </div>
+            );
         } else if (error.code === 'auth/popup-closed-by-user') {
             errorTitle = 'تم إغلاق النافذة';
             errorDescription = 'لقد قمت بإغلاق نافذة تسجيل الدخول قبل الإكمال.';
