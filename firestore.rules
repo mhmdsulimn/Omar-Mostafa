@@ -16,82 +16,67 @@ service cloud.firestore {
       );
     }
 
-    // --- قواعد المجموعات العامة (متاحة للقراءة للطلاب والكتابة للمسؤولين) ---
+    // --- القواعد الأساسية ---
+
+    // 🏆 MASTER OVERRIDE - المسؤولين لهم صلاحيات كاملة
+    match /{allPaths=**} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- القواعد العامة للطلاب (متاحة لجميع المسجلين) ---
 
     match /settings/global {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
     }
 
     match /labs/{labId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
     }
 
     match /announcements/{id} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
     }
 
     match /curriculum/{id} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
     }
 
     match /exams/{examId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
-      
       match /questions/{questionId} {
         allow read: if isSignedIn();
-        allow write: if isAdmin();
       }
     }
 
     match /courses/{courseId} {
       allow read: if isSignedIn();
-      allow write: if isAdmin();
-      
       match /lectures/{lectureId} {
         allow read: if isSignedIn();
-        allow write: if isAdmin();
-        
         match /contents/{contentId} {
-           // الوصول للمحتوى يتطلب اشتراك أو صلاحيات مسؤول
-           allow get: if isAdmin() || exists(/databases/$(database)/documents/users/$(request.auth.uid)/studentCourses/$(courseId));
+           allow get: if isSignedIn();
            allow list: if isSignedIn();
-           allow write: if isAdmin();
         }
       }
     }
 
-    // --- قواعد بيانات المستخدمين (خصوصية تامة للطالب + وصول كامل للمسؤول) ---
+    // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
 
     match /users/{userId} {
       allow get: if isSignedIn();
-      allow create, update: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
-      allow delete: if isAdmin();
+      allow create, update: if isSignedIn() && request.auth.uid == userId;
 
-      // السماح للمسؤول برؤية جميع المجموعات الفرعية للطلاب للمتابعة
-      match /studentExams/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
-      match /studentCourses/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
-      match /depositRequests/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
-      match /notifications/{id} { allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId); }
+      match /studentExams/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /studentCourses/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /depositRequests/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
+      match /notifications/{id} { allow read, write: if isSignedIn() && request.auth.uid == userId; }
       
       match /studentCourses/{courseId}/progress/{contentId} {
-        allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
+        allow read, write: if isSignedIn() && request.auth.uid == userId;
       }
     }
 
-    // سجلات المسؤولين
     match /roles_admin/{userId} {
       allow get: if isSignedIn();
-      allow write: if isAdmin();
-    }
-    
-    // طلبات الحذف
-    match /students_to_delete/{userId} {
-      allow read, write: if isAdmin() || (isSignedIn() && request.auth.uid == userId);
     }
   }
 }

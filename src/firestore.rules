@@ -16,12 +16,13 @@ service cloud.firestore {
       );
     }
 
-    // 🏆 MASTER OVERRIDE - المسؤولين لهم صلاحيات كاملة
+    // --- القواعد الأساسية ---
+
     match /{allPaths=**} {
       allow read, write: if isAdmin();
     }
 
-    // --- القواعد العامة (متاحة لجميع المسجلين) ---
+    // --- القواعد العامة للطلاب ---
 
     match /settings/global {
       allow read: if isSignedIn();
@@ -51,14 +52,13 @@ service cloud.firestore {
       match /lectures/{lectureId} {
         allow read: if isSignedIn();
         match /contents/{contentId} {
-           // الوصول للمحتوى الفعلي يتطلب اشتراك (أو أدمن)
-           allow get: if isAdmin() || exists(/databases/$(database)/documents/users/$(request.auth.uid)/studentCourses/$(courseId));
+           allow get: if isSignedIn();
            allow list: if isSignedIn();
         }
       }
     }
 
-    // --- قواعد بيانات المستخدمين (خصوصية تامة) ---
+    // --- بيانات المستخدمين الخاصة ---
 
     match /users/{userId} {
       allow get: if isSignedIn();

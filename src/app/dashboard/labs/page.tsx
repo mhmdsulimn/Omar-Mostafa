@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { FlaskConical, Play, Beaker, Library, Loader2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc } from '@/firebase';
-import { collection, query, where, doc, orderBy } from 'firebase/firestore';
+import { collection, query, where, doc } from 'firebase/firestore';
 import type { LabExperiment, Student } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { cn } from '@/lib/utils';
@@ -23,22 +23,30 @@ export default function StudentLabsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
 
-  const userDocRef = useMemoFirebase(() => (user ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
+  const userDocRef = useMemoFirebase(() => (user && firestore ? doc(firestore, 'users', user.uid) : null), [user, firestore]);
   const { data: studentData, isLoading: isStudentLoading } = useDoc<Student>(userDocRef);
 
   const labsQuery = useMemoFirebase(() => {
-    // التأكد من أن بيانات الطالب والصف الدراسي متاحة قبل تشغيل الاستعلام
+    // ننتظر حتى تتوفر بيانات الطالب تماماً
     if (!firestore || !studentData || !studentData.grade) return null;
+    
+    // تم تبسيط الاستعلام مؤقتاً لإزالة orderBy لضمان عدم حدوث خطأ بسبب الفهارس (Indexes)
+    // ولتسهيل فحص الأذونات (Permissions)
     return query(
       collection(firestore, 'labs'),
-      where('grade', 'in', ['all', studentData.grade]),
-      orderBy('createdAt', 'desc')
+      where('grade', 'in', ['all', studentData.grade])
     );
   }, [firestore, studentData?.grade]);
 
   const { data: labs, isLoading: isLabsLoading } = useCollection<LabExperiment>(labsQuery);
 
   const isLoading = isStudentLoading || isLabsLoading;
+
+  // ترتيب المعامل يدوياً على الكلاينت لتجنب الحاجة لفهرس مركب (Composite Index)
+  const sortedLabs = React.useMemo(() => {
+    if (!labs) return [];
+    return [...labs].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [labs]);
 
   if (isLoading) {
     return (
@@ -62,7 +70,7 @@ export default function StudentLabsPage() {
         </div>
       </div>
 
-      {!labs || labs.length === 0 ? (
+      {!sortedLabs || sortedLabs.length === 0 ? (
         <Card className="border-dashed py-20">
           <CardContent className="flex flex-col items-center justify-center text-center gap-4">
             <Library className="h-16 w-16 text-muted-foreground opacity-20" />
@@ -74,7 +82,7 @@ export default function StudentLabsPage() {
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {labs.map((lab, index) => (
+          {sortedLabs.map((lab, index) => (
             <Card
               key={lab.id}
               className="group overflow-hidden rounded-[2rem] border-primary/10 hover:shadow-xl transition-all duration-500 hover:-translate-y-1 animate-slide-in-up"
