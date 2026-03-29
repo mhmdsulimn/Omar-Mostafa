@@ -69,7 +69,7 @@ export default function LabDetailPage() {
   }
 
   return (
-    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
+    <div className="relative -mx-3 md:-mx-6 -mt-3 md:-mt-6 -mb-3 md:-mb-6 w-[calc(100%+24px)] md:w-[calc(100%+48px)] h-[calc(100vh-80px)] md:h-[calc(100vh-108px)] overflow-hidden bg-black flex flex-col group/page">
       {/* 
           Force hide scrollbar on the main dashboard container when this page is active.
           This ensures the immersive lab feel.
@@ -115,7 +115,7 @@ export default function LabDetailPage() {
       {/* Main Experiment Iframe - Full Dimension */}
       <div 
         ref={containerRef}
-        className="flex-1 w-full bg-black relative group/sim overflow-hidden"
+        className="flex-1 w-full h-full bg-black relative group/sim overflow-hidden"
       >
         <iframe
           src={lab.embedUrl}
@@ -123,6 +123,8 @@ export default function LabDetailPage() {
           allowFullScreen
           title={lab.title}
           sandbox="allow-scripts allow-same-origin allow-popups"
+          width="100%"
+          height="100%"
         ></iframe>
 
         {/* Floating Help Hint - Only visible briefly or on hover */}
