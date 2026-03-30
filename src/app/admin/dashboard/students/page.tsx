@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -490,8 +489,8 @@ function UserRow({ user: student }: { user: Student }) {
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0">
                         <AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
-                    <div className="grid gap-0.5 min-w-0">
-                        <span className="font-medium flex items-center gap-1 md:gap-2">
+                    <div className="flex flex-col gap-0.5 min-w-0">
+                        <span className="font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap">
                           {student?.firstName} {student?.lastName}
                           {student.isBanned && <ShieldOff className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />}
                         </span>
@@ -711,7 +710,7 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[45%]">المستخدم</TableHead>
+                    <TableHead className="min-w-[200px]">المستخدم</TableHead>
                     <TableHead className="w-[15%]">الصف</TableHead>
                     <TableHead className="w-[15%]">الرصيد</TableHead>
                     <TableHead className="text-center w-[25%]">الإجراءات</TableHead>
