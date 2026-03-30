@@ -18,7 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
@@ -491,11 +491,11 @@ function UserRow({ user: student }: { user: Student }) {
                         <AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="grid gap-0.5 min-w-0">
-                        <span className="font-medium flex items-center gap-1 md:gap-2 truncate">
+                        <span className="font-medium flex items-center gap-1 md:gap-2">
                           {student?.firstName} {student?.lastName}
                           {student.isBanned && <ShieldOff className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />}
                         </span>
-                        <div className="text-[10px] md:text-xs text-muted-foreground truncate">{student?.email}</div>
+                        <div className="text-[10px] md:text-xs text-muted-foreground break-all">{student?.email}</div>
                     </div>
                 </div>
             </TableCell>

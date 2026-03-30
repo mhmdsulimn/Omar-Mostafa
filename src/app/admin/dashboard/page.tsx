@@ -66,8 +66,8 @@ function RecentScoreRow({ submission, studentsMap, examsMap }: { submission: Stu
                         <AvatarFallback>{student.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="grid gap-0.5">
-                        <span className="font-medium text-xs sm:text-sm line-clamp-1">{student.firstName} {student.lastName}</span>
-                        <span className="text-[10px] sm:text-xs text-muted-foreground hidden xs:block truncate max-w-[100px] sm:max-w-none">{student.email}</span>
+                        <span className="font-medium text-xs sm:text-sm">{student.firstName} {student.lastName}</span>
+                        <span className="text-[10px] sm:text-xs text-muted-foreground hidden xs:block break-all">{student.email}</span>
                     </div>
                 </div>
             </TableCell>

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -255,8 +256,8 @@ function RequestRow({ request }: { request: DepositRequest & { studentEmail: str
         <>
             <TableRow>
                 <TableCell className="p-3 md:p-4">
-                    <div className="font-medium text-xs md:sm">{request.studentName}</div>
-                    <div className="text-[10px] md:text-xs text-muted-foreground truncate max-w-[120px] md:max-w-none">{request.studentEmail}</div>
+                    <div className="font-medium text-xs md:text-sm">{request.studentName}</div>
+                    <div className="text-[10px] md:text-xs text-muted-foreground break-all">{request.studentEmail}</div>
                 </TableCell>
                 <TableCell className="font-mono text-center text-xs md:text-sm" dir="ltr">{request.amount.toFixed(0)}</TableCell>
                 <TableCell className="text-center text-xs md:text-sm">{request.senderPhoneNumber}</TableCell>
