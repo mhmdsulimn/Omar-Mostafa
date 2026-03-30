@@ -54,6 +54,7 @@ import {
 import { DeveloperInfoDialog } from './common/developer-info-dialog';
 import { Badge } from '@/components/ui/badge';
 import { LoadingAnimation } from './ui/loading-animation';
+import { ScrollArea } from './ui/scroll-area';
 
 type NavItem = {
   href?: string;
@@ -318,44 +319,49 @@ export function DashboardLayout({
                         <Menu className="h-5 w-5" />
                       </Button>
                   </SheetTrigger>
-                  <SheetContent side="right" className="flex flex-col p-4 w-[280px]">
+                  <SheetContent side="right" className="flex flex-col p-0 w-[280px] overflow-hidden">
                       <SheetHeader className="sr-only">
                         <SheetTitle>قائمة التنقل</SheetTitle>
                         <SheetDescription>القائمة الجانبية للموبايل</SheetDescription>
                       </SheetHeader>
-                      <nav className="grid gap-2 text-lg font-medium">
-                        <div className="flex items-center gap-2 text-lg font-semibold mb-6 justify-center px-4">
-                            <Logo width={120} />
-                        </div>
-                        {navItems.map((item) => {
-                          if (item.href) {
-                              return (
-                                <Link
-                                  key={item.label}
-                                  href={item.href}
-                                  className={cn(
-                                    'flex items-center gap-4 rounded-xl px-3 py-2.5 text-sm transition-colors',
-                                    isNavItemActive(item) ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
-                                  )}
-                                  onClick={() => handleNavClick(item.href!)}
-                                >
-                                  <item.icon className="h-5 w-5" />
-                                  <span className="flex-grow">{item.label}</span>
-                                   {item.href && (item.href === '/dashboard/notifications' || (layoutType === 'admin' && item.href === '/admin/dashboard/payments')) && unreadCount > 0 && (
-                                    <span className={cn(
-                                        "h-5 w-5 flex items-center justify-center rounded-full text-xs",
-                                        isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-destructive-foreground"
-                                    )}>
-                                      {unreadCount}
-                                    </span>
-                                  )}
-                                </Link>
-                              );
-                          }
-                          return null;
-                        })}
-                      </nav>
-                      <div className="mt-auto p-4 text-center text-xs text-muted-foreground border-t">
+                      
+                      <div className="flex h-16 items-center justify-center shrink-0 border-b bg-sidebar/5">
+                          <Logo width={110} height={38} />
+                      </div>
+
+                      <ScrollArea className="flex-1 px-3 py-4">
+                        <nav className="grid gap-1.5 text-lg font-medium">
+                          {navItems.map((item) => {
+                            if (item.href) {
+                                return (
+                                  <Link
+                                    key={item.label}
+                                    href={item.href}
+                                    className={cn(
+                                      'flex items-center gap-4 rounded-xl px-3 py-2.5 text-sm transition-colors',
+                                      isNavItemActive(item) ? 'bg-primary text-primary-foreground font-bold shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    )}
+                                    onClick={() => handleNavClick(item.href!)}
+                                  >
+                                    <item.icon className="h-5 w-5" />
+                                    <span className="flex-grow">{item.label}</span>
+                                     {item.href && (item.href === '/dashboard/notifications' || (layoutType === 'admin' && item.href === '/admin/dashboard/payments')) && unreadCount > 0 && (
+                                      <span className={cn(
+                                          "h-5 w-5 flex items-center justify-center rounded-full text-[10px]",
+                                          isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-destructive-foreground"
+                                      )}>
+                                        {unreadCount}
+                                      </span>
+                                    )}
+                                  </Link>
+                                );
+                            }
+                            return null;
+                          })}
+                        </nav>
+                      </ScrollArea>
+
+                      <div className="mt-auto p-4 text-center text-[10px] text-muted-foreground border-t bg-sidebar/5">
                         <DeveloperInfoDialog>
                           <button className="hover:text-primary transition-colors focus:outline-none">
                             Developed by Mohamed Suliman
