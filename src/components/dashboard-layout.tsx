@@ -330,7 +330,7 @@ export function DashboardLayout({
                       </div>
 
                       <ScrollArea className="flex-1 px-3 py-4">
-                        <nav className="grid gap-1.5 text-lg font-medium">
+                        <nav className="grid gap-1.5 text-lg font-medium" dir="rtl">
                           {navItems.map((item) => {
                             if (item.href) {
                                 return (
