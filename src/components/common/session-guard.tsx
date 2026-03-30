@@ -19,10 +19,10 @@ import {
 
 /**
  * مكون حماية الجلسة المطور:
- * 1. يمنع فتح الحساب من أكثر من جهاز في وقت واحد.
+ * 1. يمنع فتح الحساب من أكثر من جهاز في وقت واحد (للطلاب فقط).
  * 2. يراقب الحظر اللحظي (Banned) ويقوم بطرد المستخدم فوراً.
  * 3. يراقب حذف الحساب (Ghost Session) مع حماية ضد ضعف الإنترنت.
- * 4. يحمي المحتوى من أدوات المطور والنسخ.
+ * 4. يحمي المحتوى من أدوات المطور والنسخ (للطلاب فقط).
  */
 export function SessionGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -35,6 +35,14 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   const [showDeletedDialog, setShowDeletedDialog] = React.useState(false);
   const [showBannedDialog, setShowBannedDialog] = React.useState(false);
 
+  // التحقق مما إذا كان المستخدم مسؤولاً لتعطيل قيود الجلسة الواحدة له
+  const adminDocRef = useMemoFirebase(
+    () => (user && firestore ? doc(firestore, 'roles_admin', user.uid) : null),
+    [user, firestore]
+  );
+  const { data: adminRole, isLoading: isAdminLoading } = useDoc(adminDocRef);
+  const isAdmin = !!adminRole;
+
   const userDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
     [user, firestore]
@@ -43,17 +51,18 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   // نستخدم destructuring لجلب الخطأ أيضاً للتعامل مع ضعف الإنترنت
   const { data: studentData, isLoading: isLoadingStudent, error: studentError } = useDoc<Student>(userDocRef);
 
-  // 1. مراقبة تعدد الأجهزة والتبديل اللحظي
+  // 1. مراقبة تعدد الأجهزة والتبديل اللحظي (يتم التخطي للمسؤولين)
   React.useEffect(() => {
-    if (!studentData || !user) return;
+    if (!studentData || !user || isAdmin || isAdminLoading) return;
 
     const localSessionId = localStorage.getItem('exam_prep_session');
     const cloudSessionId = studentData.currentSessionId;
 
+    // إذا كان هناك معرف جلسة مختلف في السحابة، فهذا يعني أن جهازاً آخر قد سجل الدخول
     if (cloudSessionId && localSessionId && cloudSessionId !== localSessionId) {
       setShowLogoutDialog(true);
     }
-  }, [studentData, user]);
+  }, [studentData, user, isAdmin, isAdminLoading]);
 
   // 2. مراقبة الحظر وحذف الحساب (مع حماية ضد تقلبات الشبكة)
   React.useEffect(() => {
@@ -62,21 +71,20 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     // إذا وجد خطأ في جلب البيانات (غالباً بسبب الإنترنت)، لا نفعل شيئاً وننتظر المحاولة القادمة
     if (studentError) return;
 
-    // حالة حذف الحساب: لا نظهر الرسالة إلا إذا كان الاتصال سليماً والبيانات فارغة تماماً (null)
-    if (studentData === null && !isLoadingStudent && !studentError) {
-        // ننتظر قليلاً (2 ثانية) للتأكد أن الحساب فعلاً محذوف وليس مجرد تأخر في الاستجابة
+    // حالة حذف الحساب: لا نظهر الرسالة إلا إذا كان الاتصال سليماً والبيانات فارغة تماماً (null) ولم يكن المستخدم مسؤولاً
+    if (studentData === null && !isLoadingStudent && !studentError && !isAdmin && !isAdminLoading) {
         const timer = setTimeout(() => {
             setShowDeletedDialog(true);
         }, 2000);
         return () => clearTimeout(timer);
     }
 
-    // حالة الحظر اللحظي
+    // حالة الحظر اللحظي (تنطبق على الجميع)
     if (studentData && studentData.isBanned) {
         setShowBannedDialog(true);
         return;
     }
-  }, [studentData, isUserLoading, isLoadingStudent, user, studentError]);
+  }, [studentData, isUserLoading, isLoadingStudent, user, studentError, isAdmin, isAdminLoading]);
 
   const handleForceLogout = async () => {
     if (auth) {
@@ -90,8 +98,10 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // 3. حماية المتصفح من أدوات المطور
+  // 3. حماية المتصفح من أدوات المطور (يتم تعطيل الحماية للمسؤولين لتسهيل عملهم)
   React.useEffect(() => {
+    if (isAdmin) return;
+
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
@@ -116,7 +126,7 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
       window.removeEventListener('contextmenu', handleContextMenu);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [toast]);
+  }, [toast, isAdmin]);
 
   return (
     <>
