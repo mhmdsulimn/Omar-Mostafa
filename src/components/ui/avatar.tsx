@@ -44,8 +44,8 @@ const AvatarFallback = React.forwardRef<
       ref={ref}
       className={cn(
         "flex h-full w-full items-center justify-center rounded-full bg-muted",
-        // Apply special styling only for Arabic characters
-        isArabic && "font-headline leading-none pb-[0.65rem]",
+        // Apply special styling only for Arabic characters to visually center Aref Ruqaa font
+        isArabic && "font-headline leading-none pb-[0.15em]",
         className
       )}
       {...props}
