@@ -29,7 +29,7 @@ export default function Home() {
         if (!firestore || !auth) return;
         
         try {
-            // 1. فحص إذا كان المستخدم مسؤولاً (Accessing roles_admin requires isSignedIn)
+            // 1. فحص إذا كان المستخدم مسؤولاً
             const adminRoleDoc = doc(firestore, 'roles_admin', user.uid);
             const adminDocSnap = await getDoc(adminRoleDoc);
 
@@ -38,12 +38,12 @@ export default function Home() {
                 return;
             }
 
-            // 2. فحص الطلاب والحالة (Accessing users/UID requires isOwner)
+            // 2. فحص الطلاب والحالة
             const userDocRef = doc(firestore, 'users', user.uid);
             const userDocSnap = await getDoc(userDocRef);
 
             if (!userDocSnap.exists()) {
-                // المستخدم مسجل في Auth ولكن ليس له بيانات في Firestore (حالة نادرة)
+                // إذا كان المستخدم ليس مسؤولاً وليس له ملف طالب، نعيده للدخول لإكمال بياناته
                 router.replace('/login');
                 return;
             }
@@ -56,12 +56,11 @@ export default function Home() {
                 return;
             }
 
-            // 3. توجيه الطالب إلى لوحة التحكم الخاصة به (تم التغيير لتصفح الكورسات)
+            // 3. توجيه الطالب إلى لوحة التحكم
             router.replace('/dashboard/courses');
             
         } catch (e) {
             console.error("Redirect logic error:", e);
-            // في حالة خطأ الأذونات أو الشبكة، نعود لصفحة الدخول كإجراء احترازي
             router.replace('/login');
         }
     };

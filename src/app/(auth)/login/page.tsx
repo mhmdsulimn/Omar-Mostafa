@@ -67,6 +67,16 @@ export default function LoginPage() {
   const processUser = async (currentUser: User) => {
     if (!firestore || !auth) return;
 
+    // 1. Check if user is an ADMIN first
+    const adminRoleDoc = doc(firestore, 'roles_admin', currentUser.uid);
+    const adminDocSnap = await getDoc(adminRoleDoc);
+
+    if (adminDocSnap.exists()) {
+      router.replace('/admin/dashboard');
+      return;
+    }
+
+    // 2. If not admin, check student profiles
     const userDocRef = doc(firestore, 'users', currentUser.uid);
     const userDocSnap = await getDoc(userDocRef);
 
