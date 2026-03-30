@@ -175,12 +175,22 @@ export function DashboardLayout({
     }
   }, [user, isUserLoading, router]);
 
-  // Route protection logic
+  // Route protection logic - Fixed to handle Admin reloads on student pages
   React.useEffect(() => {
-    if (!isUserLoading && !isCheckingAdmin && layoutType === 'admin' && !isAdmin) {
-      router.replace('/dashboard/courses');
+    if (isUserLoading || isCheckingAdmin || !user) return;
+
+    if (layoutType === 'admin') {
+      if (!isAdmin) {
+        // Student trying to access admin area
+        router.replace('/dashboard/courses');
+      }
+    } else if (layoutType === 'student') {
+      if (isAdmin) {
+        // Admin trying to access student area (auto-redirect to their domain)
+        router.replace('/admin/dashboard');
+      }
     }
-  }, [isAdmin, isCheckingAdmin, isUserLoading, layoutType, router]);
+  }, [isAdmin, isCheckingAdmin, isUserLoading, layoutType, router, user]);
 
   React.useEffect(() => {
     setOptimisticPath(null);
