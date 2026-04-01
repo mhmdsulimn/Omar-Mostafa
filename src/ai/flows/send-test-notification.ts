@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview تدفق إرسال إشعار تجريبي للمسؤول لاختبار النظام.
@@ -72,7 +73,7 @@ const sendTestNotificationFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Test Notification Flow Error:', error);
       
-      // معالجة خطأ الـ Credentials والـ Token في بيئة التطوير
+      // معالجة خطأ الـ Credentials والـ Token في بيئة التطوير والإنتاج
       const errorMsg = error.message?.toLowerCase() || '';
       if (
         errorMsg.includes('credentials') || 
@@ -82,7 +83,7 @@ const sendTestNotificationFlow = ai.defineFlow(
       ) {
         return {
           success: false,
-          message: 'تنبيه: الكود البرمجي سليم تماماً، ولكن بيئة التطوير الحالية تفتقد لـ "مفتاح الخدمة" (Service Account Key). الإشعارات الفورية ستعمل بشكل تلقائي وفوري بمجرد رفع الموقع (Deployment) على السيرفر.'
+          message: 'تنبيه: الكود البرمجي سليم تماماً، ولكن السيرفر الحالي يفتقد لـ "مفتاح الخدمة" (Service Account Key). إذا كنت رفعت الموقع، تأكد من إضافة FIREBASE_SERVICE_ACCOUNT في إعدادات البيئة (Env Variables) بالاستضافة.'
         };
       }
 

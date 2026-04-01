@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -112,7 +113,7 @@ function AnnouncementForm({
                         fullName.includes(part) || email.includes(part)
                     );
                 });
-            setSearchResults(results.slice(0, 15));
+            setSearchResults(results); // عرض كل النتائج بدون حظر (Limit)
         } catch (e) {
         } finally {
             setIsSearching(false);
@@ -168,7 +169,7 @@ function AnnouncementForm({
                             <Input placeholder="اكتب اسم الطالب بالكامل هنا..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())} className="text-right" />
                         </div>
                         {searchResults.length > 0 && !selectedStudent && (
-                            <div className="mt-2 rounded-lg border bg-muted/50 p-1 space-y-1">
+                            <div className="mt-2 rounded-lg border bg-muted/50 p-1 space-y-1 max-h-48 overflow-y-auto">
                                 {searchResults.map(s => (
                                     <div key={s.id} className="flex items-center justify-between p-2 hover:bg-background rounded cursor-pointer" onClick={() => { setSelectedStudent(s); setSearchResults([]); setSearchTerm(''); }}>
                                         <Badge variant="outline" className="text-[10px]">{gradeMap[s.grade]}</Badge>

@@ -16,7 +16,8 @@
         "currentSessionId": { "type": "string" },
         "rewardedExams": { "type": "array", "items": { "type": "string" } },
         "fcmTokens": { "type": "array", "items": { "type": "string" } },
-        "readAnnouncements": { "type": "array", "items": { "type": "string" } }
+        "readAnnouncements": { "type": "array", "items": { "type": "string" } },
+        "lastActiveAt": { "type": "string", "format": "date-time" }
       },
       "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
     },

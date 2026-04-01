@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -49,7 +50,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
-import { toArabicDigits } from '@/lib/utils';
+import { toArabicDigits, cn } from '@/lib/utils';
 
 const gradeMap: Record<Student['grade'], string> = {
   first_secondary: '1ث',
@@ -365,7 +366,7 @@ function UserRow({ user: student }: { user: Student }) {
         <>
         <TableRow className={student.isBanned ? 'bg-destructive/10' : ''}>
             <TableCell className="text-right">
-                <div className="flex items-center gap-2 md:gap-3">
+                <div className="flex items-center gap-2 md:gap-3" dir="rtl">
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0"><AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
                         <span className="font-medium flex items-center justify-start gap-1 md:gap-2 whitespace-nowrap">
@@ -401,7 +402,7 @@ function UserRow({ user: student }: { user: Student }) {
         </TableRow>
 
         <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
-            <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
+            <AlertDialogContent className="max-w-[95vw] sm:max-w-425px">
             <AlertDialogHeader>
                 <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
                 <AlertDialogDescription className="text-right">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
@@ -414,7 +415,7 @@ function UserRow({ user: student }: { user: Student }) {
         </AlertDialog>
 
         <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-            <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
+            <AlertDialogContent className="max-w-[95vw] sm:max-w-425px">
             <AlertDialogHeader>
                 <AlertDialogTitle className="text-destructive text-right">حذف الطالب نهائياً</AlertDialogTitle>
                 <AlertDialogDescription className="text-right">أنت على وشك حذف {student.firstName} وجميع سجلاته بشكل نهائي. لا يمكن التراجع!</AlertDialogDescription>
@@ -461,7 +462,7 @@ export default function AdminStudentsPage() {
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
         
-        // تحسين البحث: التأكد من وجود كافة كلمات البحث في حقول الطالب (الاسم أو الإيميل)
+        // تحسين البحث: التأكد من وجود كافة كلمات البحث في حقول الطالب (الاسم بالكامل أو البريد)
         const searchMatch = searchParts.length === 0 || searchParts.every(part => 
             fullName.includes(part) || email.includes(part)
         );
