@@ -193,7 +193,6 @@ export default function AdminDashboardPage() {
         // --- الحسابات الأكثر دقة (High Accuracy Engine) ---
         const today = startOfDay(new Date());
         
-        // 1. حساب القراءات (المدير قرأ الآن كل هذه السجلات + تقدير نشاط الطلاب)
         const currentAdminReads = 
             allUsersData.length + 
             allExamsData.length + 
@@ -202,20 +201,16 @@ export default function AdminDashboardPage() {
             (allPaymentsData?.length || 0) + 
             (allNotifsData?.length || 0);
 
-        // تقدير نشاط الطلاب: كل طالب نشط يستهلك حوالي 20 قراءة (تصفح، إشعارات، ملف شخصي)
         const studentsActivityReads = filteredStudents.length * 20; 
         const dailyReads = currentAdminReads + studentsActivityReads;
 
-        // 2. حساب الكتابات الفعلية اليوم
         const todaySubmissions = allSubmissionsData.filter(s => new Date(s.submissionDate) >= today).length;
         const todayPayments = allPaymentsData?.filter(p => new Date(p.requestDate) >= today).length || 0;
         const todayNotifs = allNotifsData?.filter(n => new Date(n.createdAt) >= today).length || 0;
         const dailyWrites = todaySubmissions + todayPayments + todayNotifs;
 
-        // 3. تقدير الحذف
         const dailyDeletes = Math.floor(todayPayments * 0.1); 
 
-        // 4. حساب المساحة بأوزان Firestore الحقيقية (شاملة الـ Overhead)
         const docsCount = {
             users: allUsersData.length,
             exams: allExamsData.length,
@@ -228,13 +223,12 @@ export default function AdminDashboardPage() {
 
         const totalDocs = Object.values(docsCount).reduce((a, b) => a + b, 0);
 
-        // حساب المساحة بناءً على الوثائق والأوزان (Document Metadata ≈ 100 bytes)
         const estSizeKB = 
             (docsCount.users * 0.8) + 
             (docsCount.exams * 1.5) + 
             (docsCount.courses * 2.0) + 
-            (docsCount.questions * 4.0) + // الأسئلة ثقيلة بسبب النصوص والصور
-            (docsCount.submissions * 8.5) + // النتائج الأثقل لأنها تخزن كائنات أسئلة كاملة
+            (docsCount.questions * 4.0) + 
+            (docsCount.submissions * 8.5) + 
             (docsCount.payments * 1.0) +
             (docsCount.notifs * 0.4);
 
@@ -320,7 +314,6 @@ export default function AdminDashboardPage() {
                         <CardDescription className="text-xs">الأرقام تقديرية حسابياً. المصدر النهائي للمساحة هو تبويب Usage في Firebase Console.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {/* قسم العمليات اليومية */}
                         <div className="grid grid-cols-3 divide-x divide-x-reverse border-b bg-primary/5">
                             <div className="p-4 text-center">
                                 <div className='flex items-center justify-center gap-1.5 mb-1'>
@@ -395,11 +388,11 @@ export default function AdminDashboardPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="p-3 rounded-xl border bg-muted/20">
                                     <p className="text-[10px] text-muted-foreground font-bold mb-1 uppercase">المساحة الفعلية</p>
-                                    <p className="text-lg font-black text-foreground">{dbStats.consumedMB} <span className="text-[10px]">ميجابايت</span></p>
+                                    <p className="text-lg font-black text-foreground">{dbStats.consumedMB.toFixed(2)} <span className="text-[10px]">ميجابايت</span></p>
                                 </div>
                                 <div className="p-3 rounded-xl border bg-primary/5">
                                     <p className="text-[10px] text-primary font-bold mb-1 uppercase">المساحة المتبقية</p>
-                                    <p className="text-lg font-black text-primary">{dbStats.remainingMB.toFixed(1)} <span className="text-[10px]">ميجابايت</span></p>
+                                    <p className="text-lg font-black text-primary">{dbStats.remainingMB.toFixed(2)} <span className="text-[10px]">ميجابايت</span></p>
                                 </div>
                             </div>
                             <p className="text-[9px] text-muted-foreground italic mt-4 text-center leading-relaxed px-4">
