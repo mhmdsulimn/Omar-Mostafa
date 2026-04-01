@@ -16,6 +16,7 @@ function getAdminApp(): App {
   }
   
   // محاولة الحصول على "مفتاح الخدمة" من متغير بيئة مخصص (للإشعارات الفورية)
+  // يجب إضافة محتوى ملف الـ JSON كقيمة لهذا المتغير في إعدادات الاستضافة
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
     : null;

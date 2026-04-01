@@ -1,9 +1,12 @@
+/**
+ * @fileOverview Firebase Messaging Service Worker.
+ * هذا الملف هو المحرك المسؤول عن استقبال إشعارات الـ Push في الخلفية.
+ */
 
-// Scripts for firebase messaging
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js');
 
-// Initialize the Firebase app in the service worker by passing in the messagingSenderId.
+// تهيئة الخدمة في الخلفية (يجب مطابقة هذه القيم مع ملف config.ts)
 firebase.initializeApp({
   apiKey: "AIzaSyDE6OjDwFXbhWglSvSO7hnSowz-no6dfTM",
   authDomain: "studio-8343614197-d2c5b.firebaseapp.com",
@@ -15,13 +18,16 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// Handle background messages
+// معالج الرسائل التي تصل بينما الموقع مغلق أو في الخلفية
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
+  
   const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icons/icon-192x192.png'
+    icon: '/icons/icon-192x192.png',
+    badge: '/icons/logo.png',
+    data: payload.data
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

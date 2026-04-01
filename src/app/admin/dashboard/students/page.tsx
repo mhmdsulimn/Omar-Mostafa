@@ -206,7 +206,7 @@ function WithdrawBalanceDialog({ student }: { student: Student }) {
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="سحب رصيد"><Minus className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-2xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-425px rounded-2xl">
                 <DialogHeader>
                     <DialogTitle>سحب رصيد من الطالب</DialogTitle>
                     <DialogDescription>سحب من محفظة: {student.firstName} {student.lastName}</DialogDescription>
@@ -268,7 +268,7 @@ function AddBalanceDialog({ student }: { student: Student }) {
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="شحن رصيد"><DollarSign className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-2xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-425px rounded-2xl">
                 <DialogHeader>
                     <DialogTitle>شحن رصيد الطالب</DialogTitle>
                     <DialogDescription>إضافة لـ: {student.firstName} {student.lastName}</DialogDescription>
@@ -342,7 +342,7 @@ function UserRow({ user: student }: { user: Student }) {
     
     return (
         <>
-        <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/10 hover:bg-destructive/20' : 'hover:bg-muted/50')}>
+        <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/5 hover:bg-destructive/10' : 'hover:bg-muted/50')}>
             <TableCell className="text-right">
                 <div className="flex items-center gap-3" dir="rtl">
                     <Avatar className="h-9 w-9 md:h-10 md:w-10 shrink-0 border-2 border-primary/10">
