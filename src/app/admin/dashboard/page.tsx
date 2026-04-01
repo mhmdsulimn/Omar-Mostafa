@@ -365,8 +365,8 @@ export default function AdminDashboardPage() {
                     <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
                 </div>
 
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
-                    <Card className="md:col-span-2 shadow-sm border-primary/10 overflow-hidden">
+                <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
+                    <Card className="lg:col-span-2 shadow-sm border-primary/10 overflow-hidden">
                         <CardHeader className="bg-muted/30 p-4 border-b">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
