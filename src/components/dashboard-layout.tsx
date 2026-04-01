@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -86,7 +85,6 @@ export function DashboardLayout({
   );
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
-  // Admin status check - Updated to match Firestore Rules (hardcoded emails/IDs + doc check)
   const adminDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'roles_admin', user.uid) : null),
     [user, firestore]
@@ -100,14 +98,12 @@ export function DashboardLayout({
     return adminEmails.includes(user.email || '') || adminIds.includes(user.uid) || !!adminRole;
   }, [user, adminRole]);
 
-  // Shared queries (Notifications)
   const notificationsQuery = useMemoFirebase(
     () => (user && firestore) ? query(collection(firestore, `users/${user.uid}/notifications`), where('isRead', '==', false)) : null,
     [user, firestore]
   );
   const { data: unreadNotifications } = useCollection<Notification>(notificationsQuery);
 
-  // Student specific queries (Announcements)
   const announcementsQuery = useMemoFirebase(
     () => (firestore && studentData && layoutType === 'student') ? query(
       collection(firestore, 'announcements'),
@@ -118,8 +114,6 @@ export function DashboardLayout({
   );
   const { data: announcements } = useCollection<Announcement>(announcementsQuery);
 
-  // Admin specific queries (Pending Payments)
-  // We fetch ALL requests and filter in JS to avoid index requirement issues that might block the badge
   const allPaymentsQuery = useMemoFirebase(
     () => (firestore && user && layoutType === 'admin' && isAdmin) 
       ? query(collectionGroup(firestore, 'depositRequests')) 
@@ -134,7 +128,6 @@ export function DashboardLayout({
   );
   const { data: appSettings } = useDoc<AppSettings>(settingsDocRef);
 
-  // Badge counting logic per item
   const getBadgeCount = (href: string) => {
     if (href === '/dashboard/notifications') {
       let count = unreadNotifications?.length || 0;
@@ -148,7 +141,6 @@ export function DashboardLayout({
     }
     
     if (href === '/admin/dashboard/payments') {
-      // Filter for 'pending' status in memory for maximum reliability
       return allPayments?.filter(p => p.status === 'pending').length || 0;
     }
 
@@ -344,9 +336,9 @@ export function DashboardLayout({
               </SidebarMenu>
             </SidebarContent>
             <SidebarSeparator />
-            <SidebarFooter className="p-4 pt-2 text-center text-[10px] text-muted-foreground shrink-0">
+            <SidebarFooter className="p-4 pt-3 text-center shrink-0">
               <DeveloperInfoDialog>
-                <button className="hover:text-primary transition-colors focus:outline-none">
+                <button className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none">
                   Developed by Mohamed Suliman
                 </button>
               </DeveloperInfoDialog>
@@ -404,9 +396,9 @@ export function DashboardLayout({
                         </nav>
                       </ScrollArea>
 
-                      <div className="mt-auto p-4 text-center text-[10px] text-muted-foreground border-t bg-sidebar/5">
+                      <div className="mt-auto p-4 text-center border-t bg-sidebar/5">
                         <DeveloperInfoDialog>
-                          <button className="hover:text-primary transition-colors focus:outline-none">
+                          <button className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none">
                             Developed by Mohamed Suliman
                           </button>
                         </DeveloperInfoDialog>
