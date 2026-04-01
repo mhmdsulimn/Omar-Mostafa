@@ -50,7 +50,6 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 type AdminRole = { id: string };
 
@@ -504,15 +503,13 @@ export default function AdminDashboardPage() {
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
-                            {/* Visual Cleanup Animation Container */}
+                            {/* Cleaning Vortex Visual (Replaces the book Lottie) */}
                             <div className="relative h-28 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/30 border border-dashed border-primary/20 mb-2">
-                                <div className="absolute inset-0 opacity-40">
-                                    <DotLottieReact
-                                        src="https://lottie.host/16f4696d-4c5b-4871-865a-27e3f677cb26/iWSv2oF75k.lottie"
-                                        loop
-                                        autoplay
-                                        className="w-full h-full"
-                                    />
+                                <div className="absolute inset-0 opacity-20 overflow-hidden">
+                                    <div className="w-full h-full relative">
+                                        <Wind className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-32 text-primary animate-spin-slow" />
+                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent animate-pulse" />
+                                    </div>
                                 </div>
                                 <div className="relative z-20 flex flex-col items-center gap-1">
                                     <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg animate-bounce">
