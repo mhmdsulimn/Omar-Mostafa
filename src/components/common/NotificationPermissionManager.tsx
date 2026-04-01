@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -7,6 +8,11 @@ import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { initializeFirebase } from '@/firebase';
 
+/**
+ * مكون إدارة تصاريح الإشعارات:
+ * 1. يطلب الإذن من الطالب لاستقبال التنبيهات.
+ * 2. يقوم بتحديث رمز الجهاز (Token) في قاعدة البيانات لضمان وصول الرسائل.
+ */
 export function NotificationPermissionManager() {
   const { firestore } = useFirebase();
   const { user } = useUser();
@@ -18,9 +24,10 @@ export function NotificationPermissionManager() {
       return;
     }
     
-    // التحقق من وجود المفتاح قبل البدء لتجنب الأخطاء
+    // المفتاح العام من Firebase Console (VAPID Key)
     const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY;
     if (!vapidKey) {
+      console.warn("FCM: Missing NEXT_PUBLIC_VAPID_KEY. Push notifications will not work.");
       return;
     }
 
@@ -29,48 +36,53 @@ export function NotificationPermissionManager() {
     const { messaging } = initializeFirebase();
     if (!messaging) return;
 
-    // Listen for foreground messages
+    // استقبال الرسائل والموقع مفتوح (Foreground)
     onMessage(messaging, (payload) => {
-      console.log('Foreground message received. ', payload);
       toast({
-        title: payload.notification?.title,
+        title: payload.notification?.title || 'إشعار جديد',
         description: payload.notification?.body,
       });
     });
 
     const requestPermissionAndGetToken = async () => {
       try {
-        if (Notification.permission === 'default') {
-            const permission = await Notification.requestPermission();
-            if (permission !== 'granted') {
-                return;
-            }
+        // فحص حالة التصريح الحالية
+        let permission = Notification.permission;
+        
+        if (permission === 'default') {
+            permission = await Notification.requestPermission();
         }
 
-        if (Notification.permission === 'granted') {
-            const fcmToken = await getToken(messaging, { vapidKey });
+        if (permission === 'granted') {
+            // تسجيل الـ Service Worker يدوياً لضمان التوافق مع Next.js
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            
+            const fcmToken = await getToken(messaging, { 
+              vapidKey,
+              serviceWorkerRegistration: registration
+            });
             
             if (fcmToken) {
               const userDocRef = doc(firestore, 'users', user.uid);
               const userDoc = await getDoc(userDocRef);
               const existingTokens = userDoc.data()?.fcmTokens || [];
+              
               if (!existingTokens.includes(fcmToken)) {
                 await updateDoc(userDocRef, {
                     fcmTokens: arrayUnion(fcmToken)
                 });
-                 toast({
-                  title: 'تم تفعيل الإشعارات',
-                  description: 'ستتلقى الآن إشعارات مهمة على هذا الجهاز.',
-                });
+                console.log("FCM Token synced with Firestore.");
               }
             }
         }
       } catch (error) {
-        // فشل صامت للاشعارات إذا كانت البيئة لا تدعمها
+        console.error("FCM: Permission or Token error", error);
       }
     };
 
-    requestPermissionAndGetToken();
+    // تأخير الطلب قليلاً لضمان تحميل الصفحة بالكامل
+    const timer = setTimeout(requestPermissionAndGetToken, 3000);
+    return () => clearTimeout(timer);
 
   }, [user, firestore, toast]);
 
