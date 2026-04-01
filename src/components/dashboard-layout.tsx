@@ -144,10 +144,6 @@ export function DashboardLayout({
       return allPayments?.filter(p => p.status === 'pending').length || 0;
     }
 
-    if (href === '/admin/dashboard/announcements') {
-      return unreadNotifications?.length || 0;
-    }
-
     return 0;
   };
 
@@ -338,7 +334,7 @@ export function DashboardLayout({
             <SidebarSeparator />
             <SidebarFooter className="p-4 pt-3 text-center shrink-0 overflow-hidden">
               <DeveloperInfoDialog>
-                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 active:scale-95">
+                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 hover:tracking-[0.18em] hover:underline underline-offset-4 active:scale-95 group">
                   Developed by Mohamed Suliman
                 </button>
               </DeveloperInfoDialog>
@@ -398,7 +394,7 @@ export function DashboardLayout({
 
                       <div className="mt-auto p-4 text-center border-t bg-sidebar/5 overflow-hidden">
                         <DeveloperInfoDialog>
-                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 active:scale-95">
+                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 hover:tracking-[0.18em] hover:underline underline-offset-4 active:scale-95 group">
                             Developed by Mohamed Suliman
                           </button>
                         </DeveloperInfoDialog>
