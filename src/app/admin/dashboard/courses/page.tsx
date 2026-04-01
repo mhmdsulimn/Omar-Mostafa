@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, User, ArrowRight } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
@@ -55,14 +55,20 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
     const router = useRouter();
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    // جلب الاشتراكات لهذا الكورس تحديداً من كافة حسابات الطلاب
+    // جلب كافة الاشتراكات عبر collectionGroup والفلترة برمجياً لضمان الاستقرار
     const subscriptionsQuery = useMemoFirebase(
-        () => (firestore && course ? query(collectionGroup(firestore, 'studentCourses'), where('courseId', '==', course.id)) : null),
+        () => (firestore && course ? collectionGroup(firestore, 'studentCourses') : null),
         [firestore, course?.id]
     );
-    const { data: subscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
+    const { data: allSubscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
 
-    const studentIds = React.useMemo(() => subscriptions?.map(s => s.studentId) || [], [subscriptions]);
+    const studentIds = React.useMemo(() => {
+        if (!allSubscriptions || !course) return [];
+        // الفلترة البرمجية لتجنب الحاجة لفهارس معقدة في بيئة التطوير
+        return allSubscriptions
+            .filter(sub => sub.courseId === course.id)
+            .map(s => s.studentId);
+    }, [allSubscriptions, course?.id]);
 
     // جلب بيانات الطلاب الذين تم العثور على اشتراكات لهم
     const studentsQuery = useMemoFirebase(
@@ -84,7 +90,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
             const fullName = `${firstName} ${lastName}`.trim();
             const email = (s.email || '').toLowerCase();
             
-            // نظام البحث بالاسم الكامل المدمج
+            // نظام البحث الذكي بالاسم الكامل المدمج
             return searchParts.every(part => 
                 fullName.includes(part) || email.includes(part)
             );
@@ -122,9 +128,18 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                                 <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
                             </div>
                         ) : (
-                            <div className="divide-y">
+                            <div className="divide-y" dir="rtl">
                                 {filteredStudents.map(student => (
                                     <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                        <div className="flex items-center gap-3 text-right">
+                                            <Avatar className="h-9 w-9 border">
+                                                <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col text-right">
+                                                <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
+                                                <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
+                                            </div>
+                                        </div>
                                         <Button 
                                             variant="ghost" 
                                             size="sm" 
@@ -135,17 +150,8 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                                             }}
                                         >
                                             <span>عرض الملف</span>
-                                            <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+                                            <ArrowRight className="h-3.5 w-3.5" />
                                         </Button>
-                                        <div className="flex items-center gap-3 text-right" dir="rtl">
-                                            <Avatar className="h-9 w-9 border">
-                                                <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col text-right">
-                                                <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
-                                                <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
-                                            </div>
-                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -153,7 +159,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                     </ScrollArea>
                 </div>
                 <div className="p-4 bg-muted/20 border-t text-center">
-                    <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين المكتشفين: {subscriptions?.length || 0} طالب</p>
+                    <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
                 </div>
             </DialogContent>
         </Dialog>
