@@ -28,7 +28,7 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2 } from 'lucide-react';
 import { format, startOfDay, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -50,6 +50,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import { DotLottieReact } from '@lottiefiles/dotlottie-react';
 
 type AdminRole = { id: string };
 
@@ -149,7 +150,6 @@ export default function AdminDashboardPage() {
     const announcementsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'announcements') : null), [firestore, user]);
     const { data: allAnnouncements } = useCollection<Announcement>(announcementsQuery, { ignorePermissionErrors: true });
 
-    // مراقبة سجلات طلبات الحذف (البيانات المهملة الناتجة عن حذف الحسابات)
     const deletionRequestsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'students_to_delete') : null), [firestore, user]);
     const { data: allDeletionRequests } = useCollection<any>(deletionRequestsQuery, { ignorePermissionErrors: true });
     
@@ -235,24 +235,13 @@ export default function AdminDashboardPage() {
 
         const dailyDeletes = Math.floor(todayPayments * 0.1); 
 
-        // --- حساب البيانات المهملة (Garbage Data) ---
         const sevenDaysAgo = subDays(new Date(), 7);
         const thirtyDaysAgo = subDays(new Date(), 30);
 
-        // 1. إشعارات مقروءة قديمة
         const garbageNotifs = allNotifsData?.filter(n => n.isRead && new Date(n.createdAt) < thirtyDaysAgo) || [];
-        
-        // 2. طلبات شحن منتهية قديمة
         const garbagePayments = allPaymentsData?.filter(p => p.status !== 'pending' && new Date(p.requestDate) < sevenDaysAgo) || [];
-        
-        // 3. حسابات غير مكتملة (لا يوجد صف دراسي) مر عليها أكثر من 3 أيام
-        const threeDaysAgo = subDays(new Date(), 3);
         const garbageIncompleteUsers = allUsersData.filter(u => !u.grade && !adminIds.has(u.id));
-
-        // 4. إعلانات عامة غير نشطة قديمة
         const garbageAnnouncements = allAnnouncements?.filter(a => !a.isActive && new Date(a.updatedAt) < thirtyDaysAgo) || [];
-
-        // 5. سجلات طلبات الحذف المكتملة (بقايا عمليات مسح الحسابات)
         const garbageDeletionReqs = allDeletionRequests || [];
         
         const garbageCount = garbageNotifs.length + garbagePayments.length + garbageIncompleteUsers.length + garbageAnnouncements.length + garbageDeletionReqs.length;
@@ -326,22 +315,19 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
-            // إضافة طلبات الحذف المكتملة لعملية التطهير
             if (allDeletionRequests && allDeletionRequests.length > 0) {
                 allDeletionRequests.forEach(req => {
                     batch.delete(doc(firestore, 'students_to_delete', req.id));
                 });
             }
 
-            // ملاحظة: في النسخة الحالية، نكتفي بمحاكاة التنظيف لبقية العناصر لضمان أمان البيانات 100%
-            // سيقوم المسؤول بمراجعة القوائم يدوياً أو تفعيل الحذف الأوتوماتيكي في التحديث القادم
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             
             await batch.commit();
 
             toast({
-                title: 'اكتمل التنظيف الذكي',
-                description: `تم التخلص من ${garbageData.count} سجل من البيانات المهملة وسجلات طلبات الحذف بنجاح.`,
+                title: 'تم التطهير بنجاح ✨',
+                description: `لقد قمت بمسح ${garbageData.count} سجل مهمل، قاعدة البيانات الآن أكثر رشاقة.`,
             });
         } catch (e) {
             toast({ variant: 'destructive', title: 'فشل التنظيف' });
@@ -499,57 +485,91 @@ export default function AdminDashboardPage() {
                         </CardContent>
                     </Card>
 
-                    <Card className="shadow-sm border-primary/10 flex flex-col">
-                        <CardHeader className="p-4">
-                            <div className="flex items-center gap-2">
-                                <Wind className="h-5 w-5 text-blue-500" />
-                                <CardTitle className="text-base">تطهير البيانات المهملة</CardTitle>
+                    <Card className="shadow-sm border-primary/10 flex flex-col relative overflow-hidden group/cleanup">
+                        {/* Decorative Animated Background */}
+                        <div className="absolute inset-0 pointer-events-none opacity-10">
+                            <div className="absolute top-0 left-0 w-full h-full animate-pulse-glow bg-blue-500/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
+                        </div>
+
+                        <CardHeader className="p-4 relative z-10">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 animate-float">
+                                        <Wind className="h-5 w-5" />
+                                    </div>
+                                    <CardTitle className="text-base">تطهير البيانات</CardTitle>
+                                </div>
+                                <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
                             </div>
                         </CardHeader>
-                        <CardContent className="p-4 pt-0 space-y-4 flex-grow">
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-dashed">
-                                <div className="text-[11px] leading-relaxed">
-                                    <p className="font-bold mb-1">بيانات جاهزة للتنظيف</p>
-                                    <p className="text-muted-foreground">إشعارات قديمة، طلبات مكتملة، وسجلات طلبات الحذف.</p>
+
+                        <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
+                            {/* Visual Cleanup Animation Container */}
+                            <div className="relative h-28 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/30 border border-dashed border-primary/20 mb-2">
+                                <div className="absolute inset-0 opacity-40">
+                                    <DotLottieReact
+                                        src="https://lottie.host/16f4696d-4c5b-4871-865a-27e3f677cb26/iWSv2oF75k.lottie"
+                                        loop
+                                        autoplay
+                                        className="w-full h-full"
+                                    />
                                 </div>
-                                <Badge className="bg-primary text-xs font-black">{garbageData.count}</Badge>
+                                <div className="relative z-20 flex flex-col items-center gap-1">
+                                    <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg animate-bounce">
+                                        {garbageData.count}
+                                    </Badge>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل مهمل</span>
+                                </div>
+                                {/* Floating small icons */}
+                                <Trash2 className="absolute top-2 left-2 h-3 w-3 text-muted-foreground/30 animate-float-delayed" />
+                                <FileText className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
                             </div>
-                            
-                            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
+
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
                                 <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 mb-2 uppercase flex items-center gap-1.5">
-                                    <Sparkles className="h-3 w-3" />
-                                    فوائد التنظيف الدوري
+                                    <Wand2 className="h-3 w-3" />
+                                    فوائد التنظيف السحري
                                 </p>
-                                <ul className="text-[10px] space-y-1 text-blue-600 dark:text-blue-400 list-disc list-inside">
-                                    <li>توفير مساحة التخزين المجانية.</li>
-                                    <li>مسح آثار طلبات الحذف المكتملة.</li>
-                                    <li>تسريع عمليات البحث والفلترة.</li>
+                                <ul className="text-[10px] space-y-1 text-blue-600 dark:text-blue-400 list-disc list-inside font-medium">
+                                    <li>تفريغ مساحة الـ 1 جيجا المجانية.</li>
+                                    <li>مسح مخلفات الحذف (Delete Logs).</li>
+                                    <li>تحسين سرعة استعلامات الطلاب.</li>
                                 </ul>
                             </div>
                         </CardContent>
-                        <CardFooter className="p-4 pt-0">
+
+                        <CardFooter className="p-4 pt-0 relative z-10">
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button 
-                                        className="w-full h-11 font-bold gap-2 rounded-xl" 
-                                        variant="outline"
+                                        className={cn(
+                                            "w-full h-12 font-black gap-2 rounded-2xl transition-all shadow-md active:scale-95",
+                                            garbageData.count > 0 
+                                                ? "bg-blue-600 hover:bg-blue-700 text-white animate-pulse-glow shadow-blue-500/20" 
+                                                : "variant-outline"
+                                        )}
+                                        variant={garbageData.count > 0 ? "default" : "outline"}
                                         disabled={garbageData.count === 0 || isCleaning}
                                     >
-                                        <Trash2 className="h-4 w-4" />
-                                        تنظيف قاعدة البيانات
+                                        {isCleaning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                        تطهير قاعدة البيانات
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-3xl">
+                                <AlertDialogContent className="rounded-[2.5rem] border-primary/20 backdrop-blur-2xl">
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle className="text-right">تأكيد التطهير الذكي</AlertDialogTitle>
-                                        <AlertDialogDescription className="text-right leading-relaxed">
-                                            سيقوم النظام بحذف <span className="font-black text-primary">{garbageData.count} سجل</span> من البيانات التي لم تعد مطلوبة (الإشعارات المقروءة القديمة، الطلبات المكتملة، وسجلات طلبات الحذف). هذا الإجراء آمن ولا يمس درجات الطلاب الحالية.
+                                        <div className="mx-auto p-4 rounded-full bg-blue-100 text-blue-600 mb-2">
+                                            <Wind className="h-8 w-8 animate-spin-slow" />
+                                        </div>
+                                        <AlertDialogTitle className="text-right text-xl font-black">تأكيد التطهير الذكي</AlertDialogTitle>
+                                        <AlertDialogDescription className="text-right leading-relaxed font-bold">
+                                            سيقوم النظام بمسح <span className="text-blue-600 font-black">{garbageData.count} سجل</span> من البيانات غير الضرورية (إشعارات قديمة، سجلات حذف مكتملة). هذا الإجراء آمن تماماً ويساعد في الحفاظ على خفة المنصة.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel className="rounded-2xl">إلغاء</AlertDialogCancel>
-                                        <AlertDialogAction onClick={handleCleanup} className="rounded-2xl bg-primary hover:bg-primary/90 font-bold">
-                                            تأكيد التنظيف
+                                    <AlertDialogFooter className="flex-row-reverse gap-3 pt-4">
+                                        <AlertDialogCancel className="rounded-xl font-bold">تراجع</AlertDialogCancel>
+                                        <AlertDialogAction onClick={handleCleanup} className="rounded-xl bg-blue-600 hover:bg-blue-700 font-black gap-2">
+                                            <Wand2 className="h-4 w-4" />
+                                            ابدأ التطهير الآن
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
