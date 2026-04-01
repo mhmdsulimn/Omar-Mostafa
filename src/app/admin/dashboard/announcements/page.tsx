@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -100,7 +99,7 @@ function AnnouncementForm({
                 .map(d => ({ ...d.data() as Student, id: d.id }))
                 .filter(s => {
                     if (adminIds.has(s.id)) return false;
-                    // تحسين البحث عن الطالب بالاسم الكامل (دمج الاسم الأول والأخير)
+                    // تحسين البحث: دمج الاسم الأول والأخير للبحث عن الاسم بالكامل
                     const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
                     const email = (s.email || '').toLowerCase();
                     return fullName.includes(term) || email.includes(term);

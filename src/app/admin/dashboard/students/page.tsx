@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -442,7 +441,7 @@ export default function AdminStudentsPage() {
     if (!students) return [];
     const search = searchTerm.toLowerCase().trim();
     return students.filter(student => {
-        // تحسين البحث ليشمل الاسم الكامل (الأول + الأخير)
+        // تحسين البحث ليشمل الاسم الكامل (دمج الاسم الأول والاسم الأخير)
         const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
         const email = (student.email || '').toLowerCase();
         const searchMatch = !search || fullName.includes(search) || email.includes(search);

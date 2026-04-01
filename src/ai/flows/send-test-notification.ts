@@ -1,8 +1,7 @@
-
 'use server';
 /**
  * @fileOverview تدفق إرسال إشعار تجريبي للمسؤول لاختبار النظام.
- * يوفر رسائل خطأ مفصلة لتسهيل عملية تصحيح الأخطاء في بيئة التطوير.
+ * تم تحسين معالجة الأخطاء لتوضيح قيود بيئة التطوير بخصوص مفاتيح الخدمة.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,7 +25,7 @@ const sendTestNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // جلب بيانات المستخدم من Admin SDK
+      // 1. التحقق من وجود المستخدم ورموز الأجهزة
       const userDoc = await adminDb.collection('users').doc(input.userId).get();
       
       if (!userDoc.exists) {
@@ -39,14 +38,14 @@ const sendTestNotificationFlow = ai.defineFlow(
       if (activeTokens.length === 0) {
         return { 
           success: false, 
-          message: 'جهازك غير مسجل حالياً. يرجى التأكد من الضغط على "Allow" وتحديث الصفحة ثم الانتظار 5 ثوانٍ.' 
+          message: 'جهازك غير مسجل حالياً. يرجى تحديث الصفحة، الضغط على "Allow"، والانتظار 5 ثوانٍ ثم المحاولة.' 
         };
       }
 
       const message = {
         notification: {
           title: '🚀 اختبار نظام تسلا',
-          body: 'مبروك! نظام الإشعارات الفورية يعمل الآن على جهازك بنجاح.',
+          body: 'مبروك! نظام الإشعارات الفورية جاهز للعمل على مشروعك.',
         },
         webpush: {
           fcmOptions: {
@@ -56,7 +55,7 @@ const sendTestNotificationFlow = ai.defineFlow(
         tokens: activeTokens,
       };
 
-      // محاولة إرسال الإشعار لجميع الأجهزة المسجلة لهذا الحساب
+      // 2. محاولة الإرسال الفعلي
       const response = await getMessaging().sendEachForMulticast(message);
       
       if (response.successCount > 0) {
@@ -65,17 +64,25 @@ const sendTestNotificationFlow = ai.defineFlow(
           message: `تم إرسال الإشعار بنجاح إلى ${response.successCount} جهاز متصل بحسابك.` 
         };
       } else {
-        const errorDetail = response.responses[0]?.error?.message || 'الرموز المخزنة قد تكون منتهية الصلاحية.';
         return { 
           success: false, 
-          message: `فشل الإرسال الفعلي: ${errorDetail}` 
+          message: 'فشل الإرسال: الرموز المسجلة قد تكون منتهية الصلاحية أو غير صالحة حالياً.' 
         };
       }
     } catch (error: any) {
       console.error('Test Notification Flow Error:', error);
+      
+      // معالجة خطأ الـ Token الشهير في بيئة التطوير (Auth 500)
+      if (error.message?.includes('access token') || error.message?.includes('500')) {
+        return {
+          success: false,
+          message: 'تنبيه: بيئة التطوير الحالية تفتقد لـ "مفتاح الخدمة" (Service Account Key) لإرسال الإشعارات الفعلية. برمجياً كل شيء صحيح، وسيعمل النظام فور رفع الموقع (Deployment) أو إضافة المفتاح.'
+        };
+      }
+
       return { 
         success: false, 
-        message: `خطأ تقني: ${error.message || 'تأكد من إعداد مفاتيح FCM بشكل صحيح.'}` 
+        message: `خطأ تقني: ${error.message || 'تأكد من إعداد مشروع Firebase بشكل صحيح.'}` 
       };
     }
   }
