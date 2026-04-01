@@ -319,9 +319,6 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
-            // Note: Since all garbage items were gathered, we would ideally delete them here.
-            // For safety in this MVP, we are specifically targeting the deletion request tracking logs
-            // which the user specifically noted should be cleared.
             if (allDeletionRequests && allDeletionRequests.length > 0) {
                 allDeletionRequests.forEach(req => {
                     batch.delete(doc(firestore, 'students_to_delete', req.id));
@@ -494,7 +491,6 @@ export default function AdminDashboardPage() {
                     </Card>
 
                     <Card className="shadow-sm border-primary/10 flex flex-col relative overflow-hidden group/cleanup">
-                        {/* Decorative Animated Background */}
                         <div className="absolute inset-0 pointer-events-none opacity-10">
                             <div className="absolute top-0 left-0 w-full h-full animate-pulse-glow bg-blue-500/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
                         </div>
@@ -512,7 +508,6 @@ export default function AdminDashboardPage() {
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
-                            {/* Cleaning Vortex Visual */}
                             <div className="relative h-28 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/30 border border-dashed border-primary/20 mb-2">
                                 <div className="absolute inset-0 opacity-20 overflow-hidden">
                                     <div className="w-full h-full relative">
@@ -526,7 +521,6 @@ export default function AdminDashboardPage() {
                                     </Badge>
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل مهمل</span>
                                 </div>
-                                {/* Floating small icons */}
                                 <Trash2 className="absolute top-2 left-2 h-3 w-3 text-muted-foreground/30 animate-float-delayed" />
                                 <Zap className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
                             </div>
@@ -539,23 +533,23 @@ export default function AdminDashboardPage() {
                                 <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>إشعارات قديمة:</span>
-                                        <span className="text-primary">{toArabicDigits(String(garbageData.notifs))}</span>
+                                        <span className="text-primary">{garbageData.notifs}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>طلبات دفع:</span>
-                                        <span className="text-primary">{toArabicDigits(String(garbageData.payments))}</span>
+                                        <span className="text-primary">{garbageData.payments}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>حسابات فارغة:</span>
-                                        <span className="text-primary">{toArabicDigits(String(garbageData.users))}</span>
+                                        <span className="text-primary">{garbageData.users}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>إعلانات قديمة:</span>
-                                        <span className="text-primary">{toArabicDigits(String(garbageData.announcements))}</span>
+                                        <span className="text-primary">{garbageData.announcements}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5 col-span-2">
                                         <span>سجلات الحذف (Delete Logs):</span>
-                                        <span className="text-primary">{toArabicDigits(String(garbageData.deletions))}</span>
+                                        <span className="text-primary">{garbageData.deletions}</span>
                                     </div>
                                 </div>
                             </div>
