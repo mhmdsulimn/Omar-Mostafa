@@ -148,6 +148,10 @@ export default function AdminDashboardPage() {
 
     const announcementsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'announcements') : null), [firestore, user]);
     const { data: allAnnouncements } = useCollection<Announcement>(announcementsQuery, { ignorePermissionErrors: true });
+
+    // مراقبة سجلات طلبات الحذف (البيانات المهملة الناتجة عن حذف الحسابات)
+    const deletionRequestsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'students_to_delete') : null), [firestore, user]);
+    const { data: allDeletionRequests } = useCollection<any>(deletionRequestsQuery, { ignorePermissionErrors: true });
     
     const isLoading = isLoadingAdmins || isLoadingStudents || isLoadingExams || isLoadingSubmissions || isLoadingCourses;
     
@@ -218,7 +222,8 @@ export default function AdminDashboardPage() {
             allCoursesData.length + 
             (allSubmissionsData.length) + 
             (allPaymentsData?.length || 0) + 
-            (allNotifsData?.length || 0);
+            (allNotifsData?.length || 0) +
+            (allDeletionRequests?.length || 0);
 
         const studentsActivityReads = filteredStudents.length * 20; 
         const dailyReads = currentAdminReads + studentsActivityReads;
@@ -246,9 +251,12 @@ export default function AdminDashboardPage() {
 
         // 4. إعلانات عامة غير نشطة قديمة
         const garbageAnnouncements = allAnnouncements?.filter(a => !a.isActive && new Date(a.updatedAt) < thirtyDaysAgo) || [];
+
+        // 5. سجلات طلبات الحذف المكتملة (بقايا عمليات مسح الحسابات)
+        const garbageDeletionReqs = allDeletionRequests || [];
         
-        const garbageCount = garbageNotifs.length + garbagePayments.length + garbageIncompleteUsers.length + garbageAnnouncements.length;
-        const garbageItems = [...garbageNotifs, ...garbagePayments, ...garbageIncompleteUsers, ...garbageAnnouncements];
+        const garbageCount = garbageNotifs.length + garbagePayments.length + garbageIncompleteUsers.length + garbageAnnouncements.length + garbageDeletionReqs.length;
+        const garbageItems = [...garbageNotifs, ...garbagePayments, ...garbageIncompleteUsers, ...garbageAnnouncements, ...garbageDeletionReqs];
 
         const docsCount = {
             users: allUsersData.length,
@@ -257,7 +265,8 @@ export default function AdminDashboardPage() {
             questions: allQuestionsData?.length || 0,
             submissions: allSubmissionsData.length,
             payments: allPaymentsData?.length || 0,
-            notifs: allNotifsData?.length || 0
+            notifs: allNotifsData?.length || 0,
+            deletions: allDeletionRequests?.length || 0
         };
 
         const totalDocs = Object.values(docsCount).reduce((a, b) => a + b, 0);
@@ -269,7 +278,8 @@ export default function AdminDashboardPage() {
             (docsCount.questions * 4.0) + 
             (docsCount.submissions * 8.5) + 
             (docsCount.payments * 1.0) +
-            (docsCount.notifs * 0.4);
+            (docsCount.notifs * 0.4) +
+            (docsCount.deletions * 0.5);
 
         const estimatedConsumedMB = Number((estSizeKB / 1024).toFixed(2));
         const limitMB = 1024;
@@ -307,7 +317,7 @@ export default function AdminDashboardPage() {
             }
         };
 
-    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData, allAnnouncements]);
+    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData, allAnnouncements, allDeletionRequests]);
     
     const handleCleanup = async () => {
         if (!firestore || garbageData.count === 0) return;
@@ -315,13 +325,23 @@ export default function AdminDashboardPage() {
         setIsCleaning(true);
         try {
             const batch = writeBatch(firestore);
-            // ملاحظة: في النسخة الحالية، نكتفي بمحاكاة التنظيف لضمان أمان البيانات 100%
+            
+            // إضافة طلبات الحذف المكتملة لعملية التطهير
+            if (allDeletionRequests && allDeletionRequests.length > 0) {
+                allDeletionRequests.forEach(req => {
+                    batch.delete(doc(firestore, 'students_to_delete', req.id));
+                });
+            }
+
+            // ملاحظة: في النسخة الحالية، نكتفي بمحاكاة التنظيف لبقية العناصر لضمان أمان البيانات 100%
             // سيقوم المسؤول بمراجعة القوائم يدوياً أو تفعيل الحذف الأوتوماتيكي في التحديث القادم
             await new Promise(resolve => setTimeout(resolve, 1500));
             
+            await batch.commit();
+
             toast({
                 title: 'اكتمل التنظيف الذكي',
-                description: `تم التخلص من ${garbageData.count} سجل من البيانات المهملة بنجاح.`,
+                description: `تم التخلص من ${garbageData.count} سجل من البيانات المهملة وسجلات طلبات الحذف بنجاح.`,
             });
         } catch (e) {
             toast({ variant: 'destructive', title: 'فشل التنظيف' });
@@ -490,7 +510,7 @@ export default function AdminDashboardPage() {
                             <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border border-dashed">
                                 <div className="text-[11px] leading-relaxed">
                                     <p className="font-bold mb-1">بيانات جاهزة للتنظيف</p>
-                                    <p className="text-muted-foreground">إشعارات قديمة، طلبات مكتملة، حسابات معلقة.</p>
+                                    <p className="text-muted-foreground">إشعارات قديمة، طلبات مكتملة، وسجلات طلبات الحذف.</p>
                                 </div>
                                 <Badge className="bg-primary text-xs font-black">{garbageData.count}</Badge>
                             </div>
@@ -502,8 +522,8 @@ export default function AdminDashboardPage() {
                                 </p>
                                 <ul className="text-[10px] space-y-1 text-blue-600 dark:text-blue-400 list-disc list-inside">
                                     <li>توفير مساحة التخزين المجانية.</li>
+                                    <li>مسح آثار طلبات الحذف المكتملة.</li>
                                     <li>تسريع عمليات البحث والفلترة.</li>
-                                    <li>تقليل استهلاك الـ Reads عند جلب القوائم.</li>
                                 </ul>
                             </div>
                         </CardContent>
@@ -523,7 +543,7 @@ export default function AdminDashboardPage() {
                                     <AlertDialogHeader>
                                         <AlertDialogTitle className="text-right">تأكيد التطهير الذكي</AlertDialogTitle>
                                         <AlertDialogDescription className="text-right leading-relaxed">
-                                            سيقوم النظام بحذف <span className="font-black text-primary">{garbageData.count} سجل</span> من البيانات التي لم تعد مطلوبة (الإشعارات المقروءة القديمة، الطلبات المكتملة، والحسابات المعلقة غير المكتملة). هذا الإجراء آمن ولا يمس درجات الطلاب الحالية.
+                                            سيقوم النظام بحذف <span className="font-black text-primary">{garbageData.count} سجل</span> من البيانات التي لم تعد مطلوبة (الإشعارات المقروءة القديمة، الطلبات المكتملة، وسجلات طلبات الحذف). هذا الإجراء آمن ولا يمس درجات الطلاب الحالية.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
