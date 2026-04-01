@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -364,8 +365,8 @@ function UserRow({ user: student }: { user: Student }) {
             <TableCell>
                 <div className="flex items-center gap-2 md:gap-3">
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0"><AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
-                    <div className="flex flex-col gap-0.5 min-w-0">
-                        <span className="font-medium flex items-center gap-1 md:gap-2 whitespace-nowrap">
+                    <div className="flex flex-col gap-0.5 min-w-0 text-right">
+                        <span className="font-medium flex items-center justify-end gap-1 md:gap-2 whitespace-nowrap">
                           {student?.firstName} {student?.lastName}
                           {student.isBanned && <ShieldOff className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />}
                         </span>
@@ -390,8 +391,8 @@ function UserRow({ user: student }: { user: Student }) {
         <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
             <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
             <AlertDialogHeader>
-                <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-                <AlertDialogDescription>سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
+                <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+                <AlertDialogDescription className="text-right">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel disabled={isBanStatusUpdating}>إلغاء</AlertDialogCancel>
@@ -403,8 +404,8 @@ function UserRow({ user: student }: { user: Student }) {
         <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
             <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
             <AlertDialogHeader>
-                <AlertDialogTitle className="text-destructive">حذف الطالب نهائياً</AlertDialogTitle>
-                <AlertDialogDescription>أنت على وشك حذف {student.firstName} وجميع سجلاته بشكل نهائي. لا يمكن التراجع!</AlertDialogDescription>
+                <AlertDialogTitle className="text-destructive text-right">حذف الطالب نهائياً</AlertDialogTitle>
+                <AlertDialogDescription className="text-right">أنت على وشك حذف {student.firstName} وجميع سجلاته بشكل نهائي. لا يمكن التراجع!</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
@@ -441,10 +442,11 @@ export default function AdminStudentsPage() {
     if (!students) return [];
     const search = searchTerm.toLowerCase().trim();
     return students.filter(student => {
-        // تحسين البحث: دمج الاسم الأول والأخير للبحث في الاسم الكامل
+        // تحسين البحث ليشمل الاسم الكامل (الأول + الأخير)
         const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
         const email = (student.email || '').toLowerCase();
         const searchMatch = !search || fullName.includes(search) || email.includes(search);
+        
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
         return searchMatch && gradeMatch;
     }).sort((a,b) => (a.firstName || '').localeCompare(b.firstName || ''));
@@ -463,12 +465,12 @@ export default function AdminStudentsPage() {
       </div>
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg">
         <CardHeader className="px-2 md:px-6">
-          <CardTitle>قائمة الطلاب</CardTitle>
-          <CardDescription>إدارة حسابات وأرصدة الطلاب المسجلين.</CardDescription>
+          <CardTitle className="text-right">قائمة الطلاب</CardTitle>
+          <CardDescription className="text-right">إدارة حسابات وأرصدة الطلاب المسجلين.</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="ابحث بالاسم بالكامل أو البريد..." className="pr-8" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder="ابحث بالاسم بالكامل أو البريد..." className="pr-8 text-right" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
@@ -489,9 +491,9 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="min-w-[200px]">المستخدم</TableHead>
-                    <TableHead className="w-[15%]">الصف</TableHead>
-                    <TableHead className="w-[15%]">الرصيد</TableHead>
+                    <TableHead className="min-w-[200px] text-right">المستخدم</TableHead>
+                    <TableHead className="w-[15%] text-right">الصف</TableHead>
+                    <TableHead className="w-[15%] text-right">الرصيد</TableHead>
                     <TableHead className="text-center w-[25%]">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>

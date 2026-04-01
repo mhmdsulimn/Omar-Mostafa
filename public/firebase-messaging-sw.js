@@ -1,12 +1,9 @@
-/**
- * @fileOverview Firebase Messaging Service Worker.
- * هذا الملف ضروري جداً لاستقبال الإشعارات الفورية في الخلفية.
- */
 
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
-importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
+// Scripts for firebase messaging
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js');
 
-// تهيئة فايربيز داخل الـ Service Worker باستخدام إعدادات مشروعك
+// Initialize the Firebase app in the service worker by passing in the messagingSenderId.
 firebase.initializeApp({
   apiKey: "AIzaSyDE6OjDwFXbhWglSvSO7hnSowz-no6dfTM",
   authDomain: "studio-8343614197-d2c5b.firebaseapp.com",
@@ -18,16 +15,13 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-// التعامل مع الإشعارات التي تصل والموقع مغلق
+// Handle background messages
 messaging.onBackgroundMessage((payload) => {
   console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  
-  const notificationTitle = payload.notification.title || '🔔 تنبيه من منصة تسلا';
+  const notificationTitle = payload.notification.title;
   const notificationOptions = {
     body: payload.notification.body,
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/icon-192x192.png',
-    data: payload.data
+    icon: '/icons/icon-192x192.png'
   };
 
   self.registration.showNotification(notificationTitle, notificationOptions);

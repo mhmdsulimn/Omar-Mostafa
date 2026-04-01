@@ -1,7 +1,8 @@
+
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { getToken, onMessage, Messaging } from 'firebase/messaging';
+import { getToken, onMessage } from 'firebase/messaging';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -22,7 +23,7 @@ export function NotificationPermissionManager() {
       return;
     }
     
-    // مفتاح VAPID العام الخاص بمشروعك (يمكنك تحديثه من Firebase Console > Cloud Messaging)
+    // مفتاح VAPID العام (يجب تحديثه من Firebase Console عند النشر النهائي)
     const vapidKey = 'BD6Py_X_vX_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z';
 
     initialized.current = true;
@@ -41,7 +42,7 @@ export function NotificationPermissionManager() {
 
     const setupNotifications = async () => {
       try {
-        // 1. تسجيل ملف الـ Service Worker
+        // 1. تسجيل ملف الـ Service Worker من المسار العام
         const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         await navigator.serviceWorker.ready;
 
@@ -58,22 +59,25 @@ export function NotificationPermissionManager() {
           if (fcmToken) {
             const userDocRef = doc(firestore, 'users', user.uid);
             const userDoc = await getDoc(userDocRef);
-            const existingTokens = userDoc.data()?.fcmTokens || [];
-            
-            // 4. حفظ الرمز في قاعدة البيانات إذا كان جديداً
-            if (!existingTokens.includes(fcmToken)) {
-              await updateDoc(userDocRef, {
-                  fcmTokens: arrayUnion(fcmToken)
-              });
-              console.log("FCM: الجهاز مسجل الآن لاستقبال الإشعارات.");
+            if (userDoc.exists()) {
+                const existingTokens = userDoc.data()?.fcmTokens || [];
+                
+                // 4. حفظ الرمز في قاعدة البيانات إذا كان جديداً
+                if (!existingTokens.includes(fcmToken)) {
+                  await updateDoc(userDocRef, {
+                      fcmTokens: arrayUnion(fcmToken)
+                  });
+                  console.log("FCM Token synced with Firestore.");
+                }
             }
           }
         }
       } catch (error) {
-        console.warn("FCM Setup Notice:", "إعدادات الإشعارات تحتاج لمفتاح VAPID صالح من الكونسول.");
+        console.warn("FCM Setup Notice:", "إعدادات الإشعارات تحتاج لمفتاح VAPID من الكونسول وتوفر HTTPS.");
       }
     };
 
+    // تأخير طفيف لضمان استقرار الصفحة
     const timer = setTimeout(setupNotifications, 3000);
     return () => clearTimeout(timer);
 

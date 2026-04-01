@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview تدفق إرسال إشعار تجريبي للمسؤول لاختبار النظام.
@@ -6,7 +7,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { adminDb, adminAuth } from '@/firebase/admin-services';
+import { adminDb } from '@/firebase/admin-services';
 import { getMessaging } from 'firebase-admin/messaging';
 
 const TestNotifInputSchema = z.object({
@@ -25,7 +26,7 @@ const sendTestNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      // استخدام adminDb بدلاً من getFirestore لضمان استقرار التطبيق الإداري
+      // جلب بيانات المستخدم من Admin SDK
       const userDoc = await adminDb.collection('users').doc(input.userId).get();
       
       if (!userDoc.exists) {
@@ -38,14 +39,14 @@ const sendTestNotificationFlow = ai.defineFlow(
       if (activeTokens.length === 0) {
         return { 
           success: false, 
-          message: 'جهازك غير مسجل. يرجى الضغط على "Allow" في المتصفح وتحديث الصفحة ثم المحاولة مرة أخرى.' 
+          message: 'جهازك غير مسجل حالياً. يرجى التأكد من الضغط على "Allow" وتحديث الصفحة ثم الانتظار 5 ثوانٍ.' 
         };
       }
 
       const message = {
         notification: {
           title: '🚀 اختبار نظام تسلا',
-          body: 'مبروك! جهازك الآن متصل بنظام الإشعارات الفورية بنجاح.',
+          body: 'مبروك! نظام الإشعارات الفورية يعمل الآن على جهازك بنجاح.',
         },
         webpush: {
           fcmOptions: {
@@ -55,7 +56,7 @@ const sendTestNotificationFlow = ai.defineFlow(
         tokens: activeTokens,
       };
 
-      // إرسال الإشعار
+      // محاولة إرسال الإشعار لجميع الأجهزة المسجلة لهذا الحساب
       const response = await getMessaging().sendEachForMulticast(message);
       
       if (response.successCount > 0) {
@@ -67,14 +68,14 @@ const sendTestNotificationFlow = ai.defineFlow(
         const errorDetail = response.responses[0]?.error?.message || 'الرموز المخزنة قد تكون منتهية الصلاحية.';
         return { 
           success: false, 
-          message: `فشل الإرسال: ${errorDetail}` 
+          message: `فشل الإرسال الفعلي: ${errorDetail}` 
         };
       }
     } catch (error: any) {
       console.error('Test Notification Flow Error:', error);
       return { 
         success: false, 
-        message: `خطأ تقني: ${error.message || 'تأكد من إعداد مفاتيح FCM بشكل صحيح في Firebase Console.'}` 
+        message: `خطأ تقني: ${error.message || 'تأكد من إعداد مفاتيح FCM بشكل صحيح.'}` 
       };
     }
   }

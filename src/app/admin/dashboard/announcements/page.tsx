@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, useDoc } from '@/firebase';
 import { collection, doc, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, User, Megaphone, CheckCircle2, Bell, Sparkles, AlertTriangle } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Bell, Sparkles, AlertTriangle } from 'lucide-react';
 import type { Announcement, Student } from '@/lib/data';
 import {
   Dialog,
@@ -45,10 +46,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { format } from 'date-fns';
-import { arSA } from 'date-fns/locale/ar-SA';
 import { Input } from '@/components/ui/input';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 const gradeMap: Record<string, string> = {
@@ -56,12 +54,6 @@ const gradeMap: Record<string, string> = {
   first_secondary: '1ث',
   second_secondary: '2ث',
   third_secondary: '3ث',
-};
-
-const categoryMap: Record<string, { label: string, color: string, icon: any }> = {
-    normal: { label: 'عادية', color: 'text-foreground', icon: Bell },
-    congratulation: { label: 'تهنئة', color: 'text-green-600', icon: Sparkles },
-    warning: { label: 'تحذير', color: 'text-destructive', icon: AlertTriangle },
 };
 
 function AnnouncementForm({
@@ -204,7 +196,6 @@ function AnnouncementForm({
 
 export default function AdminAnnouncementsPage() {
   const firestore = useFirestore();
-  const { user } = useUser();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialogId, setDeleteDialogId] = React.useState<string | null>(null);
@@ -292,9 +283,19 @@ export default function AdminAnnouncementsPage() {
               )}
           </CardContent>
       </Card>
-      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}><DialogContent><AnnouncementForm onSave={handleSave} onClose={() => setIsAddDialogOpen(false)} /></DialogContent></Dialog>
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
+            <AnnouncementForm onSave={handleSave} onClose={() => setIsAddDialogOpen(false)} />
+        </DialogContent>
+      </Dialog>
       <AlertDialog open={!!deleteDialogId} onOpenChange={(o) => !o && setDeleteDialogId(null)}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>تأكيد الحذف</AlertDialogTitle></AlertDialogHeader><AlertDialogFooter><AlertDialogAction onClick={handleDelete} className="bg-destructive">حذف</AlertDialogAction><AlertDialogCancel>إلغاء</AlertDialogCancel></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
+            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle></AlertDialogHeader>
+            <AlertDialogFooter className="flex-row-reverse gap-2">
+                <AlertDialogCancel>إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive">حذف</AlertDialogAction>
+            </AlertDialogFooter>
+        </AlertDialogContent>
       </AlertDialog>
     </>
   );
