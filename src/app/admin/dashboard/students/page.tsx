@@ -21,7 +21,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2 } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -51,13 +51,20 @@ import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { toArabicDigits, cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
 const gradeMap: Record<Student['grade'], string> = {
+  first_secondary: 'الصف الأول الثانوي',
+  second_secondary: 'الصف الثاني الثانوي',
+  third_secondary: 'الصف الثالث الثانوي',
+};
+
+const gradeShortMap: Record<Student['grade'], string> = {
   first_secondary: '1ث',
   second_secondary: '2ث',
   third_secondary: '3ث',
 };
-
 
 function AddBalanceToAllDialog({ students }: { students: Student[] }) {
     const firestore = useFirestore();
@@ -165,77 +172,16 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
     );
 }
 
-function WithdrawBalanceDialog({ student }: { student: Student }) {
+function StudentProfileDialog({ student }: { student: Student }) {
     const firestore = useFirestore();
     const { toast } = useToast();
     const [amount, setAmount] = React.useState(0);
     const [isSaving, setIsSaving] = React.useState(false);
-    const [isOpen, setIsOpen] = React.useState(false);
+    const [isBanConfirmOpen, setIsBanConfirmOpen] = React.useState(false);
+    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
+    const [activeTab, setActiveTab] = React.useState('info');
 
-    const handleWithdrawBalance = async () => {
-        if (!firestore || !student || amount <= 0) return;
-        setIsSaving(true);
-        const userDocRef = doc(firestore, 'users', student.id);
-        try {
-            await runTransaction(firestore, async (transaction) => {
-                 const studentDoc = await transaction.get(userDocRef);
-                if (!studentDoc.exists()) throw new Error("لم يتم العثور على حساب الطالب.");
-                const currentBalance = studentDoc.data().balance || 0;
-                if (amount > currentBalance) throw new Error("لا يمكن سحب مبلغ أكبر من الرصيد الحالي.");
-                transaction.update(userDocRef, { balance: currentBalance - amount });
-                const notificationRef = doc(collection(firestore, 'users', student.id, 'notifications'));
-                transaction.set(notificationRef, {
-                    message: `تم سحب مبلغ ${amount} جنيه من رصيدك بواسطة الإدارة.`,
-                    createdAt: new Date().toISOString(),
-                    isRead: false,
-                    type: 'wallet',
-                    link: '/dashboard/wallet'
-                });
-            });
-            toast({ title: 'تم سحب الرصيد بنجاح' });
-            setIsOpen(false);
-            setAmount(0);
-        } catch (error: any) {
-            toast({ variant: 'destructive', title: 'فشل سحب الرصيد', description: error.message });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-    
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="سحب رصيد"><Minus className="h-4 w-4" /></Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-425px rounded-2xl">
-                <DialogHeader>
-                    <DialogTitle>سحب رصيد من الطالب</DialogTitle>
-                    <DialogDescription>سحب من محفظة: {student.firstName} {student.lastName}</DialogDescription>
-                </DialogHeader>
-                 <div className="space-y-2 py-4">
-                    <Label htmlFor="amount">المبلغ المراد سحبه (بالجنيه)</Label>
-                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
-                </div>
-                <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
-                    <Button onClick={handleWithdrawBalance} disabled={isSaving || amount <= 0} variant="destructive" className="rounded-xl">
-                        {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                        تأكيد السحب
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-function AddBalanceDialog({ student }: { student: Student }) {
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [amount, setAmount] = React.useState(0);
-    const [isSaving, setIsSaving] = React.useState(false);
-    const [isOpen, setIsOpen] = React.useState(false);
-
-    const handleAddBalance = async () => {
+    const handleUpdateBalance = async (type: 'add' | 'withdraw') => {
         if (!firestore || !student || amount <= 0) return;
         setIsSaving(true);
         const userDocRef = doc(firestore, 'users', student.id);
@@ -244,63 +190,35 @@ function AddBalanceDialog({ student }: { student: Student }) {
                 const studentDoc = await transaction.get(userDocRef);
                 if (!studentDoc.exists()) throw new Error("لم يتم العثور على حساب الطالب.");
                 const currentBalance = studentDoc.data().balance || 0;
-                transaction.update(userDocRef, { balance: currentBalance + amount });
+                
+                if (type === 'withdraw' && amount > currentBalance) throw new Error("لا يمكن سحب مبلغ أكبر من الرصيد الحالي.");
+                
+                const newBalance = type === 'add' ? currentBalance + amount : currentBalance - amount;
+                transaction.update(userDocRef, { balance: newBalance });
+                
                 const notificationRef = doc(collection(firestore, 'users', student.id, 'notifications'));
                 transaction.set(notificationRef, {
-                    message: `تمت إضافة ${amount} جنيه إلى رصيدك كهدية من الإدارة.`,
+                    message: type === 'add' 
+                        ? `تمت إضافة ${amount} جنيه إلى رصيدك كهدية من الإدارة.` 
+                        : `تم سحب مبلغ ${amount} جنيه من رصيدك بواسطة الإدارة.`,
                     createdAt: new Date().toISOString(),
                     isRead: false,
                     type: 'wallet',
                     link: '/dashboard/wallet'
                 });
             });
-            toast({ title: 'تم شحن الرصيد بنجاح' });
-            setIsOpen(false);
+            toast({ title: `تم ${type === 'add' ? 'شحن' : 'سحب'} الرصيد بنجاح` });
             setAmount(0);
         } catch (error: any) {
-            toast({ variant: 'destructive', title: 'فشل شحن الرصيد' });
+            toast({ variant: 'destructive', title: 'فشل العملية', description: error.message });
         } finally {
             setIsSaving(false);
         }
     };
-    
-    return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="شحن رصيد"><DollarSign className="h-4 w-4" /></Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-425px rounded-2xl">
-                <DialogHeader>
-                    <DialogTitle>شحن رصيد الطالب</DialogTitle>
-                    <DialogDescription>إضافة لـ: {student.firstName} {student.lastName}</DialogDescription>
-                </DialogHeader>
-                 <div className="space-y-2 py-4">
-                    <Label htmlFor="amount">المبلغ المراد إضافته (بالجنيه)</Label>
-                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
-                </div>
-                <DialogFooter className="gap-2">
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
-                    <Button onClick={handleAddBalance} disabled={isSaving || amount <= 0} className="rounded-xl">
-                        {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                        تأكيد الشحن
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
 
-function UserRow({ user: student }: { user: Student }) {
-    const firestore = useFirestore();
-    const { toast } = useToast();
-    const [isBanConfirmOpen, setIsBanConfirmOpen] = React.useState(false);
-    const [isBanStatusUpdating, setIsBanStatusUpdating] = React.useState(false);
-    const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
-    const [isDeleting, setIsDeleting] = React.useState(false);
-    
-    const handleToggleBanStudent = async () => {
+    const handleToggleBan = async () => {
         if (!firestore || !student) return;
-        setIsBanStatusUpdating(true);
+        setIsSaving(true);
         const newBanStatus = !student.isBanned;
         try {
             await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: newBanStatus });
@@ -309,22 +227,24 @@ function UserRow({ user: student }: { user: Student }) {
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل التحديث' });
         } finally {
-            setIsBanStatusUpdating(false);
+            setIsSaving(false);
         }
     };
 
-    const handleDeleteStudent = async () => {
+    const handleDelete = async () => {
         if (!firestore || !student) return;
-        setIsDeleting(true);
+        setIsSaving(true);
         try {
             const batch = writeBatch(firestore);
             const examsSnap = await getDocs(collection(firestore, 'users', student.id, 'studentExams'));
             const coursesSnap = await getDocs(collection(firestore, 'users', student.id, 'studentCourses'));
             const depositsSnap = await getDocs(collection(firestore, 'users', student.id, 'depositRequests'));
             const notifsSnap = await getDocs(collection(firestore, 'users', student.id, 'notifications'));
+            
             examsSnap.docs.forEach(d => batch.delete(d.ref));
             depositsSnap.docs.forEach(d => batch.delete(d.ref));
             notifsSnap.docs.forEach(d => batch.delete(d.ref));
+            
             for (const courseDoc of coursesSnap.docs) {
                 const progressSnap = await getDocs(collection(courseDoc.ref, 'progress'));
                 progressSnap.docs.forEach(p => batch.delete(p.ref));
@@ -332,17 +252,183 @@ function UserRow({ user: student }: { user: Student }) {
             }
             batch.delete(doc(firestore, 'users', student.id));
             await batch.commit();
-            toast({ title: 'تم الحذف بنجاح' });
+            toast({ title: 'تم حذف الطالب وكافة سجلاته بنجاح' });
             setIsDeleteConfirmOpen(false);
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل الحذف' });
         } finally {
-            setIsDeleting(false);
+            setIsSaving(false);
         }
     };
-    
+
     return (
-        <>
+        <Dialog>
+            <DialogTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10 rounded-lg font-bold">
+                    <UserCircle2 className="h-4 w-4" />
+                    عرض الملف
+                </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
+                <div className="bg-primary/5 p-8 border-b text-right relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
+                    <div className="relative z-10 flex flex-col items-center sm:items-start gap-6 sm:flex-row-reverse">
+                        <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                            <AvatarFallback className="text-3xl font-black">{student.firstName?.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1 space-y-2 text-center sm:text-right">
+                            <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
+                                {student.isBanned && <Badge variant="destructive" className="font-bold gap-1"><ShieldOff className="h-3 w-3" /> محظور</Badge>}
+                                <h2 className="text-2xl font-black">{student.firstName} {student.lastName}</h2>
+                            </div>
+                            <div className="flex items-center justify-center sm:justify-end gap-2 text-muted-foreground text-sm font-bold">
+                                <span dir="ltr">{student.email}</span>
+                                <Mail className="h-4 w-4" />
+                            </div>
+                            <div className="flex items-center justify-center sm:justify-end gap-4 mt-2">
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full text-primary text-xs font-black">
+                                    <GraduationCap className="h-3.5 w-3.5" />
+                                    {gradeMap[student.grade] || 'غير محدد'}
+                                </div>
+                                <div className="flex items-center gap-1.5 bg-green-500/10 px-3 py-1 rounded-full text-green-600 text-xs font-black">
+                                    <Wallet className="h-3.5 w-3.5" />
+                                    {student.balance || 0} ج
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="p-6">
+                    <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
+                        <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 rounded-xl p-1 mb-6">
+                            <TabsTrigger value="info" className="rounded-lg font-bold">معلومات النشاط</TabsTrigger>
+                            <TabsTrigger value="actions" className="rounded-lg font-bold">إدارة المحفظة والتحكم</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="info" className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><Clock className="h-3 w-3" /> آخر ظهور</p>
+                                    <p className="font-bold text-sm">
+                                        {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
+                                    </p>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
+                                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
+                                    <p className="font-bold text-sm text-muted-foreground italic">منذ بداية المسيرة 🎓</p>
+                                </div>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
+                                <div className="p-2 bg-primary/10 rounded-xl text-primary"><ExternalLink className="h-4 w-4" /></div>
+                                <div>
+                                    <p className="text-xs font-black text-primary mb-1">حالة الجلسة</p>
+                                    <p className="text-xs font-bold text-muted-foreground">معرف الجلسة الحالي: <span className="font-mono text-[10px] select-all">{student.currentSessionId || 'لا يوجد'}</span></p>
+                                </div>
+                            </div>
+                        </TabsContent>
+
+                        <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <div className="space-y-3">
+                                <Label className="font-bold text-xs flex items-center justify-end gap-1.5">التحكم في الرصيد <Wallet className="h-3 w-3" /></Label>
+                                <div className="flex gap-2">
+                                    <div className="relative flex-1">
+                                        <Input 
+                                            type="number" 
+                                            placeholder="أدخل المبلغ..." 
+                                            className="h-12 rounded-xl text-center font-black pr-10" 
+                                            value={amount || ''} 
+                                            onChange={e => setAmount(Number(e.target.value))}
+                                            disabled={isSaving}
+                                        />
+                                        <DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <Button 
+                                        onClick={() => handleUpdateBalance('add')} 
+                                        disabled={isSaving || amount <= 0} 
+                                        className="h-12 rounded-xl bg-green-600 hover:bg-green-700 gap-1 font-bold px-6"
+                                    >
+                                        <Gift className="h-4 w-4" /> شحن
+                                    </Button>
+                                    <Button 
+                                        variant="outline" 
+                                        onClick={() => handleUpdateBalance('withdraw')} 
+                                        disabled={isSaving || amount <= 0} 
+                                        className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 gap-1 font-bold px-6"
+                                    >
+                                        <Minus className="h-4 w-4" /> سحب
+                                    </Button>
+                                </div>
+                            </div>
+
+                            <Separator className="bg-border/50" />
+
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <Button 
+                                    variant={student.isBanned ? 'default' : 'destructive'} 
+                                    onClick={() => setIsBanConfirmOpen(true)}
+                                    disabled={isSaving}
+                                    className="flex-1 h-12 rounded-xl font-bold gap-2"
+                                >
+                                    {student.isBanned ? <><ShieldCheck className="h-4 w-4" /> تفعيل الحساب</> : <><ShieldOff className="h-4 w-4" /> حظر الطالب</>}
+                                </Button>
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setIsDeleteConfirmOpen(true)}
+                                    disabled={isSaving}
+                                    className="flex-1 h-12 rounded-xl font-bold gap-2 border-destructive text-destructive hover:bg-destructive/10"
+                                >
+                                    <Trash2 className="h-4 w-4" /> حذف الحساب نهائياً
+                                </Button>
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+
+                <DialogFooter className="bg-muted/30 p-4 border-t px-6">
+                    <p className="text-[10px] text-muted-foreground font-bold text-center w-full">إدارة شؤون الطلاب - منصة الأستاذ عمر مصطفى</p>
+                </DialogFooter>
+            </DialogContent>
+
+            <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
+                <AlertDialogContent className="rounded-2xl max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-right">تأكيد الإجراء</AlertDialogTitle>
+                        <AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl", !student.isBanned && "bg-destructive")} disabled={isSaving}>
+                            {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} تأكيد
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+                <AlertDialogContent className="rounded-2xl max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-destructive text-right">حذف نهائي للملف</AlertDialogTitle>
+                        <AlertDialogDescription className="text-right font-medium leading-relaxed">
+                            أنت على وشك حذف الطالب <span className="font-black">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
+                            <br /><br />
+                            <span className="text-destructive font-black">لا يمكن التراجع عن هذا الإجراء!</span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="gap-2">
+                        <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl" disabled={isSaving}>
+                            {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} حذف نهائي
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </Dialog>
+    );
+}
+
+function UserRow({ user: student }: { user: Student }) {
+    return (
         <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/5 hover:bg-destructive/10' : 'hover:bg-muted/50')}>
             <TableCell className="text-right">
                 <div className="flex items-center gap-3" dir="rtl">
@@ -350,15 +436,17 @@ function UserRow({ user: student }: { user: Student }) {
                         <AvatarFallback className="font-bold">{student?.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
-                        <span className="font-bold flex items-center justify-start gap-2 whitespace-nowrap text-sm md:text-base">
-                          {student?.firstName} {student?.lastName}
-                          {student.isBanned && <ShieldOff className="h-3.5 w-3.5 text-destructive shrink-0" />}
-                        </span>
+                        <div className="flex items-center justify-start gap-2">
+                            <span className="font-bold whitespace-nowrap text-sm md:text-base">
+                                {student?.firstName} {student?.lastName}
+                            </span>
+                            <StudentProfileDialog student={student} />
+                        </div>
                         <div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70">{student?.email}</div>
                     </div>
                 </div>
             </TableCell>
-            <TableCell className="whitespace-nowrap text-right font-bold text-xs md:text-sm">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
+            <TableCell className="whitespace-nowrap text-right font-bold text-xs md:text-sm">{student.grade ? gradeShortMap[student.grade] : '-'}</TableCell>
             <TableCell className="font-bold whitespace-nowrap text-right text-xs md:text-sm text-primary">{student.balance || 0} ج</TableCell>
             <TableCell className="text-right">
                 {student.lastActiveAt ? (
@@ -370,44 +458,7 @@ function UserRow({ user: student }: { user: Student }) {
                     <span className="text-muted-foreground italic text-[10px] md:text-xs opacity-40">غير متوفر</span>
                 )}
             </TableCell>
-            <TableCell className="text-center px-2">
-                <div className="flex justify-center gap-1.5 md:gap-2">
-                    <AddBalanceDialog student={student} />
-                    <WithdrawBalanceDialog student={student} />
-                    <Button variant={student.isBanned ? 'default' : 'destructive'} size="icon" className="h-8 w-8 rounded-lg" onClick={() => setIsBanConfirmOpen(true)} title={student.isBanned ? 'إلغاء حظر' : 'حظر'}>
-                        {student.isBanned ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
-                    </Button>
-                    <Button variant="destructive" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setIsDeleteConfirmOpen(true)} title="حذف"><Trash2 className="h-4 w-4" /></Button>
-                </div>
-            </TableCell>
         </TableRow>
-
-        <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
-            <AlertDialogContent className="rounded-2xl max-w-md">
-            <AlertDialogHeader>
-                <AlertDialogTitle className="text-right">تأكيد الإجراء</AlertDialogTitle>
-                <AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel disabled={isBanStatusUpdating} className="rounded-xl">إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleToggleBanStudent} className={cn("rounded-xl", !student.isBanned && "bg-destructive")} disabled={isBanStatusUpdating}>تأكيد</AlertDialogAction>
-            </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-
-        <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-            <AlertDialogContent className="rounded-2xl max-w-md">
-            <AlertDialogHeader>
-                <AlertDialogTitle className="text-destructive text-right">حذف نهائي للملف</AlertDialogTitle>
-                <AlertDialogDescription className="text-right font-medium">أنت على وشك حذف الطالب {student.firstName} وكافة سجلاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel disabled={isDeleting} className="rounded-xl">إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteStudent} className="bg-destructive rounded-xl" disabled={isDeleting}>حذف نهائي</AlertDialogAction>
-            </AlertDialogFooter>
-            </AlertDialogContent>
-        </AlertDialog>
-        </>
     );
 }
 
@@ -444,7 +495,6 @@ export default function AdminStudentsPage() {
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
         
-        // نظام البحث الذكي بالاسم الكامل
         const searchMatch = searchParts.length === 0 || searchParts.every(part => 
             fullName.includes(part) || email.includes(part)
         );
@@ -493,11 +543,10 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="min-w-[220px] text-right font-bold">المستخدم</TableHead>
+                    <TableHead className="min-w-[250px] text-right font-bold">المستخدم</TableHead>
                     <TableHead className="w-[10%] text-right font-bold">الصف</TableHead>
                     <TableHead className="w-[10%] text-right font-bold">الرصيد</TableHead>
                     <TableHead className="w-[15%] text-right font-bold">آخر ظهور</TableHead>
-                    <TableHead className="text-center w-[20%] font-bold">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
