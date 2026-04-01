@@ -258,9 +258,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-primary hover:text-primary hover:bg-primary/10 rounded-lg font-bold">
-                    <UserCircle2 className="h-4 w-4" />
-                    عرض الملف
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm">
+                    <UserCircle2 className="h-4.5 w-4.5" />
+                    <span>عرض الملف</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
@@ -440,21 +440,21 @@ function StudentProfileDialog({ student }: { student: Student }) {
 function UserRow({ user: student }: { user: Student }) {
     return (
         <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/5 hover:bg-destructive/10' : 'hover:bg-muted/50')}>
-            <TableCell className="text-right">
+            <TableCell className="text-right p-4">
                 <div className="flex items-center gap-3" dir="rtl">
-                    <Avatar className="h-9 w-9 md:h-10 md:w-10 shrink-0 border-2 border-primary/10">
-                        <AvatarFallback className="font-bold">{student?.firstName?.charAt(0)}</AvatarFallback>
+                    <Avatar className="h-10 w-10 md:h-12 md:w-12 shrink-0 border-2 border-primary/10 shadow-sm">
+                        <AvatarFallback className="font-bold text-lg">{student?.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
-                        <div className="flex items-center justify-start gap-2">
-                            <span className="font-bold whitespace-nowrap text-sm md:text-base">
-                                {student?.firstName} {student?.lastName}
-                            </span>
-                            <StudentProfileDialog student={student} />
-                        </div>
-                        <div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70">{student?.email}</div>
+                        <span className="font-bold whitespace-nowrap text-sm md:text-base text-foreground/90">
+                            {student?.firstName} {student?.lastName}
+                        </span>
+                        <div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70 font-medium">{student?.email}</div>
                     </div>
                 </div>
+            </TableCell>
+            <TableCell className="text-center p-4 w-[140px]">
+                <StudentProfileDialog student={student} />
             </TableCell>
         </TableRow>
     );
@@ -541,7 +541,8 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="min-w-[250px] text-right font-bold">الطالب</TableHead>
+                    <TableHead className="text-right font-bold p-4">بيانات الطالب</TableHead>
+                    <TableHead className="text-center font-bold p-4">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
