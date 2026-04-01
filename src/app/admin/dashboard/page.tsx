@@ -127,7 +127,7 @@ export default function AdminDashboardPage() {
     const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
 
     const allNotifsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'notifications')) : null), [firestore, user]);
-    const { data: allNotifsData } = useCollection<Notification>(allNotifsData ? undefined : allNotifsQuery, { ignorePermissionErrors: true });
+    const { data: allNotifsData } = useCollection<Notification>(allNotifsQuery, { ignorePermissionErrors: true });
     
     const isLoading = isLoadingAdmins || isLoadingStudents || isLoadingExams || isLoadingSubmissions || isLoadingCourses;
     
