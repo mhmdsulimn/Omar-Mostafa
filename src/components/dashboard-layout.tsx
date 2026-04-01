@@ -333,17 +333,16 @@ export function DashboardLayout({
               </SidebarMenu>
             </SidebarContent>
             <SidebarSeparator />
-            <SidebarFooter className="p-4 pt-3 text-center shrink-0 overflow-hidden">
+            <SidebarFooter className="p-4 pt-3 flex items-center justify-center shrink-0 overflow-hidden">
               <DeveloperInfoDialog>
-                <button className="mx-auto w-fit relative group flex items-center justify-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow hover:scale-105">
-                  {/* Sparkling Stars Effect - Always Visible and Animating */}
-                  <Sparkles className="absolute -top-1 left-4 h-2.5 w-2.5 text-amber-400 opacity-70 group-hover:opacity-100 group-hover:scale-125 animate-pulse transition-all duration-700" />
-                  <Sparkles className="absolute top-1 right-4 h-2 w-2 text-amber-300 opacity-60 group-hover:opacity-100 group-hover:scale-125 animate-ping transition-all duration-1000 delay-300" />
-                  <Sparkles className="absolute -bottom-1 left-1/2 h-2.5 w-2.5 text-amber-500 opacity-70 group-hover:opacity-100 group-hover:scale-125 animate-bounce transition-all duration-500 delay-150" />
-                  <Sparkles className="absolute bottom-2 right-2 h-2 w-2 text-yellow-400 opacity-60 group-hover:opacity-100 group-hover:scale-125 animate-pulse transition-all duration-800 delay-500" />
+                <button className="relative group flex items-center justify-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow hover:scale-105">
+                  {/* Sparkling Stars Effect */}
+                  <Sparkles className="absolute -top-1 left-4 h-2 w-2 text-amber-400 opacity-70 group-hover:opacity-100 animate-pulse transition-all duration-700" />
+                  <Sparkles className="absolute top-1 right-4 h-1.5 w-1.5 text-amber-300 opacity-60 group-hover:opacity-100 animate-ping transition-all duration-1000 delay-300" />
+                  <Sparkles className="absolute -bottom-1 left-1/2 h-2 w-2 text-amber-500 opacity-70 group-hover:opacity-100 animate-bounce transition-all duration-500 delay-150" />
                   
                   <span className="relative z-10">Developed by Mohamed Suliman</span>
-                  <Sparkles className="relative z-10 h-3.5 w-3.5 opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300 animate-pulse text-amber-500" />
+                  <Sparkles className="relative z-10 h-3.5 w-3.5 opacity-80 group-hover:opacity-100 transition-all duration-300 animate-pulse text-amber-500" />
                 </button>
               </DeveloperInfoDialog>
             </SidebarFooter>
@@ -400,10 +399,9 @@ export function DashboardLayout({
                         </nav>
                       </ScrollArea>
 
-                      <div className="mt-auto p-4 text-center border-t bg-sidebar/5 overflow-hidden">
+                      <div className="mt-auto p-4 flex items-center justify-center border-t bg-sidebar/5 overflow-hidden">
                         <DeveloperInfoDialog>
-                          <button className="mx-auto w-fit relative group flex items-center justify-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow hover:scale-105">
-                            {/* Sparkling Stars Effect Mobile - Always Visible */}
+                          <button className="relative group flex items-center justify-center gap-1.5 px-4 py-2 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow hover:scale-105">
                             <Sparkles className="absolute -top-1 left-4 h-2 w-2 text-amber-400 opacity-70 group-hover:opacity-100 animate-pulse transition-all duration-700" />
                             <Sparkles className="absolute top-1 right-4 h-1.5 w-1.5 text-amber-300 opacity-60 group-hover:opacity-100 animate-ping transition-all duration-1000 delay-300" />
                             <Sparkles className="absolute -bottom-1 left-1/2 h-2 w-2 text-amber-500 opacity-70 group-hover:opacity-100 animate-bounce transition-all duration-500 delay-150" />
