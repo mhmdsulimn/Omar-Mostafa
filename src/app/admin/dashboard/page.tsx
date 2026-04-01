@@ -23,16 +23,18 @@ import {
   useMemoFirebase,
   useUser,
 } from '@/firebase';
-import { collection, query, collectionGroup } from 'firebase/firestore';
+import { collection, query, collectionGroup, doc } from 'firebase/firestore';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive } from 'lucide-react';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { cn } from '@/lib/utils';
+import { Progress } from '@/components/ui/progress';
 
 type AdminRole = { id: string };
 
@@ -137,7 +139,7 @@ export default function AdminDashboardPage() {
             return {
                 studentsCount: 0, examsCount: 0, coursesCount: 0,
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
-                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض' }
+                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 }
             };
         }
 
@@ -199,6 +201,11 @@ export default function AdminDashboardPage() {
         const writeLoad = allSubmissionsData.length > 100 ? 'مرتفع' : allSubmissionsData.length > 50 ? 'متوسط' : 'منخفض';
         const readLoad = totalDocs > 500 ? 'مرتفع' : totalDocs > 200 ? 'متوسط' : 'منخفض';
 
+        // حساب المساحة التقديرية (بافتراض 1.5 كيلوبايت لكل وثيقة شاملة بيانات الاختبارات والصور)
+        const estimatedConsumedMB = Number(((totalDocs * 1.5) / 1024).toFixed(2));
+        const limitMB = 1024; // باقة فايربيز المجانية 1 جيجابايت
+        const usagePercentage = Math.min(100, (estimatedConsumedMB / limitMB) * 100);
+
         return {
             studentsCount: filteredStudents.length,
             examsCount: allExamsData.length,
@@ -209,7 +216,14 @@ export default function AdminDashboardPage() {
             examsMap: eMap,
             gradeDistributionData: gradeData,
             gradePerformanceData: performanceData,
-            dbStats: { totalDocs, writeLoad, readLoad }
+            dbStats: { 
+                totalDocs, 
+                writeLoad, 
+                readLoad, 
+                consumedMB: estimatedConsumedMB, 
+                remainingMB: Math.max(0, limitMB - estimatedConsumedMB),
+                usagePercentage
+            }
         };
 
     }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData]);
@@ -271,25 +285,39 @@ export default function AdminDashboardPage() {
                                 </Badge>
                             </div>
                             <div className="p-4 text-center">
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">عمليات الحذف (Deletes)</p>
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">حالة الحذف</p>
                                 <div className="flex items-center justify-center gap-1">
                                     <Trash2 className="h-3 w-3 text-destructive" />
                                     <span className="text-lg font-bold text-destructive">آمن</span>
                                 </div>
                             </div>
                         </div>
-                        <div className="p-4 bg-primary/5">
-                            <div className="flex items-center gap-2 text-[10px] font-bold text-primary mb-2 uppercase">
-                                <Zap className="h-3 w-3 animate-pulse" />
-                                توزيع السجلات حسب النوع
+                        
+                        {/* قسم المساحة التخزينية المطور */}
+                        <div className="p-6 bg-background">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <HardDrive className="h-4 w-4 text-primary" />
+                                    <span className="text-sm font-bold">مساحة التخزين التقديرية</span>
+                                </div>
+                                <span className="text-xs font-bold text-muted-foreground">الحد المجاني: 1024 ميجابايت</span>
                             </div>
-                            <div className="flex flex-wrap gap-2">
-                                <Badge variant="secondary" className="bg-background text-[10px]">الطلاب: {allUsersData.length}</Badge>
-                                <Badge variant="secondary" className="bg-background text-[10px]">بنك الأسئلة: {allQuestionsData?.length || 0}</Badge>
-                                <Badge variant="secondary" className="bg-background text-[10px]">نتائج الامتحانات: {allSubmissionsData.length}</Badge>
-                                <Badge variant="secondary" className="bg-background text-[10px]">الإشعارات والرسائل: {(allNotifsData?.length || 0)}</Badge>
-                                <Badge variant="secondary" className="bg-background text-[10px]">عمليات الدفع: {allPaymentsData?.length || 0}</Badge>
+                            
+                            <Progress value={dbStats.usagePercentage} className="h-2.5 bg-muted mb-4" />
+                            
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="p-3 rounded-xl border bg-muted/20">
+                                    <p className="text-[10px] text-muted-foreground font-bold mb-1 uppercase">المساحة المستهلكة</p>
+                                    <p className="text-lg font-black text-foreground">{dbStats.consumedMB} <span className="text-[10px]">ميجابايت</span></p>
+                                </div>
+                                <div className="p-3 rounded-xl border bg-primary/5">
+                                    <p className="text-[10px] text-primary font-bold mb-1 uppercase">المساحة المتبقية</p>
+                                    <p className="text-lg font-black text-primary">{dbStats.remainingMB.toFixed(1)} <span className="text-[10px]">ميجابايت</span></p>
+                                </div>
                             </div>
+                            <p className="text-[9px] text-muted-foreground italic mt-4 text-center leading-relaxed">
+                                * هذه الأرقام هي تقدير برمجي بناءً على عدد الوثائق ونوع البيانات المخزنة. المساحة المتبقية تخص حصة التخزين في Firebase Firestore فقط.
+                            </p>
                         </div>
                     </CardContent>
                 </Card>
@@ -309,9 +337,29 @@ export default function AdminDashboardPage() {
                                 <p className="text-muted-foreground">تم تسجيل {allSubmissionsData.length} عملية كتابة وقراءة في قسم النتائج مؤخراً.</p>
                             </div>
                         </div>
-                        <p className="text-[9px] text-muted-foreground italic text-center">
-                            * هذه الأرقام تقديرية بناءً على حجم البيانات الفعلي في قاعدة البيانات. لمراجعة الفواتير الدقيقة، يرجى زيارة Firebase Console.
-                        </p>
+                        
+                        {dbStats.usagePercentage > 80 && (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
+                                <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
+                                <div className="text-[11px] leading-relaxed text-red-700">
+                                    <p className="font-bold mb-1">اقتربت من الحد المجاني</p>
+                                    <p>يرجى مراجعة البيانات القديمة أو ترقية الباقة لضمان استمرار الخدمة.</p>
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 mt-4">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-primary mb-2 uppercase">
+                                <Zap className="h-3 w-3 animate-pulse" />
+                                توزيع السجلات حسب النوع
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant="secondary" className="bg-background text-[10px]">الطلاب: {allUsersData.length}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">بنك الأسئلة: {allQuestionsData?.length || 0}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">نتائج الامتحانات: {allSubmissionsData.length}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">الإشعارات: {(allNotifsData?.length || 0)}</Badge>
+                            </div>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
