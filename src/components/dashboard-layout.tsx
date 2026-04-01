@@ -116,7 +116,7 @@ export function DashboardLayout({
 
   const allPaymentsQuery = useMemoFirebase(
     () => (firestore && user && layoutType === 'admin' && isAdmin) 
-      ? query(collectionGroup(firestore, 'depositRequests')) 
+      ? collectionGroup(firestore, 'depositRequests')
       : null,
     [firestore, user, layoutType, isAdmin]
   );
@@ -336,9 +336,9 @@ export function DashboardLayout({
               </SidebarMenu>
             </SidebarContent>
             <SidebarSeparator />
-            <SidebarFooter className="p-4 pt-3 text-center shrink-0">
+            <SidebarFooter className="p-4 pt-3 text-center shrink-0 overflow-hidden">
               <DeveloperInfoDialog>
-                <button className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none">
+                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap">
                   Developed by Mohamed Suliman
                 </button>
               </DeveloperInfoDialog>
@@ -396,9 +396,9 @@ export function DashboardLayout({
                         </nav>
                       </ScrollArea>
 
-                      <div className="mt-auto p-4 text-center border-t bg-sidebar/5">
+                      <div className="mt-auto p-4 text-center border-t bg-sidebar/5 overflow-hidden">
                         <DeveloperInfoDialog>
-                          <button className="text-[11px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none">
+                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap">
                             Developed by Mohamed Suliman
                           </button>
                         </DeveloperInfoDialog>
