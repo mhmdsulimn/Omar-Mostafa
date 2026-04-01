@@ -25,9 +25,9 @@ import {
   useUser,
 } from '@/firebase';
 import { collection, query, collectionGroup } from 'firebase/firestore';
-import type { Student, Exam, StudentExam, Course } from '@/lib/data';
+import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText } from 'lucide-react';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -36,15 +36,16 @@ import { LoadingAnimation } from '@/components/ui/loading-animation';
 
 type AdminRole = { id: string };
 
-function StatCard({ title, value, icon: Icon }: { title: string, value: string | number, icon: React.ElementType }) {
+function StatCard({ title, value, icon: Icon, description }: { title: string, value: string | number, icon: React.ElementType, description?: string }) {
     return (
-        <Card className="shadow-sm">
+        <Card className="shadow-sm border-primary/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4 sm:p-6">
                 <CardTitle className="text-xs sm:text-sm font-medium">{title}</CardTitle>
                 <Icon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="text-xl sm:text-2xl font-bold">{value}</div>
+                {description && <p className="text-[10px] text-muted-foreground mt-1">{description}</p>}
             </CardContent>
         </Card>
     );
@@ -116,16 +117,27 @@ export default function AdminDashboardPage() {
     
     const allCoursesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'courses') : null), [firestore, user]);
     const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery, { ignorePermissionErrors: true });
+
+    const allQuestionsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'questions')) : null), [firestore, user]);
+    const { data: allQuestionsData } = useCollection<Question>(allQuestionsQuery, { ignorePermissionErrors: true });
+
+    const allPaymentsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'depositRequests')) : null), [firestore, user]);
+    const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
+
+    const allNotifsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'notifications')) : null), [firestore, user]);
+    const { data: allNotifsData } = useCollection<Notification>(allNotifsQuery, { ignorePermissionErrors: true });
     
     const isLoading = isLoadingAdmins || isLoadingStudents || isLoadingExams || isLoadingSubmissions || isLoadingCourses;
     
     const {
         studentsCount, examsCount, coursesCount, averageScore, recentSubmissions, studentsMap, examsMap, gradeDistributionData, gradePerformanceData,
+        dbStats
     } = React.useMemo(() => {
         if (isLoading || !allUsersData || !adminRoles || !allExamsData || !allSubmissionsData || !allCoursesData) {
             return {
                 studentsCount: 0, examsCount: 0, coursesCount: 0,
-                averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: []
+                averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
+                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض' }
             };
         }
 
@@ -174,6 +186,19 @@ export default function AdminDashboardPage() {
             { name: 'ثالثة ثانوي', averageScore: gradePerformance.third_secondary.count > 0 ? Math.round(gradePerformance.third_secondary.totalScore / gradePerformance.third_secondary.count) : 0 },
         ].filter(item => item.averageScore > 0);
 
+        // حساب إحصائيات قاعدة البيانات التقديرية
+        const totalDocs = 
+            (allUsersData.length || 0) + 
+            (allExamsData.length || 0) + 
+            (allCoursesData.length || 0) + 
+            (allQuestionsData?.length || 0) + 
+            (allSubmissionsData?.length || 0) + 
+            (allPaymentsData?.length || 0) +
+            (allNotifsData?.length || 0);
+
+        const writeLoad = allSubmissionsData.length > 100 ? 'مرتفع' : allSubmissionsData.length > 50 ? 'متوسط' : 'منخفض';
+        const readLoad = totalDocs > 500 ? 'مرتفع' : totalDocs > 200 ? 'متوسط' : 'منخفض';
+
         return {
             studentsCount: filteredStudents.length,
             examsCount: allExamsData.length,
@@ -184,9 +209,10 @@ export default function AdminDashboardPage() {
             examsMap: eMap,
             gradeDistributionData: gradeData,
             gradePerformanceData: performanceData,
+            dbStats: { totalDocs, writeLoad, readLoad }
         };
 
-    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData]);
+    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData]);
     
     if (isLoading) {
         return (
@@ -197,12 +223,98 @@ export default function AdminDashboardPage() {
     }
 
     return (
-        <div className="space-y-6 max-w-full overflow-x-hidden">
+        <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
+            <div className="flex items-center gap-3 px-2">
+                <div className="bg-primary/10 p-2 rounded-lg"><Activity className="h-5 w-5 text-primary" /></div>
+                <h1 className="text-xl font-bold md:text-2xl">نظرة عامة على النظام</h1>
+            </div>
+
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
-                <StatCard title="إجمالي الطلاب" value={studentsCount} icon={Users} />
-                <StatCard title="إجمالي الاختبارات" value={examsCount} icon={BookOpen} />
-                <StatCard title="إجمالي الكورسات" value={coursesCount} icon={BookMarked} />
-                <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} />
+                <StatCard title="إجمالي الطلاب" value={studentsCount} icon={Users} description="الطلاب المسجلين حالياً" />
+                <StatCard title="إجمالي الاختبارات" value={examsCount} icon={BookOpen} description="الامتحانات المنشورة" />
+                <StatCard title="إجمالي الكورسات" value={coursesCount} icon={BookMarked} description="الدورات التعليمية" />
+                <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
+            </div>
+
+            {/* قسم إحصائيات قاعدة البيانات (الجديد) */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+                <Card className="md:col-span-2 shadow-sm border-primary/10 overflow-hidden">
+                    <CardHeader className="bg-muted/30 p-4 border-b">
+                        <div className="flex items-center gap-2">
+                            <Database className="h-5 w-5 text-primary" />
+                            <CardTitle className="text-base">مراقب استخدام قاعدة البيانات (Firestore)</CardTitle>
+                        </div>
+                        <CardDescription className="text-xs">إحصائيات مباشرة لعدد السجلات والعمليات الحالية.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-0">
+                        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y border-b">
+                            <div className="p-4 text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">إجمالي الوثائق</p>
+                                <p className="text-2xl font-black text-primary">{dbStats.totalDocs}</p>
+                                <p className="text-[9px] text-muted-foreground">سجل مخزن</p>
+                            </div>
+                            <div className="p-4 text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">ضغط القراءة (Reads)</p>
+                                <Badge variant="outline" className={cn(
+                                    "font-black",
+                                    dbStats.readLoad === 'مرتفع' ? "text-red-500 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"
+                                )}>
+                                    {dbStats.readLoad}
+                                </Badge>
+                            </div>
+                            <div className="p-4 text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">ضغط الكتابة (Writes)</p>
+                                <Badge variant="outline" className={cn(
+                                    "font-black",
+                                    dbStats.writeLoad === 'مرتفع' ? "text-red-500 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"
+                                )}>
+                                    {dbStats.writeLoad}
+                                </Badge>
+                            </div>
+                            <div className="p-4 text-center">
+                                <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">عمليات الحذف (Deletes)</p>
+                                <div className="flex items-center justify-center gap-1">
+                                    <Trash2 className="h-3 w-3 text-destructive" />
+                                    <span className="text-lg font-bold text-destructive">آمن</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-4 bg-primary/5">
+                            <div className="flex items-center gap-2 text-[10px] font-bold text-primary mb-2 uppercase">
+                                <Zap className="h-3 w-3 animate-pulse" />
+                                توزيع السجلات حسب النوع
+                            </div>
+                            <div className="flex flex-wrap gap-2">
+                                <Badge variant="secondary" className="bg-background text-[10px]">الطلاب: {allUsersData.length}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">بنك الأسئلة: {allQuestionsData?.length || 0}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">نتائج الامتحانات: {allSubmissionsData.length}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">الإشعارات والرسائل: {(allNotifsData?.length || 0)}</Badge>
+                                <Badge variant="secondary" className="bg-background text-[10px]">عمليات الدفع: {allPaymentsData?.length || 0}</Badge>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="shadow-sm border-primary/10">
+                    <CardHeader className="p-4">
+                        <div className="flex items-center gap-2">
+                            <Zap className="h-5 w-5 text-amber-500" />
+                            <CardTitle className="text-base">تنبيهات الاستهلاك</CardTitle>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0 space-y-3">
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border border-dashed">
+                            <FileText className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                            <div className="text-[11px] leading-relaxed">
+                                <p className="font-bold mb-1">النتائج هي الأكثر استهلاكاً</p>
+                                <p className="text-muted-foreground">تم تسجيل {allSubmissionsData.length} عملية كتابة وقراءة في قسم النتائج مؤخراً.</p>
+                            </div>
+                        </div>
+                        <p className="text-[9px] text-muted-foreground italic text-center">
+                            * هذه الأرقام تقديرية بناءً على حجم البيانات الفعلي في قاعدة البيانات. لمراجعة الفواتير الدقيقة، يرجى زيارة Firebase Console.
+                        </p>
+                    </CardContent>
+                </Card>
             </div>
 
             <div className="grid gap-6 grid-cols-1 md:grid-cols-2">
