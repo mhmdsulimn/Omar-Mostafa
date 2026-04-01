@@ -189,6 +189,7 @@ export function DashboardLayout({
   // --- Keyboard Shortcuts Logic ---
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Check for Ctrl or Meta (Command on Mac)
       if ((e.ctrlKey || e.metaKey)) {
         const key = e.key.toLowerCase();
         
