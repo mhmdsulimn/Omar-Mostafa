@@ -28,13 +28,13 @@ import { collection, query, collectionGroup, doc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, AlertTriangle } from 'lucide-react';
-import { format, isToday, startOfDay } from 'date-fns';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink } from 'lucide-react';
+import { format, startOfDay } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
-import { cn } from '@/lib/utils';
+import { cn, toArabicDigits } from '@/lib/utils';
 import { Progress } from '@/components/ui/progress';
 
 type AdminRole = { id: string };
@@ -216,7 +216,6 @@ export default function AdminDashboardPage() {
         const dailyDeletes = Math.floor(todayPayments * 0.1); 
 
         // 4. حساب المساحة بأوزان Firestore الحقيقية (شاملة الـ Overhead)
-        // الأوزان (Document Overhead ≈ 100 bytes + Data)
         const docsCount = {
             users: allUsersData.length,
             exams: allExamsData.length,
@@ -229,6 +228,7 @@ export default function AdminDashboardPage() {
 
         const totalDocs = Object.values(docsCount).reduce((a, b) => a + b, 0);
 
+        // حساب المساحة بناءً على الوثائق والأوزان (Document Metadata ≈ 100 bytes)
         const estSizeKB = 
             (docsCount.users * 0.8) + 
             (docsCount.exams * 1.5) + 
@@ -303,14 +303,24 @@ export default function AdminDashboardPage() {
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                 <Card className="md:col-span-2 shadow-sm border-primary/10 overflow-hidden">
                     <CardHeader className="bg-muted/30 p-4 border-b">
-                        <div className="flex items-center gap-2">
-                            <Database className="h-5 w-5 text-primary" />
-                            <CardTitle className="text-base">مراقب استخدام قاعدة البيانات (Firestore)</CardTitle>
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <Database className="h-5 w-5 text-primary" />
+                                <CardTitle className="text-base">مراقب استخدام قاعدة البيانات (Firestore)</CardTitle>
+                            </div>
+                            <a 
+                                href="https://console.firebase.google.com/project/studio-8343614197-d2c5b/firestore/usage" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[10px] flex items-center gap-1 text-primary hover:underline font-bold"
+                            >
+                                فتح الكونسول <ExternalLink className="h-3 w-3" />
+                            </a>
                         </div>
-                        <CardDescription className="text-xs">تحليل نشاط اليوم بأعلى دقة حسابية متاحة للجلسة.</CardDescription>
+                        <CardDescription className="text-xs">الأرقام تقديرية حسابياً. المصدر النهائي للمساحة هو تبويب Usage في Firebase Console.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {/* قسم العمليات اليومية المطور */}
+                        {/* قسم العمليات اليومية */}
                         <div className="grid grid-cols-3 divide-x divide-x-reverse border-b bg-primary/5">
                             <div className="p-4 text-center">
                                 <div className='flex items-center justify-center gap-1.5 mb-1'>
@@ -393,7 +403,7 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
                             <p className="text-[9px] text-muted-foreground italic mt-4 text-center leading-relaxed px-4">
-                                * الأرقام أعلاه محسوبة بناءً على أوزان (Overhead) حقيقية لكل وثيقة في Firestore وتتبع نشاط الجلسة الحالية. يتم رصد عمليات الكتابة الفعلية التي تمت منذ بداية اليوم.
+                                * الأرقام أعلاه محسوبة بناءً على أوزان (Overhead) حقيقية لكل وثيقة في Firestore وتتبع نشاط الجلسة الحالية.
                             </p>
                         </div>
                     </CardContent>
