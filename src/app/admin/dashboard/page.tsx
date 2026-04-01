@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -8,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -520,7 +520,7 @@ export default function AdminDashboardPage() {
                                             سيقوم النظام بحذف <span className="font-black text-primary">{garbageData.count} سجل</span> من البيانات التي لم تعد مطلوبة (الإشعارات المقروءة القديمة والطلبات المكتملة). هذا الإجراء آمن ولا يمس بيانات الطلاب الحالية.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
-                                    <AlertDialogFooter className="gap-2 sm:justify-start">
+                                    <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-2xl">إلغاء</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleCleanup} className="rounded-2xl bg-primary hover:bg-primary/90 font-bold">
                                             تأكيد التنظيف
