@@ -124,7 +124,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
-                <DialogHeader>
+                <DialogHeader className="text-right">
                     <DialogTitle>شحن رصيد لجميع الطلاب</DialogTitle>
                     <DialogDescription>
                         إضافة رصيد إلى محفظة جميع الطلاب ({students.length} طالب) في القائمة الحالية.
@@ -264,6 +264,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
+                {/* Accessibility Fix: Added sr-only DialogHeader components */}
+                <DialogHeader className="sr-only">
+                    <DialogTitle>ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
+                    <DialogDescription>عرض تفاصيل الطالب وإدارة حسابه المالي وحالته على المنصة.</DialogDescription>
+                </DialogHeader>
+
                 <div className="bg-primary/5 p-8 border-b text-right relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                     <div className="relative z-10 flex flex-col items-center sm:items-start gap-6 sm:flex-row-reverse">
@@ -402,9 +408,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
             <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
                 <AlertDialogContent className="rounded-2xl max-w-md">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="text-right">تأكيد الإجراء</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
+                    <AlertDialogHeader className="text-right">
+                        <AlertDialogTitle>تأكيد الإجراء</AlertDialogTitle>
+                        <AlertDialogDescription className="font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
@@ -417,9 +423,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
             <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <AlertDialogContent className="rounded-2xl max-w-md">
-                    <AlertDialogHeader>
-                        <AlertDialogTitle className="text-destructive text-right">حذف نهائي للملف</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right font-medium leading-relaxed">
+                    <AlertDialogHeader className="text-right">
+                        <AlertDialogTitle className="text-destructive">حذف نهائي للملف</AlertDialogTitle>
+                        <AlertDialogDescription className="font-medium leading-relaxed">
                             أنت على وشك حذف الطالب <span className="font-black">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
                             <br /><br />
                             <span className="text-destructive font-black">لا يمكن التراجع عن هذا الإجراء!</span>
@@ -514,9 +520,9 @@ export default function AdminStudentsPage() {
          <div className="ml-auto flex items-center gap-2"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
-        <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6">
-          <CardTitle className="text-right text-lg">قائمة المنضمين</CardTitle>
-          <CardDescription className="text-right font-medium">إدارة حسابات الطلاب من خلال ملفاتهم التعريفية.</CardDescription>
+        <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6 text-right">
+          <CardTitle className="text-lg">قائمة المنضمين</CardTitle>
+          <CardDescription className="font-medium">إدارة حسابات الطلاب من خلال ملفاتهم التعريفية.</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
