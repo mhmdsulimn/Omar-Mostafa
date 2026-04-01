@@ -25,6 +25,7 @@ import {
   Headset,
   Wrench,
   FlaskConical,
+  Sparkles,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -334,8 +335,9 @@ export function DashboardLayout({
             <SidebarSeparator />
             <SidebarFooter className="p-4 pt-3 text-center shrink-0 overflow-hidden">
               <DeveloperInfoDialog>
-                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 hover:tracking-[0.18em] hover:underline underline-offset-4 active:scale-95 group">
-                  Developed by Mohamed Suliman
+                <button className="group flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow">
+                  <span className="group-hover:scale-105 transition-transform">Developed by Mohamed Suliman</span>
+                  <Sparkles className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse text-amber-500" />
                 </button>
               </DeveloperInfoDialog>
             </SidebarFooter>
@@ -394,8 +396,9 @@ export function DashboardLayout({
 
                       <div className="mt-auto p-4 text-center border-t bg-sidebar/5 overflow-hidden">
                         <DeveloperInfoDialog>
-                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-slow hover:animate-none hover:scale-105 hover:tracking-[0.18em] hover:underline underline-offset-4 active:scale-95 group">
-                            Developed by Mohamed Suliman
+                          <button className="group flex items-center justify-center gap-1.5 text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow">
+                            <span className="group-hover:scale-105 transition-transform">Developed by Mohamed Suliman</span>
+                            <Sparkles className="h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-all duration-300 animate-pulse text-amber-500" />
                           </button>
                         </DeveloperInfoDialog>
                       </div>

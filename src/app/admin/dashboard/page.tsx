@@ -223,6 +223,7 @@ export default function AdminDashboardPage() {
             (allSubmissionsData.length) + 
             (allPaymentsData?.length || 0) + 
             (allNotifsData?.length || 0) +
+            (allAnnouncements?.length || 0) +
             (allDeletionRequests?.length || 0);
 
         const studentsActivityReads = filteredStudents.length * 20; 
@@ -326,6 +327,7 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
+            // Clean deletion logs specifically
             if (allDeletionRequests && allDeletionRequests.length > 0) {
                 allDeletionRequests.forEach(req => {
                     batch.delete(doc(firestore, 'students_to_delete', req.id));
