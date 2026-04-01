@@ -105,19 +105,19 @@ function AnnouncementForm({
         setIsSearching(true);
         try {
             const studentsRef = collection(firestore, 'users');
-            const snap = await getDocs(query(studentsRef, limit(100)));
-            const term = searchTerm.toLowerCase();
+            // تم إزالة القيد (limit) لضمان جلب كافة الطلاب عند البحث
+            const snap = await getDocs(studentsRef);
+            const term = searchTerm.toLowerCase().trim();
             const results = snap.docs
                 .map(d => ({ ...d.data() as Student, id: d.id }))
                 .filter(s => {
                     if (adminIds.has(s.id)) return false;
-                    return (
-                        s.firstName?.toLowerCase().includes(term) || 
-                        s.lastName?.toLowerCase().includes(term) || 
-                        s.email?.toLowerCase().includes(term)
-                    );
+                    // البحث في الاسم الكامل المدمج والبريد الإلكتروني
+                    const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+                    const email = (s.email || '').toLowerCase();
+                    return fullName.includes(term) || email.includes(term);
                 });
-            setSearchResults(results.slice(0, 5));
+            setSearchResults(results.slice(0, 10));
         } catch (e) {
             console.error(e);
         } finally {

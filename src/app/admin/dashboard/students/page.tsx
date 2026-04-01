@@ -629,26 +629,20 @@ export default function AdminStudentsPage() {
       return [];
     }
     
-    const uniqueStudents = students.filter(
-        (student, index, self) =>
-          index ===
-          self.findIndex(
-            (s) => s.email === student.email && s.id === student.id
-          )
-      );
+    const search = searchTerm.toLowerCase().trim();
 
-    const furtherFiltered = uniqueStudents.filter(user => {
-        const searchMatch = !searchTerm ||
-            (user.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (user.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-            (user.email?.toLowerCase() || '').includes(searchTerm.toLowerCase());
+    return students.filter(user => {
+        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
+        const email = (user.email || '').toLowerCase();
+        
+        const searchMatch = !search ||
+            fullName.includes(search) ||
+            email.includes(search);
 
         const gradeMatch = gradeFilter === 'all' || user.grade === gradeFilter;
 
         return searchMatch && gradeMatch;
-    });
-
-    return furtherFiltered.sort((a,b) => (a.firstName || '').localeCompare(b.firstName || ''));
+    }).sort((a,b) => (a.firstName || '').localeCompare(b.firstName || ''));
 
   }, [searchTerm, gradeFilter, students]);
 

@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -96,18 +95,21 @@ function AddAdminDialog() {
   }, [isOpen, firestore, user, toast]);
 
   const handleSearch = () => {
-    if (!searchTerm) {
+    if (!searchTerm.trim()) {
         setSearchResults([]);
         return;
     }
     setIsSearching(true);
-    const lowercasedTerm = searchTerm.toLowerCase();
+    const lowercasedTerm = searchTerm.toLowerCase().trim();
     const nonAdmins = allStudents.filter(s => !adminIds.has(s.id));
-    const results = nonAdmins.filter(student => 
-        (student.firstName?.toLowerCase() || '').includes(lowercasedTerm) ||
-        (student.lastName?.toLowerCase() || '').includes(lowercasedTerm) ||
-        (student.email?.toLowerCase() || '').includes(lowercasedTerm)
-    );
+    
+    const results = nonAdmins.filter(student => {
+        // البحث بالاسم الكامل أو الإيميل
+        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+        const email = (student.email || '').toLowerCase();
+        return fullName.includes(lowercasedTerm) || email.includes(lowercasedTerm);
+    });
+
     setSearchResults(results.slice(0, 5)); // Limit to 5 results to keep UI clean
     if(results.length === 0) {
         toast({
@@ -312,14 +314,15 @@ export default function AdminAdminsPage() {
     if (!allAdminsData) {
         return [];
     }
-    if (!searchTerm) {
+    if (!searchTerm.trim()) {
       return allAdminsData;
     }
-    return allAdminsData.filter(admin =>
-      (admin.firstName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (admin.lastName?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-      (admin.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-    );
+    const term = searchTerm.toLowerCase().trim();
+    return allAdminsData.filter(admin => {
+        const fullName = `${admin.firstName || ''} ${admin.lastName || ''}`.toLowerCase();
+        const email = (admin.email || '').toLowerCase();
+        return fullName.includes(term) || email.includes(term);
+    });
   }, [searchTerm, allAdminsData]);
 
   const isLoading = isLoadingAdmins || (adminIds.length > 0 && isLoadingDetails);
