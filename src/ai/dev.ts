@@ -6,3 +6,4 @@ import './flows/chat-assistant';
 import './flows/admin-assistant';
 import './flows/text-to-speech';
 import './flows/generate-questions';
+import './flows/send-test-notification';

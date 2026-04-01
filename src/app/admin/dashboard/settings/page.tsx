@@ -35,13 +35,14 @@ import { useToast } from '@/hooks/use-toast';
 import * as React from 'react';
 import { PasswordInput } from '@/components/ui/password-input';
 import { doc, onSnapshot, collection, getDocs, writeBatch, query, collectionGroup, deleteDoc } from 'firebase/firestore';
-import { Loader2, Sun, Moon, Monitor, AlertTriangle, Trophy, Key, FlaskConical } from 'lucide-react';
+import { Loader2, Sun, Moon, Monitor, AlertTriangle, Trophy, Key, FlaskConical, BellRing } from 'lucide-react';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import type { Student, AppSettings } from '@/lib/data';
 import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { useTheme } from 'next-themes';
+import { sendTestNotification } from '@/ai/flows/send-test-notification';
 
 const DEFAULT_IMGBB_KEY = '3940d136f148755904ab3afd4e73d825';
 
@@ -221,6 +222,7 @@ export default function AdminSettingsPage() {
   const auth = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = React.useState(false);
+  const [isTestingNotif, setIsTestingNotif] = React.useState(false);
   const [password, setPassword] = React.useState('');
   const [isDialogOpen, setIsDialogOpen] = React.useState(false);
   const [primaryColor, setPrimaryColor] = React.useState<string | undefined>(undefined);
@@ -353,6 +355,23 @@ export default function AdminSettingsPage() {
         });
       })
       .finally(() => setIsSavingImgbb(false));
+  };
+
+  const handleTestNotification = async () => {
+    if (!user) return;
+    setIsTestingNotif(true);
+    try {
+      const result = await sendTestNotification(user.uid);
+      toast({
+        title: result.success ? 'طلب الاختبار تم' : 'تنبيه',
+        description: result.message,
+        variant: result.success ? 'default' : 'destructive',
+      });
+    } catch (e) {
+      toast({ title: 'خطأ', description: 'فشل إرسال طلب الاختبار.', variant: 'destructive' });
+    } finally {
+      setIsTestingNotif(false);
+    }
   };
 
   const handleDeleteAccount = async () => {
@@ -536,6 +555,20 @@ export default function AdminSettingsPage() {
               checked={appSettings?.isLabsEnabled !== false}
               onCheckedChange={handleLabsToggle}
             />
+          </div>
+          <div className="flex items-center justify-between border-t pt-6">
+            <div>
+              <Label htmlFor="test-notif" className="font-medium flex items-center gap-2">
+                <BellRing className="h-4 w-4" />
+                اختبار الإشعارات الفورية
+              </Label>
+              <p className="text-sm text-muted-foreground">
+                أرسل إشعاراً تجريبياً لمتصفحك الآن للتأكد من عمل النظام.
+              </p>
+            </div>
+            <Button onClick={handleTestNotification} disabled={isTestingNotif} variant="outline" size="sm">
+              {isTestingNotif ? <Loader2 className="h-4 w-4 animate-spin" /> : 'إرسال إشعار فوري'}
+            </Button>
           </div>
         </CardContent>
       </Card>

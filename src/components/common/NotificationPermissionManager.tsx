@@ -57,6 +57,9 @@ export function NotificationPermissionManager() {
             // تسجيل الـ Service Worker يدوياً لضمان التوافق مع Next.js
             const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
             
+            // انتظار الـ service worker ليكون نشطاً
+            await navigator.serviceWorker.ready;
+
             const fcmToken = await getToken(messaging, { 
               vapidKey,
               serviceWorkerRegistration: registration
@@ -72,8 +75,11 @@ export function NotificationPermissionManager() {
                     fcmTokens: arrayUnion(fcmToken)
                 });
                 console.log("FCM Token synced with Firestore.");
+                toast({ title: 'تم تفعيل الإشعارات', description: 'جهازك الآن جاهز لاستقبال تنبيهات المنصة.' });
               }
             }
+        } else if (permission === 'denied') {
+            console.warn("FCM: User denied notification permission.");
         }
       } catch (error) {
         console.error("FCM: Permission or Token error", error);
