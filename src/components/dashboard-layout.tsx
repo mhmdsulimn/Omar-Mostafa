@@ -86,13 +86,19 @@ export function DashboardLayout({
   );
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
-  // Admin status check
+  // Admin status check - Updated to match Firestore Rules (hardcoded emails/IDs + doc check)
   const adminDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'roles_admin', user.uid) : null),
     [user, firestore]
   );
   const { data: adminRole, isLoading: isCheckingAdmin } = useDoc(adminDocRef);
-  const isAdmin = !!adminRole;
+  
+  const isAdmin = React.useMemo(() => {
+    if (!user) return false;
+    const adminEmails = ["mhmdsulimn.dev@gmail.com"];
+    const adminIds = ["70vVkvBj0IQIwbxwdPaEAOj6LSu2"];
+    return adminEmails.includes(user.email || '') || adminIds.includes(user.uid) || !!adminRole;
+  }, [user, adminRole]);
 
   // Shared queries (Notifications)
   const notificationsQuery = useMemoFirebase(
@@ -113,13 +119,14 @@ export function DashboardLayout({
   const { data: announcements } = useCollection<Announcement>(announcementsQuery);
 
   // Admin specific queries (Pending Payments)
-  const pendingPaymentsQuery = useMemoFirebase(
+  // We fetch ALL requests and filter in JS to avoid index requirement issues that might block the badge
+  const allPaymentsQuery = useMemoFirebase(
     () => (firestore && user && layoutType === 'admin' && isAdmin) 
-      ? query(collectionGroup(firestore, 'depositRequests'), where('status', '==', 'pending')) 
+      ? query(collectionGroup(firestore, 'depositRequests')) 
       : null,
     [firestore, user, layoutType, isAdmin]
   );
-  const { data: pendingPayments } = useCollection<DepositRequest>(pendingPaymentsQuery, { ignorePermissionErrors: true });
+  const { data: allPayments } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
   
   const settingsDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
@@ -141,7 +148,8 @@ export function DashboardLayout({
     }
     
     if (href === '/admin/dashboard/payments') {
-      return pendingPayments?.length || 0;
+      // Filter for 'pending' status in memory for maximum reliability
+      return allPayments?.filter(p => p.status === 'pending').length || 0;
     }
 
     if (href === '/admin/dashboard/announcements') {
