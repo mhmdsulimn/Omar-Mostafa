@@ -95,6 +95,8 @@ function AnnouncementForm({
         try {
             const snap = await getDocs(collection(firestore, 'users'));
             const term = searchTerm.toLowerCase().trim();
+            const searchParts = term.split(/\s+/).filter(p => p.length > 0);
+
             const results = snap.docs
                 .map(d => ({ ...d.data() as Student, id: d.id }))
                 .filter(s => {
@@ -105,11 +107,10 @@ function AnnouncementForm({
                     const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
                     
-                    // تحسين البحث ليشمل الاسم الكامل المدمج
-                    return firstName.includes(term) || 
-                           lastName.includes(term) || 
-                           fullName.includes(term) || 
-                           email.includes(term);
+                    // تحسين البحث ليشمل الاسم الكامل المدمج بأي ترتيب للكلمات
+                    return searchParts.every(part => 
+                        fullName.includes(part) || email.includes(part)
+                    );
                 });
             setSearchResults(results.slice(0, 15));
         } catch (e) {

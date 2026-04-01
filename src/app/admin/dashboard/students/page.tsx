@@ -361,11 +361,11 @@ function UserRow({ user: student }: { user: Student }) {
     return (
         <>
         <TableRow className={student.isBanned ? 'bg-destructive/10' : ''}>
-            <TableCell>
+            <TableCell className="text-right">
                 <div className="flex items-center gap-2 md:gap-3">
                     <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0"><AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
-                        <span className="font-medium flex items-center justify-end gap-1 md:gap-2 whitespace-nowrap">
+                        <span className="font-medium flex items-center justify-start gap-1 md:gap-2 whitespace-nowrap">
                           {student?.firstName} {student?.lastName}
                           {student.isBanned && <ShieldOff className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />}
                         </span>
@@ -373,8 +373,8 @@ function UserRow({ user: student }: { user: Student }) {
                     </div>
                 </div>
             </TableCell>
-            <TableCell className="whitespace-nowrap">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
-            <TableCell className="font-medium whitespace-nowrap">{student.balance || 0} جنيه</TableCell>
+            <TableCell className="whitespace-nowrap text-right">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
+            <TableCell className="font-medium whitespace-nowrap text-right">{student.balance || 0} جنيه</TableCell>
             <TableCell className="text-center px-2">
                 <div className="flex justify-center gap-1 md:gap-2">
                     <AddBalanceDialog student={student} />
@@ -440,19 +440,18 @@ export default function AdminStudentsPage() {
   const filteredUsers = React.useMemo(() => {
     if (!students) return [];
     const search = searchTerm.toLowerCase().trim();
+    const searchParts = search.split(/\s+/).filter(p => p.length > 0);
+
     return students.filter(student => {
-        // تحسين البحث ليشمل الاسم الكامل (دمج الاسم الأول والاسم الأخير)
         const firstName = (student.firstName || '').toLowerCase();
         const lastName = (student.lastName || '').toLowerCase();
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
         
-        // Match if search term is in first name, last name, full name, or email
-        const searchMatch = !search || 
-            firstName.includes(search) || 
-            lastName.includes(search) || 
-            fullName.includes(search) || 
-            email.includes(search);
+        // تحسين البحث: التأكد من وجود كافة كلمات البحث في حقول الطالب (الاسم أو الإيميل)
+        const searchMatch = searchParts.length === 0 || searchParts.every(part => 
+            fullName.includes(part) || email.includes(part)
+        );
         
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
         return searchMatch && gradeMatch;

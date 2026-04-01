@@ -101,13 +101,19 @@ function AddAdminDialog() {
     }
     setIsSearching(true);
     const lowercasedTerm = searchTerm.toLowerCase().trim();
+    const searchParts = lowercasedTerm.split(/\s+/).filter(p => p.length > 0);
     const nonAdmins = allStudents.filter(s => !adminIds.has(s.id));
     
     const results = nonAdmins.filter(student => {
-        // تحسين البحث بالاسم الكامل المدمج أو الإيميل
-        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+        const firstName = (student.firstName || '').toLowerCase();
+        const lastName = (student.lastName || '').toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
-        return fullName.includes(lowercasedTerm) || email.includes(lowercasedTerm);
+        
+        // تحسين البحث بالاسم الكامل المدمج (كلمات متعددة)
+        return searchParts.every(part => 
+            fullName.includes(part) || email.includes(part)
+        );
     });
 
     setSearchResults(results.slice(0, 5)); // Limit to 5 results to keep UI clean
@@ -195,7 +201,7 @@ function AddAdminDialog() {
               <div className="mt-4 max-h-60 overflow-y-auto rounded-lg border bg-muted p-2 space-y-2">
                   {searchResults.map(student => (
                     <div key={student.id} className="flex items-center justify-between p-2 bg-background rounded-md">
-                        <div>
+                        <div className="text-right">
                             <p className="font-semibold">{student.firstName} {student.lastName}</p>
                             <p className="text-sm text-muted-foreground">{student.email}</p>
                         </div>
@@ -230,7 +236,7 @@ function AdminRow({ admin }: { admin: Student }) {
   return (
     <>
       <TableRow>
-        <TableCell>
+        <TableCell className="text-right">
           <div className="flex items-center gap-3">
             <Avatar className="hidden h-9 w-9 sm:flex">
               <AvatarFallback>{admin.firstName?.charAt(0)}</AvatarFallback>
@@ -240,7 +246,7 @@ function AdminRow({ admin }: { admin: Student }) {
             </span>
           </div>
         </TableCell>
-        <TableCell>{admin.email}</TableCell>
+        <TableCell className="text-right">{admin.email}</TableCell>
         <TableCell className="text-center px-2">
            <Button
             variant="destructive"
@@ -260,14 +266,14 @@ function AdminRow({ admin }: { admin: Student }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>هل أنت متأكد؟</AlertDialogTitle>
-            <AlertDialogDescription>
+            <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
+            <AlertDialogDescription className="text-right">
               سيؤدي هذا إلى إزالة صلاحيات المسؤول من المستخدم{' '}
               <span className="font-bold">{admin?.firstName} {admin?.lastName}</span>.
               لن يتمكن من الوصول إلى لوحة تحكم المسؤول بعد الآن.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-row-reverse gap-2">
             <AlertDialogCancel>
               إلغاء
             </AlertDialogCancel>
@@ -318,10 +324,15 @@ export default function AdminAdminsPage() {
       return allAdminsData;
     }
     const term = searchTerm.toLowerCase().trim();
+    const searchParts = term.split(/\s+/).filter(p => p.length > 0);
+
     return allAdminsData.filter(admin => {
         const fullName = `${admin.firstName || ''} ${admin.lastName || ''}`.toLowerCase();
         const email = (admin.email || '').toLowerCase();
-        return fullName.includes(term) || email.includes(term);
+        
+        return searchParts.every(part => 
+            fullName.includes(part) || email.includes(part)
+        );
     });
   }, [searchTerm, allAdminsData]);
 
@@ -345,15 +356,15 @@ export default function AdminAdminsPage() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>إدارة المسؤولين</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-right">إدارة المسؤولين</CardTitle>
+          <CardDescription className="text-right">
             قائمة بجميع المستخدمين الذين لديهم صلاحيات المسؤول في النظام.
           </CardDescription>
           <div className="relative mt-2">
             <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
                 placeholder="ابحث بالاسم أو البريد الإلكتروني..."
-                className="pr-8"
+                className="pr-8 text-right"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -371,8 +382,8 @@ export default function AdminAdminsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>الاسم</TableHead>
-                    <TableHead>البريد الإلكتروني</TableHead>
+                    <TableHead className="text-right">الاسم</TableHead>
+                    <TableHead className="text-right">البريد الإلكتروني</TableHead>
                     <TableHead className="text-center">
                       الإجراءات
                     </TableHead>
