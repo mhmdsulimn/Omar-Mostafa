@@ -94,7 +94,14 @@ export function DashboardLayout({
   const { data: adminRole, isLoading: isCheckingAdmin } = useDoc(adminDocRef);
   const isAdmin = !!adminRole;
 
-  // Student specific queries
+  // Shared queries (Notifications)
+  const notificationsQuery = useMemoFirebase(
+    () => (user && firestore) ? query(collection(firestore, `users/${user.uid}/notifications`), where('isRead', '==', false)) : null,
+    [user, firestore]
+  );
+  const { data: unreadNotifications } = useCollection<Notification>(notificationsQuery);
+
+  // Student specific queries (Announcements)
   const announcementsQuery = useMemoFirebase(
     () => (firestore && studentData && layoutType === 'student') ? query(
       collection(firestore, 'announcements'),
@@ -105,13 +112,6 @@ export function DashboardLayout({
   );
   const { data: announcements } = useCollection<Announcement>(announcementsQuery);
 
-  // Shared queries (Notifications)
-  const notificationsQuery = useMemoFirebase(
-    () => (user && firestore) ? query(collection(firestore, `users/${user.uid}/notifications`), where('isRead', '==', false)) : null,
-    [user, firestore]
-  );
-  const { data: unreadNotifications } = useCollection<Notification>(notificationsQuery);
-
   // Admin specific queries (Pending Payments)
   const pendingPaymentsQuery = useMemoFirebase(
     () => (firestore && user && layoutType === 'admin' && isAdmin) 
@@ -121,6 +121,12 @@ export function DashboardLayout({
   );
   const { data: pendingPayments } = useCollection<DepositRequest>(pendingPaymentsQuery, { ignorePermissionErrors: true });
   
+  const settingsDocRef = useMemoFirebase(
+    () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
+    [firestore, user]
+  );
+  const { data: appSettings } = useDoc<AppSettings>(settingsDocRef);
+
   // Badge counting logic per item
   const getBadgeCount = (href: string) => {
     if (href === '/dashboard/notifications') {
@@ -139,18 +145,11 @@ export function DashboardLayout({
     }
 
     if (href === '/admin/dashboard/announcements') {
-      // Just showing unread notifications for admin here
       return unreadNotifications?.length || 0;
     }
 
     return 0;
   };
-
-  const settingsDocRef = useMemoFirebase(
-    () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
-    [firestore, user]
-  );
-  const { data: appSettings } = useDoc<AppSettings>(settingsDocRef);
 
   const studentNavItems: NavItem[] = [
       { href: '/dashboard/courses', label: 'تصفح الكورسات', icon: Library },
@@ -200,7 +199,6 @@ export function DashboardLayout({
     }
   }, [user, isUserLoading, router]);
 
-  // Route protection logic
   React.useEffect(() => {
     if (isUserLoading || isCheckingAdmin || !user) return;
 
@@ -327,7 +325,7 @@ export function DashboardLayout({
                         <item.icon />
                         <span>{item.label}</span>
                         {count > 0 && (
-                          <span className="mr-auto h-5 w-5 flex items-center justify-center rounded-full bg-destructive text-[10px] font-black text-destructive-foreground animate-in zoom-in-50 duration-300">
+                          <span className="mr-auto h-5 w-5 flex items-center justify-center rounded-full bg-destructive text-[10px] font-black text-destructive-foreground animate-in zoom-in-50 duration-300 shadow-sm shadow-destructive/20">
                             {count}
                           </span>
                         )}
@@ -384,8 +382,8 @@ export function DashboardLayout({
                                     <span className="flex-grow">{item.label}</span>
                                     {count > 0 && (
                                       <span className={cn(
-                                          "h-5 w-5 flex items-center justify-center rounded-full text-[10px] font-black",
-                                          isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-white"
+                                          "h-5 w-5 flex items-center justify-center rounded-full text-[10px] font-black shadow-sm",
+                                          isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-white shadow-destructive/20"
                                       )}>
                                         {count}
                                       </span>
