@@ -28,7 +28,7 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2, ListChecks } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2, ListChecks, Bell } from 'lucide-react';
 import { format, startOfDay, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -48,7 +48,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
 type AdminRole = { id: string };
@@ -62,7 +61,7 @@ function StatCard({ title, value, icon: Icon, description }: { title: string, va
             </CardHeader>
             <CardContent className="p-4 sm:p-6 pt-0">
                 <div className="text-xl sm:text-2xl font-bold">{value}</div>
-                {description && <p className="text-[10px] text-muted-foreground mt-1">{description}</p>}
+                {description && <p className="text-[10px] text-muted-foreground mt-1 font-bold">{description}</p>}
             </CardContent>
         </Card>
     );
@@ -156,7 +155,7 @@ export default function AdminDashboardPage() {
     
     const {
         studentsCount, examsCount, coursesCount, averageScore, recentSubmissions, studentsMap, examsMap, gradeDistributionData, gradePerformanceData,
-        dbStats, dailyActivity, garbageData
+        dbStats, dailyActivity, garbageData, totalNotifsCount, readNotifsCount, unreadNotifsCount
     } = React.useMemo(() => {
         if (isLoading || !allUsersData || !adminRoles || !allExamsData || !allSubmissionsData || !allCoursesData) {
             return {
@@ -164,7 +163,8 @@ export default function AdminDashboardPage() {
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
                 dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 },
                 dailyActivity: { reads: 0, writes: 0, deletes: 0 },
-                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0, items: [] as any[] }
+                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0, items: [] as any[] },
+                totalNotifsCount: 0, readNotifsCount: 0, unreadNotifsCount: 0
             };
         }
 
@@ -236,7 +236,6 @@ export default function AdminDashboardPage() {
 
         const sevenDaysAgo = subDays(new Date(), 7);
 
-        // تحديث المعايير: 7 أيام للإشعارات والمدفوعات والإعلانات
         const garbageNotifs = allNotifsData?.filter(n => n.isRead && new Date(n.createdAt) < sevenDaysAgo) || [];
         const garbagePayments = allPaymentsData?.filter(p => p.status !== 'pending' && new Date(p.requestDate) < sevenDaysAgo) || [];
         const garbageIncompleteUsers = allUsersData.filter(u => !u.grade && !adminIds.has(u.id));
@@ -276,6 +275,10 @@ export default function AdminDashboardPage() {
         const writeLoad = dailyWrites > 150 ? 'مرتفع جداً' : dailyWrites > 80 ? 'مرتفع' : 'منخفض';
         const readLoad = dailyReads > 1500 ? 'مرتفع جداً' : dailyReads > 800 ? 'مرتفع' : 'منخفض';
 
+        const totalN = allNotifsData?.length || 0;
+        const readN = allNotifsData?.filter(n => n.isRead).length || 0;
+        const unreadN = totalN - readN;
+
         return {
             studentsCount: filteredStudents.length,
             examsCount: allExamsData.length,
@@ -307,7 +310,10 @@ export default function AdminDashboardPage() {
                 announcements: garbageAnnouncements.length,
                 deletions: garbageDeletionReqs.length,
                 items: garbageItems
-            }
+            },
+            totalNotifsCount: totalN,
+            readNotifsCount: readN,
+            unreadNotifsCount: unreadN
         };
 
     }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData, allAnnouncements, allDeletionRequests]);
@@ -363,11 +369,17 @@ export default function AdminDashboardPage() {
                     </Badge>
                 </div>
 
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
                     <StatCard title="إجمالي الطلاب" value={studentsCount} icon={Users} description="الطلاب المسجلين حالياً" />
                     <StatCard title="إجمالي الاختبارات" value={examsCount} icon={BookOpen} description="الامتحانات المنشورة" />
                     <StatCard title="إجمالي الكورسات" value={coursesCount} icon={BookMarked} description="الدورات التعليمية" />
                     <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
+                    <StatCard 
+                        title="إجمالي الإشعارات" 
+                        value={totalNotifsCount} 
+                        icon={Bell} 
+                        description={`مقروء: ${readNotifsCount} | غير مقروء: ${unreadNotifsCount}`} 
+                    />
                 </div>
 
                 <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
