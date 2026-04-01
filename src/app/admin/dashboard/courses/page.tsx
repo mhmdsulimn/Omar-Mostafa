@@ -55,6 +55,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
     const router = useRouter();
     const [searchTerm, setSearchTerm] = React.useState('');
 
+    // جلب الاشتراكات لهذا الكورس تحديداً من كافة حسابات الطلاب
     const subscriptionsQuery = useMemoFirebase(
         () => (firestore && course ? query(collectionGroup(firestore, 'studentCourses'), where('courseId', '==', course.id)) : null),
         [firestore, course?.id]
@@ -63,6 +64,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
 
     const studentIds = React.useMemo(() => subscriptions?.map(s => s.studentId) || [], [subscriptions]);
 
+    // جلب بيانات الطلاب الذين تم العثور على اشتراكات لهم
     const studentsQuery = useMemoFirebase(
         () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
         [firestore, studentIds]
@@ -71,17 +73,25 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
 
     const filteredStudents = React.useMemo(() => {
         if (!students) return [];
-        if (!searchTerm.trim()) return students;
-        
         const term = searchTerm.toLowerCase().trim();
+        if (!term) return students;
+        
         const searchParts = term.split(/\s+/).filter(p => p.length > 0);
 
         return students.filter(s => {
-            const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+            const firstName = (s.firstName || '').toLowerCase();
+            const lastName = (s.lastName || '').toLowerCase();
+            const fullName = `${firstName} ${lastName}`.trim();
             const email = (s.email || '').toLowerCase();
-            return searchParts.every(part => fullName.includes(part) || email.includes(part));
+            
+            // نظام البحث بالاسم الكامل المدمج
+            return searchParts.every(part => 
+                fullName.includes(part) || email.includes(part)
+            );
         });
     }, [students, searchTerm]);
+
+    const isLoading = isLoadingSubs || (studentIds.length > 0 && isLoadingStudents);
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -95,7 +105,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                     <div className="relative mt-4">
                         <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <Input 
-                            placeholder="ابحث عن طالب في هذا الكورس..." 
+                            placeholder="ابحث عن طالب بالاسم الكامل..." 
                             className="pr-9 bg-background h-11 rounded-xl text-right"
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
@@ -104,7 +114,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                 </DialogHeader>
                 <div className="p-0">
                     <ScrollArea className="h-[400px]">
-                        {isLoadingSubs || isLoadingStudents ? (
+                        {isLoading ? (
                             <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
                         ) : filteredStudents.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
@@ -270,7 +280,7 @@ export default function AdminCoursesPage() {
       <Card className='mb-6'>
         <CardHeader className="px-4 md:px-6">
           <CardTitle className="text-right">بحث وفلترة</CardTitle>
-          <CardDescription className="text-right">ابحث عن كورس محدد أو قم بالفلترة حسب الصف الدراسي.</CardDescription>
+          <CardDescription className="text-right">ابحث عن كورس محدد أو قم بالفلترة حسب السعر.</CardDescription>
         </CardHeader>
         <CardContent className="px-4 md:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

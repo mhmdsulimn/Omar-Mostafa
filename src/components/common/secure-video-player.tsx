@@ -11,7 +11,7 @@ interface SecureVideoPlayerProps {
 }
 
 export function SecureVideoPlayer({ videoUrl }: SecureVideoPlayerProps) {
-  const { user } = useUser();
+  const { user } = userHook();
   const wrapperRef = React.useRef<HTMLDivElement>(null);
   const watermarkRef = React.useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = React.useState(false);
@@ -43,7 +43,7 @@ export function SecureVideoPlayer({ videoUrl }: SecureVideoPlayerProps) {
   React.useEffect(() => {
     const handleContextmenu = (e: MouseEvent) => e.preventDefault();
     const handleKeydown = (e: KeyboardEvent) => {
-      // Fullscreen shortcut 'f'
+      // Fullscreen shortcut 'f' - Toggle when 'f' is pressed
       if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
         e.preventDefault();
         handleFullscreenToggle();
@@ -171,4 +171,8 @@ export function SecureVideoPlayer({ videoUrl }: SecureVideoPlayerProps) {
       </Button>
     </div>
   );
+}
+
+function userHook() {
+    return useUser();
 }

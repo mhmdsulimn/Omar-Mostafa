@@ -82,9 +82,13 @@ service cloud.firestore {
       }
     }
 
-    // السماح باستعلامات المجموعات (collectionGroup) للنتائج - ضروري للوحة الصدارة
+    // السماح باستعلامات المجموعات (collectionGroup) - ضروري للمسؤول ولوحة الصدارة
     match /{allPaths=**}/studentExams/{id} {
       allow read: if isSignedIn();
+    }
+    
+    match /{allPaths=**}/studentCourses/{id} {
+      allow read: if isAdmin();
     }
 
     match /roles_admin/{userId} {
