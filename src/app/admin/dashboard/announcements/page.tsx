@@ -99,12 +99,18 @@ function AnnouncementForm({
                 .map(d => ({ ...d.data() as Student, id: d.id }))
                 .filter(s => {
                     if (adminIds.has(s.id)) return false;
-                    // تحسين البحث: دمج الاسم الأول والأخير للبحث عن الاسم بالكامل
-                    const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+                    
+                    const firstName = (s.firstName || '').toLowerCase();
+                    const lastName = (s.lastName || '').toLowerCase();
+                    const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
-                    return fullName.includes(term) || email.includes(term);
+                    
+                    return firstName.includes(term) || 
+                           lastName.includes(term) || 
+                           fullName.includes(term) || 
+                           email.includes(term);
                 });
-            setSearchResults(results.slice(0, 10));
+            setSearchResults(results.slice(0, 15));
         } catch (e) {
         } finally {
             setIsSearching(false);

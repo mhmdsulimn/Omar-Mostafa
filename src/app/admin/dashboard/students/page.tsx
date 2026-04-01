@@ -442,9 +442,17 @@ export default function AdminStudentsPage() {
     const search = searchTerm.toLowerCase().trim();
     return students.filter(student => {
         // تحسين البحث ليشمل الاسم الكامل (دمج الاسم الأول والاسم الأخير)
-        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+        const firstName = (student.firstName || '').toLowerCase();
+        const lastName = (student.lastName || '').toLowerCase();
+        const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
-        const searchMatch = !search || fullName.includes(search) || email.includes(search);
+        
+        // Match if search term is in first name, last name, full name, or email
+        const searchMatch = !search || 
+            firstName.includes(search) || 
+            lastName.includes(search) || 
+            fullName.includes(search) || 
+            email.includes(search);
         
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
         return searchMatch && gradeMatch;
