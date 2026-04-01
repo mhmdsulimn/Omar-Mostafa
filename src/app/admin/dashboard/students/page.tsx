@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -122,7 +121,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                     </span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[500px]">
+            <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-3xl">
                 <DialogHeader>
                     <DialogTitle>شحن رصيد لجميع الطلاب</DialogTitle>
                     <DialogDescription>
@@ -130,46 +129,34 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                     </DialogDescription>
                 </DialogHeader>
                  <Tabs value={tab} onValueChange={setTab} className="w-full" dir="rtl">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="fixed">مبلغ ثابت</TabsTrigger>
-                        <TabsTrigger value="random">مبلغ عشوائي</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl">
+                        <TabsTrigger value="fixed" className="rounded-lg">مبلغ ثابت</TabsTrigger>
+                        <TabsTrigger value="random" className="rounded-lg">مبلغ عشوائي</TabsTrigger>
                     </TabsList>
-                    <TabsContent value="fixed">
-                        <Card className="shadow-none border-none bg-transparent">
-                            <CardHeader className="px-0">
-                                <CardTitle className="text-base">مبلغ ثابت</CardTitle>
-                                <CardDescription>إضافة نفس المبلغ لجميع الطلاب.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-2 px-0 pb-0">
-                                <Label htmlFor="fixedAmount">المبلغ المراد إضافته (بالجنيه)</Label>
-                                <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} />
-                            </CardContent>
-                        </Card>
+                    <TabsContent value="fixed" className="pt-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="fixedAmount">المبلغ المراد إضافته (بالجنيه)</Label>
+                            <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
+                        </div>
                     </TabsContent>
-                    <TabsContent value="random">
-                         <Card className="shadow-none border-none bg-transparent">
-                            <CardHeader className="px-0">
-                                <CardTitle className="text-base">مبلغ عشوائي</CardTitle>
-                                <CardDescription>إضافة مبلغ عشوائي لكل طالب ضمن النطاق المحدد.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4 px-0 pb-0">
-                                <div className="space-y-2">
-                                    <Label htmlFor="minAmount">الحد الأدنى للمبلغ</Label>
-                                    <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="maxAmount">الحد الأقصى للمبلغ</Label>
-                                    <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} />
-                                </div>
-                            </CardContent>
-                        </Card>
+                    <TabsContent value="random" className="pt-4 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="minAmount">الحد الأدنى</Label>
+                                <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="maxAmount">الحد الأقصى</Label>
+                                <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl" />
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
-                <DialogFooter className="mt-4">
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving}>إلغاء</Button>
-                    <Button onClick={handleBulkAddBalance} disabled={isSaving}>
+                <DialogFooter className="mt-6 gap-2">
+                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
+                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                        تأكيد الشحن
+                        تأكيد الشحن الجماعي
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -184,26 +171,17 @@ function WithdrawBalanceDialog({ student }: { student: Student }) {
     const [isSaving, setIsSaving] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false);
 
-    const currentBalance = student.balance || 0;
-
     const handleWithdrawBalance = async () => {
-        if (!firestore || !student || amount <= 0) {
-            toast({ variant: 'destructive', title: 'مبلغ غير صالح' });
-            return;
-        }
-
+        if (!firestore || !student || amount <= 0) return;
         setIsSaving(true);
         const userDocRef = doc(firestore, 'users', student.id);
-        
         try {
             await runTransaction(firestore, async (transaction) => {
                  const studentDoc = await transaction.get(userDocRef);
                 if (!studentDoc.exists()) throw new Error("لم يتم العثور على حساب الطالب.");
-                const studentData = studentDoc.data();
-                const currentBalanceInDb = studentData.balance || 0;
-                if (amount > currentBalanceInDb) throw new Error("لا يمكن سحب مبلغ أكبر من الرصيد الحالي.");
-                const newBalance = currentBalanceInDb - amount;
-                transaction.update(userDocRef, { balance: newBalance });
+                const currentBalance = studentDoc.data().balance || 0;
+                if (amount > currentBalance) throw new Error("لا يمكن سحب مبلغ أكبر من الرصيد الحالي.");
+                transaction.update(userDocRef, { balance: currentBalance - amount });
                 const notificationRef = doc(collection(firestore, 'users', student.id, 'notifications'));
                 transaction.set(notificationRef, {
                     message: `تم سحب مبلغ ${amount} جنيه من رصيدك بواسطة الإدارة.`,
@@ -226,20 +204,20 @@ function WithdrawBalanceDialog({ student }: { student: Student }) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8" title="سحب رصيد"><Minus className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="سحب رصيد"><Minus className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px]">
+            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-3xl">
                 <DialogHeader>
                     <DialogTitle>سحب رصيد من الطالب</DialogTitle>
                     <DialogDescription>سحب من محفظة: {student.firstName} {student.lastName}</DialogDescription>
                 </DialogHeader>
                  <div className="space-y-2 py-4">
                     <Label htmlFor="amount">المبلغ المراد سحبه (بالجنيه)</Label>
-                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" max={currentBalance} disabled={isSaving} />
+                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving}>إلغاء</Button>
-                    <Button onClick={handleWithdrawBalance} disabled={isSaving || amount <= 0 || amount > currentBalance} variant="destructive">
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
+                    <Button onClick={handleWithdrawBalance} disabled={isSaving || amount <= 0} variant="destructive" className="rounded-xl">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                         تأكيد السحب
                     </Button>
@@ -288,20 +266,20 @@ function AddBalanceDialog({ student }: { student: Student }) {
     return (
         <Dialog open={isOpen} onOpenChange={setIsOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="icon" className="h-8 w-8" title="شحن رصيد"><DollarSign className="h-4 w-4" /></Button>
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="شحن رصيد"><DollarSign className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px]">
+            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-3xl">
                 <DialogHeader>
                     <DialogTitle>شحن رصيد الطالب</DialogTitle>
                     <DialogDescription>إضافة لـ: {student.firstName} {student.lastName}</DialogDescription>
                 </DialogHeader>
                  <div className="space-y-2 py-4">
                     <Label htmlFor="amount">المبلغ المراد إضافته (بالجنيه)</Label>
-                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" disabled={isSaving} />
+                    <Input id="amount" type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
                 </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving}>إلغاء</Button>
-                    <Button onClick={handleAddBalance} disabled={isSaving || amount <= 0}>
+                <DialogFooter className="gap-2">
+                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
+                    <Button onClick={handleAddBalance} disabled={isSaving || amount <= 0} className="rounded-xl">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                         تأكيد الشحن
                     </Button>
@@ -364,65 +342,67 @@ function UserRow({ user: student }: { user: Student }) {
     
     return (
         <>
-        <TableRow className={student.isBanned ? 'bg-destructive/10' : ''}>
+        <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/10 hover:bg-destructive/20' : 'hover:bg-muted/50')}>
             <TableCell className="text-right">
-                <div className="flex items-center gap-2 md:gap-3" dir="rtl">
-                    <Avatar className="h-8 w-8 md:h-9 md:w-9 shrink-0"><AvatarFallback>{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
+                <div className="flex items-center gap-3" dir="rtl">
+                    <Avatar className="h-9 w-9 md:h-10 md:w-10 shrink-0 border-2 border-primary/10">
+                        <AvatarFallback className="font-bold">{student?.firstName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
-                        <span className="font-medium flex items-center justify-start gap-1 md:gap-2 whitespace-nowrap">
+                        <span className="font-black flex items-center justify-start gap-2 whitespace-nowrap text-sm md:text-base">
                           {student?.firstName} {student?.lastName}
-                          {student.isBanned && <ShieldOff className="h-3 w-3 md:h-4 md:w-4 text-destructive shrink-0" />}
+                          {student.isBanned && <ShieldOff className="h-3.5 w-3.5 text-destructive shrink-0" />}
                         </span>
-                        <div className="text-[10px] md:text-xs text-muted-foreground break-all">{student?.email}</div>
+                        <div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70">{student?.email}</div>
                     </div>
                 </div>
             </TableCell>
-            <TableCell className="whitespace-nowrap text-right">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
-            <TableCell className="font-medium whitespace-nowrap text-right">{student.balance || 0} جنيه</TableCell>
+            <TableCell className="whitespace-nowrap text-right font-bold text-xs md:text-sm">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
+            <TableCell className="font-black whitespace-nowrap text-right text-xs md:text-sm text-primary">{student.balance || 0} ج</TableCell>
             <TableCell className="text-right">
                 {student.lastActiveAt ? (
                     <div className="flex flex-col text-right text-[10px] md:text-xs">
-                        <span className="font-bold">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
-                        <span className="text-muted-foreground opacity-70">{toArabicDigits(format(new Date(student.lastActiveAt), 'h:mm a', { locale: arSA }))}</span>
+                        <span className="font-black text-foreground/80">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
+                        <span className="text-muted-foreground opacity-60">{toArabicDigits(format(new Date(student.lastActiveAt), 'h:mm a', { locale: arSA }))}</span>
                     </div>
                 ) : (
-                    <span className="text-muted-foreground italic text-[10px] md:text-xs">غير متوفر</span>
+                    <span className="text-muted-foreground italic text-[10px] md:text-xs opacity-40">غير متوفر</span>
                 )}
             </TableCell>
             <TableCell className="text-center px-2">
-                <div className="flex justify-center gap-1 md:gap-2">
+                <div className="flex justify-center gap-1.5 md:gap-2">
                     <AddBalanceDialog student={student} />
                     <WithdrawBalanceDialog student={student} />
-                    <Button variant={student.isBanned ? 'default' : 'destructive'} size="icon" className="h-8 w-8" onClick={() => setIsBanConfirmOpen(true)} title={student.isBanned ? 'إلغاء حظر' : 'حظر'}>
+                    <Button variant={student.isBanned ? 'default' : 'destructive'} size="icon" className="h-8 w-8 rounded-lg" onClick={() => setIsBanConfirmOpen(true)} title={student.isBanned ? 'إلغاء حظر' : 'حظر'}>
                         {student.isBanned ? <ShieldCheck className="h-4 w-4" /> : <ShieldOff className="h-4 w-4" />}
                     </Button>
-                    <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => setIsDeleteConfirmOpen(true)} title="حذف"><Trash2 className="h-4 w-4" /></Button>
+                    <Button variant="destructive" size="icon" className="h-8 w-8 rounded-lg" onClick={() => setIsDeleteConfirmOpen(true)} title="حذف"><Trash2 className="h-4 w-4" /></Button>
                 </div>
             </TableCell>
         </TableRow>
 
         <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
-            <AlertDialogContent className="max-w-[95vw] sm:max-w-425px">
+            <AlertDialogContent className="rounded-3xl max-w-md">
             <AlertDialogHeader>
-                <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
-                <AlertDialogDescription className="text-right">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
+                <AlertDialogTitle className="text-right">تأكيد الإجراء</AlertDialogTitle>
+                <AlertDialogDescription className="text-right font-bold">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel disabled={isBanStatusUpdating}>إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleToggleBanStudent} className={student.isBanned ? '' : 'bg-destructive'} disabled={isBanStatusUpdating}>تأكيد</AlertDialogAction>
+            <AlertDialogFooter className="gap-2">
+                <AlertDialogCancel disabled={isBanStatusUpdating} className="rounded-xl">إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={handleToggleBanStudent} className={cn("rounded-xl", !student.isBanned && "bg-destructive")} disabled={isBanStatusUpdating}>تأكيد</AlertDialogAction>
             </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
         <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-            <AlertDialogContent className="max-w-[95vw] sm:max-w-425px">
+            <AlertDialogContent className="rounded-3xl max-w-md">
             <AlertDialogHeader>
-                <AlertDialogTitle className="text-destructive text-right">حذف الطالب نهائياً</AlertDialogTitle>
-                <AlertDialogDescription className="text-right">أنت على وشك حذف {student.firstName} وجميع سجلاته بشكل نهائي. لا يمكن التراجع!</AlertDialogDescription>
+                <AlertDialogTitle className="text-destructive text-right">حذف نهائي للملف</AlertDialogTitle>
+                <AlertDialogDescription className="text-right font-bold">أنت على وشك حذف الطالب {student.firstName} وكافة سجلاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteStudent} className="bg-destructive" disabled={isDeleting}>تأكيد الحذف</AlertDialogAction>
+            <AlertDialogFooter className="gap-2">
+                <AlertDialogCancel disabled={isDeleting} className="rounded-xl">إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDeleteStudent} className="bg-destructive rounded-xl" disabled={isDeleting}>حذف نهائي</AlertDialogAction>
             </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
@@ -462,7 +442,7 @@ export default function AdminStudentsPage() {
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
         
-        // تحسين البحث: التأكد من وجود كافة كلمات البحث في حقول الطالب (الاسم بالكامل أو البريد)
+        // نظام البحث الذكي بالاسم الكامل
         const searchMatch = searchParts.length === 0 || searchParts.every(part => 
             fullName.includes(part) || email.includes(part)
         );
@@ -479,43 +459,43 @@ export default function AdminStudentsPage() {
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-4">
-        <h1 className="text-lg font-semibold md:text-2xl">الطلاب</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <h1 className="text-xl font-black md:text-3xl tracking-tight">إدارة الطلاب</h1>
          <div className="ml-auto flex items-center gap-2"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
-      <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg">
-        <CardHeader className="px-2 md:px-6">
-          <CardTitle className="text-right">قائمة الطلاب</CardTitle>
-          <CardDescription className="text-right">إدارة حسابات وأرصدة الطلاب المسجلين.</CardDescription>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+      <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
+        <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6">
+          <CardTitle className="text-right text-lg">قائمة المنضمين</CardTitle>
+          <CardDescription className="text-right font-medium">إدارة حسابات وأرصدة الطلاب ونشاطهم اللحظي.</CardDescription>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="ابحث بالاسم بالكامل أو البريد..." className="pr-8 text-right" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder="ابحث بالاسم الكامل أو البريد..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
+                <SelectTrigger className="h-11 rounded-xl bg-background"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
                 <SelectContent>
                     <SelectItem value="all">كل الصفوف</SelectItem>
-                    <SelectItem value="first_secondary">الأول الثانوي</SelectItem>
-                    <SelectItem value="second_secondary">الثاني الثانوي</SelectItem>
-                    <SelectItem value="third_secondary">الثالث الثانوي</SelectItem>
+                    <SelectItem value="first_secondary">الصف الأول الثانوي</SelectItem>
+                    <SelectItem value="second_secondary">الصف الثاني الثانوي</SelectItem>
+                    <SelectItem value="third_secondary">الصف الثالث الثانوي</SelectItem>
                 </SelectContent>
             </Select>
           </div>
         </CardHeader>
-        <CardContent className="px-0 md:px-6">
+        <CardContent className="p-0 md:p-6 pt-0">
           {filteredUsers.length === 0 ? (
-            <div className="text-center py-10"><p className="text-muted-foreground">لم يتم العثور على طلاب يطابقون بحثك.</p></div>
+            <div className="text-center py-20 opacity-50"><p className="font-bold">لم يتم العثور على طلاب يطابقون بحثك.</p></div>
           ) : (
             <div className="overflow-x-auto">
               <Table>
-                <TableHeader>
+                <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="min-w-[200px] text-right">المستخدم</TableHead>
-                    <TableHead className="w-[10%] text-right">الصف</TableHead>
-                    <TableHead className="w-[10%] text-right">الرصيد</TableHead>
-                    <TableHead className="w-[15%] text-right">آخر ظهور</TableHead>
-                    <TableHead className="text-center w-[20%]">الإجراءات</TableHead>
+                    <TableHead className="min-w-[220px] text-right font-black">المستخدم</TableHead>
+                    <TableHead className="w-[10%] text-right font-black">الصف</TableHead>
+                    <TableHead className="w-[10%] text-right font-black">الرصيد</TableHead>
+                    <TableHead className="w-[15%] text-right font-black">آخر ظهور</TableHead>
+                    <TableHead className="text-center w-[20%] font-black">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

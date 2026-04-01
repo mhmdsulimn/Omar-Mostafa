@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -108,12 +107,12 @@ function AnnouncementForm({
                     const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
                     
-                    // تحسين البحث ليشمل الاسم الكامل المدمج بأي ترتيب للكلمات
+                    // تحسين البحث ليشمل الاسم الكامل المدمج
                     return searchParts.every(part => 
                         fullName.includes(part) || email.includes(part)
                     );
                 });
-            setSearchResults(results); // عرض كل النتائج بدون حظر (Limit)
+            setSearchResults(results);
         } catch (e) {
         } finally {
             setIsSearching(false);
@@ -134,69 +133,69 @@ function AnnouncementForm({
 
     return (
         <form onSubmit={handleSubmit}>
-            <DialogHeader>
-                <DialogTitle className="text-right">إرسال رسالة جديدة</DialogTitle>
-                <DialogDescription className="text-right">اختر نوع الرسالة والمستهدفين.</DialogDescription>
+            <DialogHeader className="text-right">
+                <DialogTitle>إرسال رسالة جديدة</DialogTitle>
+                <DialogDescription>اختر نوع الرسالة والمستهدفين بالأسفل.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                    <Label className="text-right block w-full">نوع الرسالة</Label>
+            <div className="grid gap-4 py-6">
+                <div className="space-y-3">
+                    <Label className="text-right block w-full font-bold">نوع الرسالة</Label>
                     <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" variant={formData.targetType === 'global' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'global'}))}>إعلان عام</Button>
-                        <Button type="button" variant={formData.targetType === 'student' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'student'}))}>رسالة خاصة</Button>
+                        <Button type="button" variant={formData.targetType === 'global' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'global'}))} className="rounded-xl">إعلان عام</Button>
+                        <Button type="button" variant={formData.targetType === 'student' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'student'}))} className="rounded-xl">رسالة خاصة</Button>
                     </div>
                 </div>
                 {formData.targetType === 'global' ? (
                     <div className="space-y-2 text-right">
-                        <Label>توجيه الإعلان إلى</Label>
+                        <Label className="font-bold">توجيه الإعلان إلى</Label>
                         <Select dir="rtl" value={formData.targetGrade} onValueChange={(v) => setFormData(prev => ({...prev, targetGrade: v as any}))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                <SelectItem value="all">كل الصفوف</SelectItem>
-                               <SelectItem value="first_secondary">1ث</SelectItem>
-                               <SelectItem value="second_secondary">2ث</SelectItem>
-                               <SelectItem value="third_secondary">3ث</SelectItem>
+                               <SelectItem value="first_secondary">الصف الأول الثانوي</SelectItem>
+                               <SelectItem value="second_secondary">الصف الثاني الثانوي</SelectItem>
+                               <SelectItem value="third_secondary">الصف الثالث الثانوي</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                 ) : (
                     <div className="space-y-2 text-right">
-                        <Label>ابحث عن الطالب بالاسم بالكامل</Label>
+                        <Label className="font-bold">ابحث عن الطالب بالاسم</Label>
                         <div className="flex gap-2">
-                            <Button type="button" size="icon" onClick={handleSearchStudents} disabled={isSearching}>
+                            <Button type="button" size="icon" onClick={handleSearchStudents} disabled={isSearching} className="rounded-xl shrink-0">
                                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                             </Button>
-                            <Input placeholder="اكتب اسم الطالب بالكامل هنا..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())} className="text-right" />
+                            <Input placeholder="اكتب اسم الطالب بالكامل هنا..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())} className="text-right rounded-xl" />
                         </div>
                         {searchResults.length > 0 && !selectedStudent && (
-                            <div className="mt-2 rounded-lg border bg-muted/50 p-1 space-y-1 max-h-48 overflow-y-auto">
+                            <div className="mt-2 rounded-xl border bg-muted/50 p-1 space-y-1 max-h-48 overflow-y-auto scrollbar-hide">
                                 {searchResults.map(s => (
-                                    <div key={s.id} className="flex items-center justify-between p-2 hover:bg-background rounded cursor-pointer" onClick={() => { setSelectedStudent(s); setSearchResults([]); setSearchTerm(''); }}>
-                                        <Badge variant="outline" className="text-[10px]">{gradeMap[s.grade]}</Badge>
-                                        <div className="flex items-center gap-2"><span className="text-xs font-bold">{s.firstName} {s.lastName}</span></div>
+                                    <div key={s.id} className="flex items-center justify-between p-3 hover:bg-background rounded-lg cursor-pointer border border-transparent hover:border-primary/10 transition-all" onClick={() => { setSelectedStudent(s); setSearchResults([]); setSearchTerm(''); }}>
+                                        <Badge variant="outline" className="text-[10px] h-5">{gradeMap[s.grade]}</Badge>
+                                        <div className="flex items-center gap-2"><span className="text-xs font-black">{s.firstName} {s.lastName}</span></div>
                                     </div>
                                 ))}
                             </div>
                         )}
                         {selectedStudent && (
-                            <div className="flex items-center justify-between p-2 bg-primary/10 rounded-lg border border-primary/20">
-                                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="h-7 text-destructive">تغيير</Button>
-                                <span className="text-sm font-bold">{selectedStudent.firstName} {selectedStudent.lastName}</span>
+                            <div className="flex items-center justify-between p-3 bg-primary/10 rounded-xl border border-primary/20 animate-in zoom-in-95 duration-200">
+                                <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="h-7 text-destructive hover:bg-destructive/10 rounded-lg">تغيير</Button>
+                                <span className="text-sm font-black">{selectedStudent.firstName} {selectedStudent.lastName}</span>
                             </div>
                         )}
                     </div>
                 )}
                 <div className="space-y-2 text-right">
-                    <Label htmlFor="message">نص الرسالة</Label>
-                    <Textarea id="message" value={formData.message} onChange={e => setFormData(prev => ({...prev, message: e.target.value}))} required disabled={isSaving} className="min-h-[100px] text-right" placeholder="اكتب محتوى الرسالة هنا..." />
+                    <Label htmlFor="message" className="font-bold">نص الرسالة</Label>
+                    <Textarea id="message" value={formData.message} onChange={e => setFormData(prev => ({...prev, message: e.target.value}))} required disabled={isSaving} className="min-h-[120px] text-right rounded-xl leading-relaxed" placeholder="اكتب محتوى الرسالة هنا..." />
                 </div>
             </div>
              <DialogFooter className="gap-2 sm:justify-start">
-                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)}>
+                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)} className="rounded-xl h-11 px-8 font-black">
                     {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                    إرسال
+                    إرسال الرسالة
                 </Button>
-                <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>إلغاء</Button>
+                <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="rounded-xl h-11">إلغاء</Button>
             </DialogFooter>
         </form>
     );
@@ -255,33 +254,33 @@ export default function AdminAnnouncementsPage() {
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-xl font-bold md:text-3xl">قسم الرسائل</h1>
-        <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)}><PlusCircle className="h-4 w-4" /> إرسال رسالة</Button></div>
+        <h1 className="text-xl font-black md:text-3xl tracking-tight">قسم المراسلات</h1>
+        <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
       </div>
-      <Card>
-          <CardHeader><CardTitle className="text-right">الإعلانات العامة</CardTitle></CardHeader>
-          <CardContent>
+      <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
+          <CardHeader className="bg-muted/10 border-b"><CardTitle className="text-right text-lg">الإعلانات المثبتة (للجميع)</CardTitle></CardHeader>
+          <CardContent className="p-0 md:p-6">
               {(!announcements || announcements.length === 0) ? (
-                  <div className="text-center py-10 opacity-50">لا توجد إعلانات.</div>
+                  <div className="text-center py-20 opacity-50 font-bold">لا توجد إعلانات مثبتة حالياً.</div>
               ) : (
-                  <div className="rounded-xl border overflow-hidden">
+                  <div className="overflow-x-auto">
                       <Table>
-                          <TableHeader>
+                          <TableHeader className="bg-muted/20">
                               <TableRow>
-                                  <TableHead className="text-center">الحالة</TableHead>
-                                  <TableHead className="text-right">الرسالة</TableHead>
-                                  <TableHead className="text-center">الصف</TableHead>
-                                  <TableHead className="text-center">إجراء</TableHead>
+                                  <TableHead className="text-center font-black">الحالة</TableHead>
+                                  <TableHead className="text-right font-black">الرسالة</TableHead>
+                                  <TableHead className="text-center font-black">الصف</TableHead>
+                                  <TableHead className="text-center font-black">إجراء</TableHead>
                               </TableRow>
                           </TableHeader>
                           <TableBody>
                               {announcements.map((ann) => (
-                                <TableRow key={ann.id}>
+                                <TableRow key={ann.id} className="hover:bg-muted/30">
                                     <TableCell className="text-center"><Switch checked={ann.isActive} onCheckedChange={() => handleToggleActive(ann)} /></TableCell>
-                                    <TableCell className="text-right"><p className="line-clamp-1 text-sm">{ann.message}</p></TableCell>
-                                    <TableCell className="text-center"><Badge variant="outline">{gradeMap[ann.targetGrade]}</Badge></TableCell>
+                                    <TableCell className="text-right"><p className="line-clamp-1 text-sm font-medium">{ann.message}</p></TableCell>
+                                    <TableCell className="text-center"><Badge variant="outline" className="rounded-lg">{gradeMap[ann.targetGrade]}</Badge></TableCell>
                                     <TableCell className="text-center">
-                                        <Button variant="ghost" size="icon" className="text-destructive" onClick={() => setDeleteDialogId(ann.id)}><Trash2 className="h-4 w-4" /></Button>
+                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg" onClick={() => setDeleteDialogId(ann.id)}><Trash2 className="h-4 w-4" /></Button>
                                     </TableCell>
                                 </TableRow>
                               ))}
@@ -292,16 +291,16 @@ export default function AdminAnnouncementsPage() {
           </CardContent>
       </Card>
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-3xl">
             <AnnouncementForm onSave={handleSave} onClose={() => setIsAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
       <AlertDialog open={!!deleteDialogId} onOpenChange={(o) => !o && setDeleteDialogId(null)}>
-        <AlertDialogContent className="rounded-2xl">
-            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle></AlertDialogHeader>
-            <AlertDialogFooter className="flex-row-reverse gap-2">
-                <AlertDialogCancel>إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive">حذف</AlertDialogAction>
+        <AlertDialogContent className="rounded-3xl max-w-md">
+            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle><AlertDialogDescription className="text-right font-bold">سيتم حذف هذا الإعلان نهائياً ولن يظهر للطلاب مجدداً.</AlertDialogDescription></AlertDialogHeader>
+            <AlertDialogFooter className="gap-2">
+                <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl">حذف نهائي</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

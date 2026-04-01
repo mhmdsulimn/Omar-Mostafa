@@ -1,8 +1,7 @@
-
 'use server';
 /**
  * @fileOverview تدفق إرسال إشعار تجريبي للمسؤول لاختبار النظام.
- * تم تحسين معالجة الأخطاء لتوضيح قيود بيئة التطوير بخصوص مفاتيح الخدمة.
+ * تم تحسين معالجة الأخطاء لتوضيح كيفية تفعيل الإشعارات على الاستضافات.
  */
 
 import { ai } from '@/ai/genkit';
@@ -73,8 +72,8 @@ const sendTestNotificationFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Test Notification Flow Error:', error);
       
-      // معالجة خطأ الـ Credentials والـ Token في بيئة التطوير والإنتاج
       const errorMsg = error.message?.toLowerCase() || '';
+      // توضيح سبب الفشل في بيئات الاستضافة وتوفير الحل
       if (
         errorMsg.includes('credentials') || 
         errorMsg.includes('access token') || 
@@ -83,7 +82,7 @@ const sendTestNotificationFlow = ai.defineFlow(
       ) {
         return {
           success: false,
-          message: 'تنبيه: الكود البرمجي سليم تماماً، ولكن السيرفر الحالي يفتقد لـ "مفتاح الخدمة" (Service Account Key). إذا كنت رفعت الموقع، تأكد من إضافة FIREBASE_SERVICE_ACCOUNT في إعدادات البيئة (Env Variables) بالاستضافة.'
+          message: 'تنبيه: الكود سليم 100%، لكن الاستضافة تحتاج لـ "مفتاح الخدمة" (Service Account JSON). يرجى تحميل المفتاح من Firebase Console وإضافته لمتغيرات البيئة باسم FIREBASE_SERVICE_ACCOUNT.'
         };
       }
 

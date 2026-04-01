@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -6,8 +5,7 @@ import { OfflineUI } from './offline-ui';
 
 /**
  * مراقب حالة الاتصال الذكي المطوّر:
- * تم إضافة نظام "تأكيد الانقطاع" لضمان عدم ظهور صفحة الأوفلاين عند حدوث تذبذب لحظي في الشبكة.
- * يتم الانتظار لمدة 3 ثوانٍ قبل تأكيد الانقطاع لضمان استقرار التجربة.
+ * تم رفع نظام "تأكيد الانقطاع" إلى 5 ثوانٍ لضمان عدم ظهور صفحة الأوفلاين عند حدوث أي تذبذب بسيط.
  */
 export function OfflineDetector({ children }: { children: React.ReactNode }) {
   const [isOffline, setIsOffline] = React.useState(false);
@@ -26,14 +24,14 @@ export function OfflineDetector({ children }: { children: React.ReactNode }) {
         }
         setIsOffline(false);
       } else {
-        // إذا انقطع الاتصال، ننتظر 3 ثوانٍ للتأكد من أنه ليس تذبذباً عابراً
+        // إذا انقطع الاتصال، ننتظر 5 ثوانٍ للتأكد من أنه ليس تذبذباً عابراً
         if (!offlineTimerRef.current) {
           offlineTimerRef.current = setTimeout(() => {
             if (!navigator.onLine) {
               setIsOffline(true);
             }
             offlineTimerRef.current = null;
-          }, 3000); 
+          }, 5000); 
         }
       }
     };

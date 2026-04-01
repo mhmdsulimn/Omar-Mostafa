@@ -1,4 +1,3 @@
-
 import { initializeApp, getApps, App, cert } from 'firebase-admin/app';
 import { getAuth, Auth } from 'firebase-admin/auth';
 import { getFirestore, Firestore } from 'firebase-admin/firestore';
@@ -20,6 +19,7 @@ function getAdminApp(): App {
   const firebaseConfigEnv = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : null;
 
   // 2. محاولة الحصول على "مفتاح الخدمة" من متغير بيئة مخصص (للإشعارات على الاستضافات الخارجية)
+  // هام: يجب وضع محتوى ملف الـ JSON الخاص بـ Service Account هنا في الاستضافة
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
     : null;
