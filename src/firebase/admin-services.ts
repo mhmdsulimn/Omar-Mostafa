@@ -4,7 +4,7 @@ import { getFirestore, Firestore } from 'firebase-admin/firestore';
 
 /**
  * @fileOverview تهيئة خدمات Firebase Admin.
- * تم تحسين التهيئة لتدعم العمل على الاستضافات الخارجية عبر مفاتيح الخدمة.
+ * تم تحسين التهيئة لتدعم العمل على الاستضافات الخارجية عبر مفاتيح الخدمة (FIREBASE_SERVICE_ACCOUNT).
  */
 
 const PROJECT_ID = 'studio-8343614197-d2c5b';
@@ -15,18 +15,14 @@ function getAdminApp(): App {
     return existingApps[0];
   }
   
-  // 1. محاولة الحصول على التهيئة من متغيرات البيئة (خاصة بـ App Hosting)
-  const firebaseConfigEnv = process.env.FIREBASE_CONFIG ? JSON.parse(process.env.FIREBASE_CONFIG) : null;
-
-  // 2. محاولة الحصول على "مفتاح الخدمة" من متغير بيئة مخصص (للإشعارات على الاستضافات الخارجية)
-  // هام: يجب وضع محتوى ملف الـ JSON الخاص بـ Service Account هنا في الاستضافة
+  // محاولة الحصول على "مفتاح الخدمة" من متغير بيئة مخصص (للإشعارات الفورية)
   const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT 
     ? JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT) 
     : null;
 
   return initializeApp({
     credential: serviceAccount ? cert(serviceAccount) : undefined,
-    projectId: firebaseConfigEnv?.projectId || PROJECT_ID,
+    projectId: PROJECT_ID,
   });
 }
 

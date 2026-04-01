@@ -21,7 +21,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, Clock } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2 } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -121,7 +121,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                     </span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-3xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
                 <DialogHeader>
                     <DialogTitle>شحن رصيد لجميع الطلاب</DialogTitle>
                     <DialogDescription>
@@ -156,7 +156,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                     <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
                     <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                        تأكيد الشحن الجماعي
+                        تأكيد الشحن
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -206,7 +206,7 @@ function WithdrawBalanceDialog({ student }: { student: Student }) {
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="سحب رصيد"><Minus className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-3xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-2xl">
                 <DialogHeader>
                     <DialogTitle>سحب رصيد من الطالب</DialogTitle>
                     <DialogDescription>سحب من محفظة: {student.firstName} {student.lastName}</DialogDescription>
@@ -268,7 +268,7 @@ function AddBalanceDialog({ student }: { student: Student }) {
             <DialogTrigger asChild>
                 <Button variant="outline" size="icon" className="h-8 w-8 rounded-lg" title="شحن رصيد"><DollarSign className="h-4 w-4" /></Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-3xl">
+            <DialogContent className="max-w-[95vw] sm:max-w-[425px] rounded-2xl">
                 <DialogHeader>
                     <DialogTitle>شحن رصيد الطالب</DialogTitle>
                     <DialogDescription>إضافة لـ: {student.firstName} {student.lastName}</DialogDescription>
@@ -349,7 +349,7 @@ function UserRow({ user: student }: { user: Student }) {
                         <AvatarFallback className="font-bold">{student?.firstName?.charAt(0)}</AvatarFallback>
                     </Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right">
-                        <span className="font-black flex items-center justify-start gap-2 whitespace-nowrap text-sm md:text-base">
+                        <span className="font-bold flex items-center justify-start gap-2 whitespace-nowrap text-sm md:text-base">
                           {student?.firstName} {student?.lastName}
                           {student.isBanned && <ShieldOff className="h-3.5 w-3.5 text-destructive shrink-0" />}
                         </span>
@@ -358,11 +358,11 @@ function UserRow({ user: student }: { user: Student }) {
                 </div>
             </TableCell>
             <TableCell className="whitespace-nowrap text-right font-bold text-xs md:text-sm">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
-            <TableCell className="font-black whitespace-nowrap text-right text-xs md:text-sm text-primary">{student.balance || 0} ج</TableCell>
+            <TableCell className="font-bold whitespace-nowrap text-right text-xs md:text-sm text-primary">{student.balance || 0} ج</TableCell>
             <TableCell className="text-right">
                 {student.lastActiveAt ? (
                     <div className="flex flex-col text-right text-[10px] md:text-xs">
-                        <span className="font-black text-foreground/80">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
+                        <span className="font-bold text-foreground/80">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
                         <span className="text-muted-foreground opacity-60">{toArabicDigits(format(new Date(student.lastActiveAt), 'h:mm a', { locale: arSA }))}</span>
                     </div>
                 ) : (
@@ -382,10 +382,10 @@ function UserRow({ user: student }: { user: Student }) {
         </TableRow>
 
         <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
-            <AlertDialogContent className="rounded-3xl max-w-md">
+            <AlertDialogContent className="rounded-2xl max-w-md">
             <AlertDialogHeader>
                 <AlertDialogTitle className="text-right">تأكيد الإجراء</AlertDialogTitle>
-                <AlertDialogDescription className="text-right font-bold">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
+                <AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'رفع الحظر عن' : 'حظر'} الطالب {student.firstName}.</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel disabled={isBanStatusUpdating} className="rounded-xl">إلغاء</AlertDialogCancel>
@@ -395,10 +395,10 @@ function UserRow({ user: student }: { user: Student }) {
         </AlertDialog>
 
         <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-            <AlertDialogContent className="rounded-3xl max-w-md">
+            <AlertDialogContent className="rounded-2xl max-w-md">
             <AlertDialogHeader>
                 <AlertDialogTitle className="text-destructive text-right">حذف نهائي للملف</AlertDialogTitle>
-                <AlertDialogDescription className="text-right font-bold">أنت على وشك حذف الطالب {student.firstName} وكافة سجلاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
+                <AlertDialogDescription className="text-right font-medium">أنت على وشك حذف الطالب {student.firstName} وكافة سجلاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel disabled={isDeleting} className="rounded-xl">إلغاء</AlertDialogCancel>
@@ -460,7 +460,7 @@ export default function AdminStudentsPage() {
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-xl font-black md:text-3xl tracking-tight">إدارة الطلاب</h1>
+        <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة الطلاب</h1>
          <div className="ml-auto flex items-center gap-2"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
@@ -491,11 +491,11 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="min-w-[220px] text-right font-black">المستخدم</TableHead>
-                    <TableHead className="w-[10%] text-right font-black">الصف</TableHead>
-                    <TableHead className="w-[10%] text-right font-black">الرصيد</TableHead>
-                    <TableHead className="w-[15%] text-right font-black">آخر ظهور</TableHead>
-                    <TableHead className="text-center w-[20%] font-black">الإجراءات</TableHead>
+                    <TableHead className="min-w-[220px] text-right font-bold">المستخدم</TableHead>
+                    <TableHead className="w-[10%] text-right font-bold">الصف</TableHead>
+                    <TableHead className="w-[10%] text-right font-bold">الرصيد</TableHead>
+                    <TableHead className="w-[15%] text-right font-bold">آخر ظهور</TableHead>
+                    <TableHead className="text-center w-[20%] font-bold">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

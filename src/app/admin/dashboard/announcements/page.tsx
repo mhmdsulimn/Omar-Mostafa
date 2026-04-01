@@ -107,7 +107,7 @@ function AnnouncementForm({
                     const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
                     
-                    // تحسين البحث ليشمل الاسم الكامل المدمج
+                    // نظام البحث بالاسم الكامل المدمج
                     return searchParts.every(part => 
                         fullName.includes(part) || email.includes(part)
                     );
@@ -172,7 +172,7 @@ function AnnouncementForm({
                                 {searchResults.map(s => (
                                     <div key={s.id} className="flex items-center justify-between p-3 hover:bg-background rounded-lg cursor-pointer border border-transparent hover:border-primary/10 transition-all" onClick={() => { setSelectedStudent(s); setSearchResults([]); setSearchTerm(''); }}>
                                         <Badge variant="outline" className="text-[10px] h-5">{gradeMap[s.grade]}</Badge>
-                                        <div className="flex items-center gap-2"><span className="text-xs font-black">{s.firstName} {s.lastName}</span></div>
+                                        <div className="flex items-center gap-2"><span className="text-xs font-bold">{s.firstName} {s.lastName}</span></div>
                                     </div>
                                 ))}
                             </div>
@@ -180,7 +180,7 @@ function AnnouncementForm({
                         {selectedStudent && (
                             <div className="flex items-center justify-between p-3 bg-primary/10 rounded-xl border border-primary/20 animate-in zoom-in-95 duration-200">
                                 <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="h-7 text-destructive hover:bg-destructive/10 rounded-lg">تغيير</Button>
-                                <span className="text-sm font-black">{selectedStudent.firstName} {selectedStudent.lastName}</span>
+                                <span className="text-sm font-bold">{selectedStudent.firstName} {selectedStudent.lastName}</span>
                             </div>
                         )}
                     </div>
@@ -191,7 +191,7 @@ function AnnouncementForm({
                 </div>
             </div>
              <DialogFooter className="gap-2 sm:justify-start">
-                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)} className="rounded-xl h-11 px-8 font-black">
+                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)} className="rounded-xl h-11 px-8 font-bold">
                     {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                     إرسال الرسالة
                 </Button>
@@ -254,7 +254,7 @@ export default function AdminAnnouncementsPage() {
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-xl font-black md:text-3xl tracking-tight">قسم المراسلات</h1>
+        <h1 className="text-xl font-bold md:text-3xl tracking-tight">قسم المراسلات</h1>
         <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
       </div>
       <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
@@ -267,10 +267,10 @@ export default function AdminAnnouncementsPage() {
                       <Table>
                           <TableHeader className="bg-muted/20">
                               <TableRow>
-                                  <TableHead className="text-center font-black">الحالة</TableHead>
-                                  <TableHead className="text-right font-black">الرسالة</TableHead>
-                                  <TableHead className="text-center font-black">الصف</TableHead>
-                                  <TableHead className="text-center font-black">إجراء</TableHead>
+                                  <TableHead className="text-center font-bold">الحالة</TableHead>
+                                  <TableHead className="text-right font-bold">الرسالة</TableHead>
+                                  <TableHead className="text-center font-bold">الصف</TableHead>
+                                  <TableHead className="text-center font-bold">إجراء</TableHead>
                               </TableRow>
                           </TableHeader>
                           <TableBody>
@@ -291,13 +291,13 @@ export default function AdminAnnouncementsPage() {
           </CardContent>
       </Card>
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-3xl">
+        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
             <AnnouncementForm onSave={handleSave} onClose={() => setIsAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
       <AlertDialog open={!!deleteDialogId} onOpenChange={(o) => !o && setDeleteDialogId(null)}>
-        <AlertDialogContent className="rounded-3xl max-w-md">
-            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle><AlertDialogDescription className="text-right font-bold">سيتم حذف هذا الإعلان نهائياً ولن يظهر للطلاب مجدداً.</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogContent className="rounded-2xl max-w-md">
+            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيتم حذف هذا الإعلان نهائياً ولن يظهر للطلاب مجدداً.</AlertDialogDescription></AlertDialogHeader>
             <AlertDialogFooter className="gap-2">
                 <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
                 <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl">حذف نهائي</AlertDialogAction>

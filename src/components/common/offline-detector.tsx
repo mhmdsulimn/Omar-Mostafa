@@ -17,14 +17,13 @@ export function OfflineDetector({ children }: { children: React.ReactNode }) {
     
     const updateOnlineStatus = () => {
       if (navigator.onLine) {
-        // إذا عاد الاتصال، نلغي أي مؤقت للحظر ونخفي واجهة الأوفلاين فوراً
         if (offlineTimerRef.current) {
           clearTimeout(offlineTimerRef.current);
           offlineTimerRef.current = null;
         }
         setIsOffline(false);
       } else {
-        // إذا انقطع الاتصال، ننتظر 5 ثوانٍ للتأكد من أنه ليس تذبذباً عابراً
+        // الانتظار 5 ثوانٍ قبل تأكيد الانقطاع لمنع الإزعاج من تذبذب الشبكة
         if (!offlineTimerRef.current) {
           offlineTimerRef.current = setTimeout(() => {
             if (!navigator.onLine) {
@@ -39,7 +38,6 @@ export function OfflineDetector({ children }: { children: React.ReactNode }) {
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
 
-    // فحص أولي عند التحميل
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
        updateOnlineStatus();
     }

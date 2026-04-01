@@ -110,7 +110,7 @@ function AddAdminDialog() {
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
         
-        // تحسين البحث بالاسم الكامل المدمج (كلمات متعددة)
+        // نظام البحث بالاسم الكامل المدمج
         return searchParts.every(part => 
             fullName.includes(part) || email.includes(part)
         );
@@ -171,7 +171,7 @@ function AddAdminDialog() {
           </span>
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="rounded-2xl">
         <DialogHeader>
           <DialogTitle>إضافة مسؤول جديد</DialogTitle>
           <DialogDescription>
@@ -202,8 +202,8 @@ function AddAdminDialog() {
                   {searchResults.map(student => (
                     <div key={student.id} className="flex items-center justify-between p-2 bg-background rounded-md">
                         <div className="text-right">
-                            <p className="font-semibold">{student.firstName} {student.lastName}</p>
-                            <p className="text-sm text-muted-foreground">{student.email}</p>
+                            <p className="font-bold">{student.firstName} {student.lastName}</p>
+                            <p className="text-xs text-muted-foreground">{student.email}</p>
                         </div>
                         <Button size="sm" onClick={() => handleMakeAdmin(student)} disabled={isSaving === student.id}>
                             {isSaving === student.id ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : 'جعله مسؤولاً'}
@@ -239,9 +239,9 @@ function AdminRow({ admin }: { admin: Student }) {
         <TableCell className="text-right">
           <div className="flex items-center gap-3">
             <Avatar className="hidden h-9 w-9 sm:flex">
-              <AvatarFallback>{admin.firstName?.charAt(0)}</AvatarFallback>
+              <AvatarFallback className="font-bold">{admin.firstName?.charAt(0)}</AvatarFallback>
             </Avatar>
-            <span className="font-medium">
+            <span className="font-bold">
               {admin.firstName} {admin.lastName}
             </span>
           </div>
@@ -264,7 +264,7 @@ function AdminRow({ admin }: { admin: Student }) {
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
             <AlertDialogDescription className="text-right">
@@ -349,7 +349,7 @@ export default function AdminAdminsPage() {
   return (
     <>
       <div className="flex items-center gap-4 mb-4">
-        <h1 className="text-lg font-semibold md:text-2xl">المسؤولون</h1>
+        <h1 className="text-xl font-bold md:text-2xl">المسؤولون</h1>
         <div className="ml-auto flex items-center gap-2">
             <AddAdminDialog />
         </div>
@@ -382,9 +382,9 @@ export default function AdminAdminsPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="text-right">الاسم</TableHead>
-                    <TableHead className="text-right">البريد الإلكتروني</TableHead>
-                    <TableHead className="text-center">
+                    <TableHead className="text-right font-bold">الاسم</TableHead>
+                    <TableHead className="text-right font-bold">البريد الإلكتروني</TableHead>
+                    <TableHead className="text-center font-bold">
                       الإجراءات
                     </TableHead>
                   </TableRow>
