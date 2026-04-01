@@ -522,7 +522,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 {/* Floating small icons */}
                                 <Trash2 className="absolute top-2 left-2 h-3 w-3 text-muted-foreground/30 animate-float-delayed" />
-                                <FileText className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
+                                <Zap className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
                             </div>
 
                             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
