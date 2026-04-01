@@ -44,8 +44,8 @@ import { useUser, useAuth, useFirestore, useDoc, useMemoFirebase, useCollection 
 import { signOut } from 'firebase/auth';
 import { Skeleton } from './ui/skeleton';
 import { useNavigationLoader } from '@/hooks/use-navigation-loader';
-import type { Student, AppSettings, Notification, Announcement } from '@/lib/data';
-import { doc, collection, query, where } from 'firebase/firestore';
+import type { Student, AppSettings, Notification, Announcement, DepositRequest } from '@/lib/data';
+import { doc, collection, query, where, collectionGroup } from 'firebase/firestore';
 import { cn } from '@/lib/utils';
 import { Sidebar, SidebarContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarSeparator, SidebarHeader, SidebarFooter } from './ui/sidebar';
 import {
@@ -86,7 +86,7 @@ export function DashboardLayout({
   );
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
-  // Admin status check to prevent students from hitting permission-denied queries in admin pages
+  // Admin status check
   const adminDocRef = useMemoFirebase(
     () => (user && firestore ? doc(firestore, 'roles_admin', user.uid) : null),
     [user, firestore]
@@ -94,6 +94,7 @@ export function DashboardLayout({
   const { data: adminRole, isLoading: isCheckingAdmin } = useDoc(adminDocRef);
   const isAdmin = !!adminRole;
 
+  // Student specific queries
   const announcementsQuery = useMemoFirebase(
     () => (firestore && studentData && layoutType === 'student') ? query(
       collection(firestore, 'announcements'),
@@ -104,22 +105,46 @@ export function DashboardLayout({
   );
   const { data: announcements } = useCollection<Announcement>(announcementsQuery);
 
+  // Shared queries (Notifications)
   const notificationsQuery = useMemoFirebase(
     () => (user && firestore) ? query(collection(firestore, `users/${user.uid}/notifications`), where('isRead', '==', false)) : null,
     [user, firestore]
   );
   const { data: unreadNotifications } = useCollection<Notification>(notificationsQuery);
+
+  // Admin specific queries (Pending Payments)
+  const pendingPaymentsQuery = useMemoFirebase(
+    () => (firestore && user && layoutType === 'admin' && isAdmin) 
+      ? query(collectionGroup(firestore, 'depositRequests'), where('status', '==', 'pending')) 
+      : null,
+    [firestore, user, layoutType, isAdmin]
+  );
+  const { data: pendingPayments } = useCollection<DepositRequest>(pendingPaymentsQuery, { ignorePermissionErrors: true });
   
-  const unreadCount = React.useMemo(() => {
-    let count = unreadNotifications?.length || 0;
-    if (layoutType === 'student' && announcements && studentData) {
-      const unreadAnnouncements = announcements.filter(a => 
-        !studentData.readAnnouncements?.includes(a.id)
-      );
-      count += unreadAnnouncements.length;
+  // Badge counting logic per item
+  const getBadgeCount = (href: string) => {
+    if (href === '/dashboard/notifications') {
+      let count = unreadNotifications?.length || 0;
+      if (layoutType === 'student' && announcements && studentData) {
+        const unreadAnnouncements = announcements.filter(a => 
+          !studentData.readAnnouncements?.includes(a.id)
+        );
+        count += unreadAnnouncements.length;
+      }
+      return count;
     }
-    return count;
-  }, [unreadNotifications, announcements, studentData, layoutType]);
+    
+    if (href === '/admin/dashboard/payments') {
+      return pendingPayments?.length || 0;
+    }
+
+    if (href === '/admin/dashboard/announcements') {
+      // Just showing unread notifications for admin here
+      return unreadNotifications?.length || 0;
+    }
+
+    return 0;
+  };
 
   const settingsDocRef = useMemoFirebase(
     () => (firestore && user ? doc(firestore, 'settings', 'global') : null),
@@ -175,18 +200,16 @@ export function DashboardLayout({
     }
   }, [user, isUserLoading, router]);
 
-  // Route protection logic - Fixed to handle Admin reloads on student pages
+  // Route protection logic
   React.useEffect(() => {
     if (isUserLoading || isCheckingAdmin || !user) return;
 
     if (layoutType === 'admin') {
       if (!isAdmin) {
-        // Student trying to access admin area
         router.replace('/dashboard/courses');
       }
     } else if (layoutType === 'student') {
       if (isAdmin) {
-        // Admin trying to access student area (auto-redirect to their domain)
         router.replace('/admin/dashboard');
       }
     }
@@ -291,24 +314,27 @@ export function DashboardLayout({
             <SidebarSeparator />
             <SidebarContent className="flex flex-col">
               <SidebarMenu className="flex-grow">
-                {navItems.map((item) => (
-                  <SidebarMenuItem key={item.label}>
-                    <SidebarMenuButton
-                      as={item.href ? Link : "button"}
-                      href={item.href}
-                      onClick={item.href ? () => handleNavClick(item.href!) : item.action}
-                      isActive={item.href ? isNavItemActive(item) : false}
-                    >
-                      <item.icon />
-                      <span>{item.label}</span>
-                       {item.href && (item.href === '/dashboard/notifications' || (layoutType === 'admin' && item.href === '/admin/dashboard/payments')) && unreadCount > 0 && (
-                        <span className="mr-auto h-5 w-5 flex items-center justify-center rounded-full bg-destructive text-xs text-destructive-foreground">
-                          {unreadCount}
-                        </span>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                ))}
+                {navItems.map((item) => {
+                  const count = item.href ? getBadgeCount(item.href) : 0;
+                  return (
+                    <SidebarMenuItem key={item.label}>
+                      <SidebarMenuButton
+                        as={item.href ? Link : "button"}
+                        href={item.href}
+                        onClick={item.href ? () => handleNavClick(item.href!) : item.action}
+                        isActive={item.href ? isNavItemActive(item) : false}
+                      >
+                        <item.icon />
+                        <span>{item.label}</span>
+                        {count > 0 && (
+                          <span className="mr-auto h-5 w-5 flex items-center justify-center rounded-full bg-destructive text-[10px] font-black text-destructive-foreground animate-in zoom-in-50 duration-300">
+                            {count}
+                          </span>
+                        )}
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
               </SidebarMenu>
             </SidebarContent>
             <SidebarSeparator />
@@ -343,6 +369,7 @@ export function DashboardLayout({
                         <nav className="grid gap-1.5 text-lg font-medium" dir="rtl">
                           {navItems.map((item) => {
                             if (item.href) {
+                                const count = getBadgeCount(item.href);
                                 return (
                                   <Link
                                     key={item.label}
@@ -355,12 +382,12 @@ export function DashboardLayout({
                                   >
                                     <item.icon className="h-5 w-5" />
                                     <span className="flex-grow">{item.label}</span>
-                                     {item.href && (item.href === '/dashboard/notifications' || (layoutType === 'admin' && item.href === '/admin/dashboard/payments')) && unreadCount > 0 && (
+                                    {count > 0 && (
                                       <span className={cn(
-                                          "h-5 w-5 flex items-center justify-center rounded-full text-[10px]",
-                                          isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-destructive-foreground"
+                                          "h-5 w-5 flex items-center justify-center rounded-full text-[10px] font-black",
+                                          isNavItemActive(item) ? "bg-white text-primary" : "bg-destructive text-white"
                                       )}>
-                                        {unreadCount}
+                                        {count}
                                       </span>
                                     )}
                                   </Link>
