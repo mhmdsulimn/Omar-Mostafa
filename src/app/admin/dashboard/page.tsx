@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -33,6 +32,7 @@ import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { cn } from '@/lib/utils';
 
 type AdminRole = { id: string };
 
@@ -236,7 +236,6 @@ export default function AdminDashboardPage() {
                 <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
             </div>
 
-            {/* قسم إحصائيات قاعدة البيانات (الجديد) */}
             <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
                 <Card className="md:col-span-2 shadow-sm border-primary/10 overflow-hidden">
                     <CardHeader className="bg-muted/30 p-4 border-b">
