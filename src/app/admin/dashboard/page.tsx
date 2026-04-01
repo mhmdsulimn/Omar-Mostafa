@@ -235,12 +235,12 @@ export default function AdminDashboardPage() {
         const dailyDeletes = Math.floor(todayPayments * 0.1); 
 
         const sevenDaysAgo = subDays(new Date(), 7);
-        const thirtyDaysAgo = subDays(new Date(), 30);
 
-        const garbageNotifs = allNotifsData?.filter(n => n.isRead && new Date(n.createdAt) < thirtyDaysAgo) || [];
+        // تحديث المعايير: 7 أيام للإشعارات والمدفوعات والإعلانات
+        const garbageNotifs = allNotifsData?.filter(n => n.isRead && new Date(n.createdAt) < sevenDaysAgo) || [];
         const garbagePayments = allPaymentsData?.filter(p => p.status !== 'pending' && new Date(p.requestDate) < sevenDaysAgo) || [];
         const garbageIncompleteUsers = allUsersData.filter(u => !u.grade && !adminIds.has(u.id));
-        const garbageAnnouncements = allAnnouncements?.filter(a => !a.isActive && new Date(a.updatedAt) < thirtyDaysAgo) || [];
+        const garbageAnnouncements = allAnnouncements?.filter(a => !a.isActive && new Date(a.updatedAt) < sevenDaysAgo) || [];
         const garbageDeletionReqs = allDeletionRequests || [];
         
         const garbageCount = garbageNotifs.length + garbagePayments.length + garbageIncompleteUsers.length + garbageAnnouncements.length + garbageDeletionReqs.length;
