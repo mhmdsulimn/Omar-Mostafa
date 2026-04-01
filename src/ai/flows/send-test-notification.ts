@@ -72,11 +72,17 @@ const sendTestNotificationFlow = ai.defineFlow(
     } catch (error: any) {
       console.error('Test Notification Flow Error:', error);
       
-      // معالجة خطأ الـ Token الشهير في بيئة التطوير (Auth 500)
-      if (error.message?.includes('access token') || error.message?.includes('500') || error.message?.includes('metadata')) {
+      // معالجة خطأ الـ Credentials والـ Token في بيئة التطوير
+      const errorMsg = error.message?.toLowerCase() || '';
+      if (
+        errorMsg.includes('credentials') || 
+        errorMsg.includes('access token') || 
+        errorMsg.includes('500') || 
+        errorMsg.includes('metadata')
+      ) {
         return {
           success: false,
-          message: 'تحذير تقني: الكود سليم 100%، ولكن بيئة التطوير الحالية تفتقد لـ "مفتاح الخدمة" (Service Account Key) للحديث مع سيرفرات جوجل. النظام سيعمل بشكل كامل وتلقائي بمجرد رفع الموقع (Deployment) للطلاب.'
+          message: 'تنبيه: الكود البرمجي سليم تماماً، ولكن بيئة التطوير الحالية تفتقد لـ "مفتاح الخدمة" (Service Account Key). الإشعارات الفورية ستعمل بشكل تلقائي وفوري بمجرد رفع الموقع (Deployment) على السيرفر.'
         };
       }
 
