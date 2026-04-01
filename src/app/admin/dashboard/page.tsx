@@ -364,10 +364,6 @@ export default function AdminDashboardPage() {
                         <div className="bg-primary/10 p-2 rounded-lg"><Activity className="h-5 w-5 text-primary" /></div>
                         <h1 className="text-xl font-bold md:text-2xl">نظرة عامة على النظام</h1>
                     </div>
-                    <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 gap-1.5 px-3 py-1">
-                        <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                        مراقب البيانات نشط
-                    </Badge>
                 </div>
 
                 <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -469,7 +465,6 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
 
-                            {/* التنبيهات مع مراقب الاستخدام */}
                             <div className="p-4 bg-muted/10 border-b">
                                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                                     <div className="flex items-center gap-2">
