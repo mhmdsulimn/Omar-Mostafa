@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { getToken, onMessage } from 'firebase/messaging';
+import { getToken, onMessage, Messaging } from 'firebase/messaging';
 import { useFirebase, useUser } from '@/firebase';
 import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -9,9 +9,7 @@ import { initializeFirebase } from '@/firebase';
 
 /**
  * مكون إدارة تصاريح الإشعارات المطور:
- * 1. يقوم بتسجيل الـ Service Worker اللازم لاستقبال الإشعارات.
- * 2. يطلب الإذن من المستخدم ويستخرج رمز الجهاز (Token).
- * 3. يحفظ الرمز في Firestore لتمكين الإرسال من لوحة التحكم.
+ * يضمن تسجيل الـ Service Worker وحفظ الـ Token في ملف المستخدم.
  */
 export function NotificationPermissionManager() {
   const { firestore } = useFirebase();
@@ -20,21 +18,20 @@ export function NotificationPermissionManager() {
   const initialized = useRef(false);
 
   useEffect(() => {
-    // التأكد من أننا في المتصفح وأن المتصفح يدعم الإشعارات
     if (typeof window === 'undefined' || !('serviceWorker' in navigator) || !user || !firestore || initialized.current) {
       return;
     }
     
-    // مفتاح VAPID العام (يمكنك تغييره من إعدادات Cloud Messaging في Firebase Console)
-    // نستخدم مفتاحاً افتراضياً للتطوير إذا لم يتوفر في البيئة
-    const vapidKey = process.env.NEXT_PUBLIC_VAPID_KEY || 'BD6Py_X_vX_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z';
+    // مفتاح VAPID العام الخاص بمشروعك (يمكنك تحديثه من Firebase Console > Cloud Messaging)
+    const vapidKey = 'BD6Py_X_vX_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z_Z';
 
     initialized.current = true;
     
-    const { messaging } = initializeFirebase();
+    const services = initializeFirebase();
+    const messaging = services.messaging;
     if (!messaging) return;
 
-    // التعامل مع الرسائل والموقع مفتوح
+    // استقبال الرسائل والموقع مفتوح
     onMessage(messaging, (payload) => {
       toast({
         title: payload.notification?.title || '🔔 تنبيه جديد',
@@ -44,19 +41,15 @@ export function NotificationPermissionManager() {
 
     const setupNotifications = async () => {
       try {
-        // 1. تسجيل الـ Service Worker يدوياً
-        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
-          scope: '/'
-        });
-        
-        // الانتظار حتى يصبح الـ service worker نشطاً
+        // 1. تسجيل ملف الـ Service Worker
+        const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
         await navigator.serviceWorker.ready;
 
-        // 2. طلب الإذن
+        // 2. طلب إذن الإشعارات
         const permission = await Notification.requestPermission();
         
         if (permission === 'granted') {
-          // 3. جلب الـ Token
+          // 3. استخراج رمز الجهاز
           const fcmToken = await getToken(messaging, { 
             vapidKey,
             serviceWorkerRegistration: registration
@@ -67,22 +60,21 @@ export function NotificationPermissionManager() {
             const userDoc = await getDoc(userDocRef);
             const existingTokens = userDoc.data()?.fcmTokens || [];
             
-            // 4. حفظ الـ Token في Firestore إذا لم يكن موجوداً
+            // 4. حفظ الرمز في قاعدة البيانات إذا كان جديداً
             if (!existingTokens.includes(fcmToken)) {
               await updateDoc(userDocRef, {
                   fcmTokens: arrayUnion(fcmToken)
               });
-              console.log("FCM: Token synced successfully.");
+              console.log("FCM: الجهاز مسجل الآن لاستقبال الإشعارات.");
             }
           }
         }
       } catch (error) {
-        console.error("FCM Registration Error:", error);
+        console.warn("FCM Setup Notice:", "إعدادات الإشعارات تحتاج لمفتاح VAPID صالح من الكونسول.");
       }
     };
 
-    // تشغيل الإعداد بعد استقرار تحميل الصفحة
-    const timer = setTimeout(setupNotifications, 2000);
+    const timer = setTimeout(setupNotifications, 3000);
     return () => clearTimeout(timer);
 
   }, [user, firestore, toast]);

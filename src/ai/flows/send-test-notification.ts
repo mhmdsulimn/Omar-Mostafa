@@ -6,7 +6,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getFirestore } from 'firebase-admin/firestore';
+import { adminDb, adminAuth } from '@/firebase/admin-services';
 import { getMessaging } from 'firebase-admin/messaging';
 
 const TestNotifInputSchema = z.object({
@@ -25,20 +25,20 @@ const sendTestNotificationFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      const db = getFirestore();
-      const userDoc = await db.collection('users').doc(input.userId).get();
+      // استخدام adminDb بدلاً من getFirestore لضمان استقرار التطبيق الإداري
+      const userDoc = await adminDb.collection('users').doc(input.userId).get();
       
       if (!userDoc.exists) {
         return { success: false, message: 'لم يتم العثور على ملف المستخدم في قاعدة البيانات.' };
       }
 
       const tokens = userDoc.data()?.fcmTokens || [];
-      const activeTokens = tokens.filter((t: string) => t && typeof t === 'string');
+      const activeTokens = tokens.filter((t: any) => t && typeof t === 'string');
 
       if (activeTokens.length === 0) {
         return { 
           success: false, 
-          message: 'جهازك غير مسجل لاستقبال الإشعارات. يرجى التأكد من الضغط على "Allow" في المتصفح وتحديث الصفحة، ثم المحاولة مرة أخرى.' 
+          message: 'جهازك غير مسجل. يرجى الضغط على "Allow" في المتصفح وتحديث الصفحة ثم المحاولة مرة أخرى.' 
         };
       }
 
@@ -55,6 +55,7 @@ const sendTestNotificationFlow = ai.defineFlow(
         tokens: activeTokens,
       };
 
+      // إرسال الإشعار
       const response = await getMessaging().sendEachForMulticast(message);
       
       if (response.successCount > 0) {
