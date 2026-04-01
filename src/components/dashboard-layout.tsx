@@ -338,7 +338,7 @@ export function DashboardLayout({
             <SidebarSeparator />
             <SidebarFooter className="p-4 pt-3 text-center shrink-0 overflow-hidden">
               <DeveloperInfoDialog>
-                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-soft hover:animate-none hover:scale-105 active:scale-95">
+                <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse hover:animate-none hover:scale-105 active:scale-95">
                   Developed by Mohamed Suliman
                 </button>
               </DeveloperInfoDialog>
@@ -398,7 +398,7 @@ export function DashboardLayout({
 
                       <div className="mt-auto p-4 text-center border-t bg-sidebar/5 overflow-hidden">
                         <DeveloperInfoDialog>
-                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse-soft hover:animate-none hover:scale-105 active:scale-95">
+                          <button className="text-[10px] font-black uppercase tracking-[0.12em] text-muted-foreground/60 hover:text-primary transition-all duration-300 focus:outline-none whitespace-nowrap animate-pulse hover:animate-none hover:scale-105 active:scale-95">
                             Developed by Mohamed Suliman
                           </button>
                         </DeveloperInfoDialog>
