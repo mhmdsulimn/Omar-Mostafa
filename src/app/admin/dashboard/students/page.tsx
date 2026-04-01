@@ -50,6 +50,7 @@ import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { toArabicDigits, cn } from '@/lib/utils';
+import { useSearchParams } from 'next/navigation';
 
 const gradeMap: Record<Student['grade'], string> = {
   first_secondary: '1ث',
@@ -414,7 +415,8 @@ function UserRow({ user: student }: { user: Student }) {
 export default function AdminStudentsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
-  const [searchTerm, setSearchTerm] = React.useState('');
+  const searchParams = useSearchParams();
+  const [searchTerm, setSearchTerm] = React.useState(searchParams.get('search') || '');
   const [gradeFilter, setGradeFilter] = React.useState('all');
 
   const adminsQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'roles_admin') : null), [firestore, user]);

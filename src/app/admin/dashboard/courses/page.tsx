@@ -8,12 +8,12 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import type { Course } from '@/lib/data';
+import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, User, ArrowRight } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,14 +33,122 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-
-const gradeMap: Record<Course['grade'], string> = {
+const gradeMap: Record<string, string> = {
   first_secondary: 'الصف الأول الثانوي',
   second_secondary: 'الصف الثاني الثانوي',
   third_secondary: 'الصف الثالث الثانوي',
 };
+
+function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Course | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
+    const firestore = useFirestore();
+    const router = useRouter();
+    const [searchTerm, setSearchTerm] = React.useState('');
+
+    const subscriptionsQuery = useMemoFirebase(
+        () => (firestore && course ? query(collectionGroup(firestore, 'studentCourses'), where('courseId', '==', course.id)) : null),
+        [firestore, course?.id]
+    );
+    const { data: subscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
+
+    const studentIds = React.useMemo(() => subscriptions?.map(s => s.studentId) || [], [subscriptions]);
+
+    const studentsQuery = useMemoFirebase(
+        () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
+        [firestore, studentIds]
+    );
+    const { data: students, isLoading: isLoadingStudents } = useCollection<Student>(studentsQuery, { ignorePermissionErrors: true });
+
+    const filteredStudents = React.useMemo(() => {
+        if (!students) return [];
+        if (!searchTerm.trim()) return students;
+        
+        const term = searchTerm.toLowerCase().trim();
+        const searchParts = term.split(/\s+/).filter(p => p.length > 0);
+
+        return students.filter(s => {
+            const fullName = `${s.firstName || ''} ${s.lastName || ''}`.toLowerCase();
+            const email = (s.email || '').toLowerCase();
+            return searchParts.every(part => fullName.includes(part) || email.includes(part));
+        });
+    }, [students, searchTerm]);
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
+                <DialogHeader className="p-6 bg-primary/5 border-b text-right">
+                    <div className="flex items-center justify-between flex-row-reverse mb-2">
+                        <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
+                        <DialogTitle className="text-xl font-bold">الطلاب المشتركين</DialogTitle>
+                    </div>
+                    <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
+                    <div className="relative mt-4">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="ابحث عن طالب في هذا الكورس..." 
+                            className="pr-9 bg-background h-11 rounded-xl text-right"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </DialogHeader>
+                <div className="p-0">
+                    <ScrollArea className="h-[400px]">
+                        {isLoadingSubs || isLoadingStudents ? (
+                            <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
+                        ) : filteredStudents.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
+                                <Users className="h-10 w-10 opacity-10" />
+                                <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y">
+                                {filteredStudents.map(student => (
+                                    <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                        <Button 
+                                            variant="ghost" 
+                                            size="sm" 
+                                            className="rounded-lg h-8 gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                                            onClick={() => {
+                                                onOpenChange(false);
+                                                router.push(`/admin/dashboard/students?search=${student.email}`);
+                                            }}
+                                        >
+                                            <span>عرض الملف</span>
+                                            <ArrowRight className="h-3.5 w-3.5 rotate-180" />
+                                        </Button>
+                                        <div className="flex items-center gap-3 text-right" dir="rtl">
+                                            <Avatar className="h-9 w-9 border">
+                                                <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col text-right">
+                                                <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
+                                                <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+                </div>
+                <div className="p-4 bg-muted/20 border-t text-center">
+                    <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين المكتشفين: {subscriptions?.length || 0} طالب</p>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 export default function AdminCoursesPage() {
   const firestore = useFirestore();
@@ -49,7 +157,7 @@ export default function AdminCoursesPage() {
   const { user } = useUser();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [gradeFilter, setGradeFilter] = React.useState('all');
-  const [dialogState, setDialogState] = React.useState<{ type: 'delete'; course: Course } | null>(null);
+  const [dialogState, setDialogState] = React.useState<{ type: 'delete' | 'subscribers'; course: Course } | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   
   const coursesCollection = useMemoFirebase(
@@ -222,6 +330,14 @@ export default function AdminCoursesPage() {
                       </Tooltip>
                       <Tooltip>
                           <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className='h-8 w-8 bg-card/90 backdrop-blur shadow-sm text-primary hover:text-primary hover:bg-primary/10' onClick={() => setDialogState({ type: 'subscribers', course })}>
+                                  <Users className="h-4 w-4" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>الطلاب المشتركين</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
                             <Button variant="destructive" size="icon" className='h-8 w-8 shadow-sm' onClick={() => setDialogState({ type: 'delete', course })}>
                                   <Trash2 className="h-4 w-4" />
                               </Button>
@@ -290,6 +406,13 @@ export default function AdminCoursesPage() {
           })}
         </div>
       )}
+
+      <CourseSubscribersDialog 
+        course={dialogState?.type === 'subscribers' ? dialogState.course : null} 
+        isOpen={dialogState?.type === 'subscribers'} 
+        onOpenChange={(open) => !open && setDialogState(null)} 
+      />
+
       <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => !open && setDialogState(null)}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
           <AlertDialogHeader>
