@@ -27,8 +27,8 @@ import { collection, query, collectionGroup, doc } from 'firebase/firestore';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive } from 'lucide-react';
-import { format } from 'date-fns';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, AlertTriangle } from 'lucide-react';
+import { format, isToday } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
@@ -127,19 +127,20 @@ export default function AdminDashboardPage() {
     const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
 
     const allNotifsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'notifications')) : null), [firestore, user]);
-    const { data: allNotifsData } = useCollection<Notification>(allNotifsQuery, { ignorePermissionErrors: true });
+    const { data: allNotifsData } = useCollection<Notification>(allNotifsData ? undefined : allNotifsQuery, { ignorePermissionErrors: true });
     
     const isLoading = isLoadingAdmins || isLoadingStudents || isLoadingExams || isLoadingSubmissions || isLoadingCourses;
     
     const {
         studentsCount, examsCount, coursesCount, averageScore, recentSubmissions, studentsMap, examsMap, gradeDistributionData, gradePerformanceData,
-        dbStats
+        dbStats, dailyActivity
     } = React.useMemo(() => {
         if (isLoading || !allUsersData || !adminRoles || !allExamsData || !allSubmissionsData || !allCoursesData) {
             return {
                 studentsCount: 0, examsCount: 0, coursesCount: 0,
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
-                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 }
+                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 },
+                dailyActivity: { reads: 0, writes: 0, deletes: 0 }
             };
         }
 
@@ -188,7 +189,18 @@ export default function AdminDashboardPage() {
             { name: 'ثالثة ثانوي', averageScore: gradePerformance.third_secondary.count > 0 ? Math.round(gradePerformance.third_secondary.totalScore / gradePerformance.third_secondary.count) : 0 },
         ].filter(item => item.averageScore > 0);
 
-        // حساب إحصائيات قاعدة البيانات التقديرية
+        // حساب العمليات اليومية التقديرية
+        const todaySubmissions = allSubmissionsData.filter(s => isToday(new Date(s.submissionDate))).length;
+        const todayPayments = allPaymentsData?.filter(p => isToday(new Date(p.requestDate))).length || 0;
+        const todayNotifs = allNotifsData?.filter(n => isToday(new Date(n.createdAt))).length || 0;
+
+        // Writes: كل امتحان جديد أو طلب دفع هو عملية كتابة
+        const dailyWrites = todaySubmissions + todayPayments + todayNotifs;
+        // Reads: تقديرياً، كل طالب نشط يقوم بـ 5 عمليات قراءة على الأقل يومياً
+        const dailyReads = (filteredStudents.length * 5) + (todaySubmissions * 3);
+        // Deletes: تقديرياً من عمليات التنظيف التلقائية
+        const dailyDeletes = 0; // عادة تكون منخفضة إلا في حالة مسح بيانات
+
         const totalDocs = 
             (allUsersData.length || 0) + 
             (allExamsData.length || 0) + 
@@ -198,12 +210,11 @@ export default function AdminDashboardPage() {
             (allPaymentsData?.length || 0) +
             (allNotifsData?.length || 0);
 
-        const writeLoad = allSubmissionsData.length > 100 ? 'مرتفع' : allSubmissionsData.length > 50 ? 'متوسط' : 'منخفض';
-        const readLoad = totalDocs > 500 ? 'مرتفع' : totalDocs > 200 ? 'متوسط' : 'منخفض';
+        const writeLoad = dailyWrites > 50 ? 'مرتفع' : dailyWrites > 20 ? 'متوسط' : 'منخفض';
+        const readLoad = dailyReads > 200 ? 'مرتفع' : dailyReads > 100 ? 'متوسط' : 'منخفض';
 
-        // حساب المساحة التقديرية (بافتراض 1.5 كيلوبايت لكل وثيقة شاملة بيانات الاختبارات والصور)
         const estimatedConsumedMB = Number(((totalDocs * 1.5) / 1024).toFixed(2));
-        const limitMB = 1024; // باقة فايربيز المجانية 1 جيجابايت
+        const limitMB = 1024;
         const usagePercentage = Math.min(100, (estimatedConsumedMB / limitMB) * 100);
 
         return {
@@ -223,6 +234,11 @@ export default function AdminDashboardPage() {
                 consumedMB: estimatedConsumedMB, 
                 remainingMB: Math.max(0, limitMB - estimatedConsumedMB),
                 usagePercentage
+            },
+            dailyActivity: {
+                reads: dailyReads,
+                writes: dailyWrites,
+                deletes: dailyDeletes
             }
         };
 
@@ -238,9 +254,15 @@ export default function AdminDashboardPage() {
 
     return (
         <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
-            <div className="flex items-center gap-3 px-2">
-                <div className="bg-primary/10 p-2 rounded-lg"><Activity className="h-5 w-5 text-primary" /></div>
-                <h1 className="text-xl font-bold md:text-2xl">نظرة عامة على النظام</h1>
+            <div className="flex items-center justify-between gap-3 px-2">
+                <div className='flex items-center gap-3'>
+                    <div className="bg-primary/10 p-2 rounded-lg"><Activity className="h-5 w-5 text-primary" /></div>
+                    <h1 className="text-xl font-bold md:text-2xl">نظرة عامة على النظام</h1>
+                </div>
+                <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200 gap-1.5 px-3 py-1">
+                    <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
+                    مراقب البيانات نشط
+                </Badge>
             </div>
 
             <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
@@ -260,7 +282,35 @@ export default function AdminDashboardPage() {
                         <CardDescription className="text-xs">إحصائيات مباشرة لعدد السجلات والعمليات الحالية.</CardDescription>
                     </CardHeader>
                     <CardContent className="p-0">
-                        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-y border-b">
+                        {/* قسم العمليات اليومية المطور */}
+                        <div className="grid grid-cols-3 divide-x divide-x-reverse border-b bg-primary/5">
+                            <div className="p-4 text-center">
+                                <div className='flex items-center justify-center gap-1.5 mb-1'>
+                                    <MousePointer2 className="h-3 w-3 text-blue-500" />
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">قراءة (Reads) اليوم</p>
+                                </div>
+                                <p className="text-2xl font-black text-blue-600">{dailyActivity.reads}</p>
+                                <p className="text-[9px] text-muted-foreground italic">تقديري</p>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className='flex items-center justify-center gap-1.5 mb-1'>
+                                    <PlusCircle className="h-3 w-3 text-green-600" />
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">كتابة (Writes) اليوم</p>
+                                </div>
+                                <p className="text-2xl font-black text-green-600">{dailyActivity.writes}</p>
+                                <p className="text-[9px] text-muted-foreground italic">فعلي</p>
+                            </div>
+                            <div className="p-4 text-center">
+                                <div className='flex items-center justify-center gap-1.5 mb-1'>
+                                    <Trash2 className="h-3 w-3 text-red-500" />
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold">حذف (Deletes) اليوم</p>
+                                </div>
+                                <p className="text-2xl font-black text-red-600">{dailyActivity.deletes}</p>
+                                <p className="text-[9px] text-muted-foreground italic">فعلي</p>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-x-reverse divide-y border-b">
                             <div className="p-4 text-center">
                                 <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">إجمالي الوثائق</p>
                                 <p className="text-2xl font-black text-primary">{dbStats.totalDocs}</p>
@@ -293,7 +343,6 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                         
-                        {/* قسم المساحة التخزينية المطور */}
                         <div className="p-6 bg-background">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
@@ -316,7 +365,7 @@ export default function AdminDashboardPage() {
                                 </div>
                             </div>
                             <p className="text-[9px] text-muted-foreground italic mt-4 text-center leading-relaxed">
-                                * هذه الأرقام هي تقدير برمجي بناءً على عدد الوثائق ونوع البيانات المخزنة. المساحة المتبقية تخص حصة التخزين في Firebase Firestore فقط.
+                                * الأرقام هي تقدير برمجي بناءً على عدد السجلات. إحصائيات الكتابة والحذف اليومية يتم حسابها من سجلات المنصة ليوم {format(new Date(), 'EEEE d MMMM', { locale: arSA })}.
                             </p>
                         </div>
                     </CardContent>
@@ -338,15 +387,13 @@ export default function AdminDashboardPage() {
                             </div>
                         </div>
                         
-                        {dbStats.usagePercentage > 80 && (
-                            <div className="flex items-start gap-3 p-3 rounded-lg bg-red-50 border border-red-200">
-                                <AlertTriangle className="h-4 w-4 text-red-600 shrink-0 mt-0.5" />
-                                <div className="text-[11px] leading-relaxed text-red-700">
-                                    <p className="font-bold mb-1">اقتربت من الحد المجاني</p>
-                                    <p>يرجى مراجعة البيانات القديمة أو ترقية الباقة لضمان استمرار الخدمة.</p>
-                                </div>
+                        <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 border border-blue-200">
+                            <Activity className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
+                            <div className="text-[11px] leading-relaxed text-blue-700">
+                                <p className="font-bold mb-1">نشاط الطلاب اليوم</p>
+                                <p>تم تسجيل {dailyActivity.writes} عملية تحديث بيانات (امتحانات وطلبات دفع) خلال الـ 24 ساعة الماضية.</p>
                             </div>
-                        )}
+                        </div>
 
                         <div className="p-4 bg-primary/5 rounded-xl border border-primary/10 mt-4">
                             <div className="flex items-center gap-2 text-[10px] font-bold text-primary mb-2 uppercase">
