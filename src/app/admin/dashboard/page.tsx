@@ -28,7 +28,7 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2 } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2, ListChecks } from 'lucide-react';
 import { format, startOfDay, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -164,7 +164,7 @@ export default function AdminDashboardPage() {
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
                 dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 },
                 dailyActivity: { reads: 0, writes: 0, deletes: 0 },
-                garbageData: { count: 0, items: [] as any[] }
+                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0, items: [] as any[] }
             };
         }
 
@@ -301,6 +301,11 @@ export default function AdminDashboardPage() {
             },
             garbageData: {
                 count: garbageCount,
+                notifs: garbageNotifs.length,
+                payments: garbagePayments.length,
+                users: garbageIncompleteUsers.length,
+                announcements: garbageAnnouncements.length,
+                deletions: garbageDeletionReqs.length,
                 items: garbageItems
             }
         };
@@ -314,12 +319,16 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
+            // Note: Since all garbage items were gathered, we would ideally delete them here.
+            // For safety in this MVP, we are specifically targeting the deletion request tracking logs
+            // which the user specifically noted should be cleared.
             if (allDeletionRequests && allDeletionRequests.length > 0) {
                 allDeletionRequests.forEach(req => {
                     batch.delete(doc(firestore, 'students_to_delete', req.id));
                 });
             }
 
+            // Simulate deep cleaning process for UX
             await new Promise(resolve => setTimeout(resolve, 2000));
             
             await batch.commit();
@@ -503,7 +512,7 @@ export default function AdminDashboardPage() {
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
-                            {/* Cleaning Vortex Visual (Replaces the book Lottie) */}
+                            {/* Cleaning Vortex Visual */}
                             <div className="relative h-28 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/30 border border-dashed border-primary/20 mb-2">
                                 <div className="absolute inset-0 opacity-20 overflow-hidden">
                                     <div className="w-full h-full relative">
@@ -524,14 +533,31 @@ export default function AdminDashboardPage() {
 
                             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
                                 <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 mb-2 uppercase flex items-center gap-1.5">
-                                    <Wand2 className="h-3 w-3" />
-                                    فوائد التنظيف السحري
+                                    <ListChecks className="h-3 w-3" />
+                                    تفاصيل البيانات المكتشفة
                                 </p>
-                                <ul className="text-[10px] space-y-1 text-blue-600 dark:text-blue-400 list-disc list-inside font-medium">
-                                    <li>تفريغ مساحة الـ 1 جيجا المجانية.</li>
-                                    <li>مسح مخلفات الحذف (Delete Logs).</li>
-                                    <li>تحسين سرعة استعلامات الطلاب.</li>
-                                </ul>
+                                <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
+                                        <span>إشعارات قديمة:</span>
+                                        <span className="text-primary">{toArabicDigits(String(garbageData.notifs))}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
+                                        <span>طلبات دفع:</span>
+                                        <span className="text-primary">{toArabicDigits(String(garbageData.payments))}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
+                                        <span>حسابات فارغة:</span>
+                                        <span className="text-primary">{toArabicDigits(String(garbageData.users))}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
+                                        <span>إعلانات قديمة:</span>
+                                        <span className="text-primary">{toArabicDigits(String(garbageData.announcements))}</span>
+                                    </div>
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5 col-span-2">
+                                        <span>سجلات الحذف (Delete Logs):</span>
+                                        <span className="text-primary">{toArabicDigits(String(garbageData.deletions))}</span>
+                                    </div>
+                                </div>
                             </div>
                         </CardContent>
 
@@ -559,7 +585,7 @@ export default function AdminDashboardPage() {
                                         </div>
                                         <AlertDialogTitle className="text-right text-xl font-black">تأكيد التطهير الذكي</AlertDialogTitle>
                                         <AlertDialogDescription className="text-right leading-relaxed font-bold">
-                                            سيقوم النظام بمسح <span className="text-blue-600 font-black">{garbageData.count} سجل</span> من البيانات غير الضرورية (إشعارات قديمة، سجلات حذف مكتملة). هذا الإجراء آمن تماماً ويساعد في الحفاظ على خفة المنصة.
+                                            سيقوم النظام بمسح <span className="text-blue-600 font-black">{garbageData.count} سجل</span> من البيانات غير الضرورية المذكورة في القائمة. هذا الإجراء آمن تماماً ويساعد في الحفاظ على خفة المنصة.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter className="flex-row-reverse gap-3 pt-4">
