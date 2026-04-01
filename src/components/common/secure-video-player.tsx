@@ -39,10 +39,17 @@ export function SecureVideoPlayer({ videoUrl }: SecureVideoPlayerProps) {
     return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
   }, []);
 
-  // 1. Prevent Right-Click and DevTools shortcuts
+  // 1. Prevent Right-Click and DevTools shortcuts + Handle 'f' key
   React.useEffect(() => {
     const handleContextmenu = (e: MouseEvent) => e.preventDefault();
     const handleKeydown = (e: KeyboardEvent) => {
+      // Fullscreen shortcut 'f'
+      if (e.key.toLowerCase() === 'f' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        e.preventDefault();
+        handleFullscreenToggle();
+      }
+
+      // Security block shortcuts
       if (
         e.key === 'F12' ||
         (e.ctrlKey && e.shiftKey && ['I', 'J', 'C'].includes(e.key.toUpperCase())) ||

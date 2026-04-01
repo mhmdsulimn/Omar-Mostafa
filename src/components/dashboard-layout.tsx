@@ -186,6 +186,41 @@ export function DashboardLayout({
       { href: '/admin/dashboard/announcements', label: 'الرسائل', icon: MessageSquareQuote },
   ];
 
+  // --- Keyboard Shortcuts Logic ---
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey)) {
+        const key = e.key.toLowerCase();
+        
+        let targetPath = '';
+        const base = layoutType === 'admin' ? '/admin/dashboard' : '/dashboard';
+
+        if (key === 's') {
+          e.preventDefault();
+          targetPath = `${base}/settings`;
+        } else if (key === 'p') {
+          e.preventDefault();
+          targetPath = `${base}/profile`;
+        } else if (key === 'c') {
+          e.preventDefault();
+          targetPath = layoutType === 'admin' ? '/admin/dashboard/courses' : '/dashboard/courses';
+        } else if (key === 'e') {
+          e.preventDefault();
+          targetPath = layoutType === 'admin' ? '/admin/dashboard/exams' : '/dashboard/exams';
+        }
+
+        if (targetPath && pathname !== targetPath) {
+          setOptimisticPath(targetPath);
+          startLoader();
+          router.push(targetPath);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [layoutType, router, pathname, startLoader]);
+
   React.useEffect(() => {
     setIsMounted(true);
   }, []);
@@ -264,11 +299,11 @@ export function DashboardLayout({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => { setOptimisticPath(profilePath); startLoader(); router.push(profilePath); }}>
             <User className="ml-2 h-4 w-4" />
-            <span>الملف الشخصي</span>
+            <span>الملف الشخصي (Ctrl+P)</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => { setOptimisticPath(settingsPath); startLoader(); router.push(settingsPath); }}>
               <Settings className="ml-2 h-4 w-4" />
-              <span>الإعدادات</span>
+              <span>الإعدادات (Ctrl+S)</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
