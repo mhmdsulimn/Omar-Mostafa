@@ -606,7 +606,6 @@ export default function AdminStudentsPage() {
     () => (firestore && user ? collection(firestore, 'roles_admin') : null),
     [firestore, user]
   );
-  // Using ignorePermissionErrors to prevent redirection triggering global errors
   const { data: adminRoles, isLoading: isLoadingAdmins } = useCollection<{id: string}>(adminsQuery, { ignorePermissionErrors: true });
   
   const allUsersQuery = useMemoFirebase(
@@ -621,25 +620,25 @@ export default function AdminStudentsPage() {
     if (isLoading || !allUsersData || !adminRoles) return [];
     
     const adminIds = new Set(adminRoles.map(r => r.id));
+    // نستثني المسؤولين من قائمة الطلاب
     return allUsersData.filter(user => !adminIds.has(user.id));
   }, [allUsersData, adminRoles, isLoading]);
 
   const filteredUsers = React.useMemo(() => {
-    if (!students) {
-      return [];
-    }
+    if (!students) return [];
     
     const search = searchTerm.toLowerCase().trim();
 
-    return students.filter(user => {
-        const fullName = `${user.firstName || ''} ${user.lastName || ''}`.toLowerCase();
-        const email = (user.email || '').toLowerCase();
+    return students.filter(student => {
+        // البحث بالاسم الكامل (دمج الاسم الأول والأخير)
+        const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
+        const email = (student.email || '').toLowerCase();
         
         const searchMatch = !search ||
             fullName.includes(search) ||
             email.includes(search);
 
-        const gradeMatch = gradeFilter === 'all' || user.grade === gradeFilter;
+        const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
 
         return searchMatch && gradeMatch;
     }).sort((a,b) => (a.firstName || '').localeCompare(b.firstName || ''));
@@ -673,7 +672,7 @@ export default function AdminStudentsPage() {
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                    placeholder="ابحث بالاسم أو البريد..."
+                    placeholder="ابحث بالاسم بالكامل أو البريد..."
                     className="pr-8"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
@@ -696,7 +695,7 @@ export default function AdminStudentsPage() {
           {filteredUsers.length === 0 ? (
             <div className="text-center py-10">
               <p className="text-muted-foreground">
-                لم يتم العثور على طلاب.
+                لم يتم العثور على طلاب يطابقون بحثك.
               </p>
             </div>
           ) : (

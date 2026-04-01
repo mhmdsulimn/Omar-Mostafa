@@ -1,4 +1,3 @@
-
 'use client';
 import {
   Card,
@@ -262,7 +261,6 @@ export default function AdminSettingsPage() {
     if (appSettings) {
       setSupportPhoneNumber(appSettings.supportPhoneNumber || '');
       setVodafoneCashNumber(appSettings.vodafoneCashNumber || '');
-      // تزويد الصندوق بالمفتاح الحالي (المحفوظ أو الافتراضي) ليراه المستخدم
       setImgbbApiKey(appSettings.imgbbApiKey || DEFAULT_IMGBB_KEY);
     }
   }, [appSettings]);
@@ -363,12 +361,16 @@ export default function AdminSettingsPage() {
     try {
       const result = await sendTestNotification(user.uid);
       toast({
-        title: result.success ? 'طلب الاختبار تم' : 'تنبيه',
+        title: result.success ? '🚀 نجاح' : '⚠️ تنبيه',
         description: result.message,
         variant: result.success ? 'default' : 'destructive',
       });
-    } catch (e) {
-      toast({ title: 'خطأ', description: 'فشل إرسال طلب الاختبار.', variant: 'destructive' });
+    } catch (e: any) {
+      toast({ 
+        title: 'خطأ تقني', 
+        description: e.message || 'فشل إرسال طلب الاختبار.', 
+        variant: 'destructive' 
+      });
     } finally {
       setIsTestingNotif(false);
     }
@@ -566,8 +568,9 @@ export default function AdminSettingsPage() {
                 أرسل إشعاراً تجريبياً لمتصفحك الآن للتأكد من عمل النظام.
               </p>
             </div>
-            <Button onClick={handleTestNotification} disabled={isTestingNotif} variant="outline" size="sm">
-              {isTestingNotif ? <Loader2 className="h-4 w-4 animate-spin" /> : 'إرسال إشعار فوري'}
+            <Button onClick={handleTestNotification} disabled={isTestingNotif} variant="outline" size="sm" className="gap-2">
+              {isTestingNotif ? <Loader2 className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
+              اختبار الإرسال لجهازي
             </Button>
           </div>
         </CardContent>

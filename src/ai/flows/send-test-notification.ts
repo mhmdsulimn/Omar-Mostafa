@@ -1,6 +1,7 @@
 'use server';
 /**
  * @fileOverview تدفق إرسال إشعار تجريبي للمسؤول لاختبار النظام.
+ * يوفر رسائل خطأ مفصلة لتسهيل عملية تصحيح الأخطاء في بيئة التطوير.
  */
 
 import { ai } from '@/ai/genkit';
@@ -26,17 +27,25 @@ const sendTestNotificationFlow = ai.defineFlow(
     try {
       const db = getFirestore();
       const userDoc = await db.collection('users').doc(input.userId).get();
-      const tokens = userDoc.data()?.fcmTokens || [];
+      
+      if (!userDoc.exists) {
+        return { success: false, message: 'لم يتم العثور على ملف المستخدم في قاعدة البيانات.' };
+      }
 
-      const activeTokens = tokens.filter((t: string) => t);
+      const tokens = userDoc.data()?.fcmTokens || [];
+      const activeTokens = tokens.filter((t: string) => t && typeof t === 'string');
+
       if (activeTokens.length === 0) {
-        return { success: false, message: 'لم يتم العثور على رموز أجهزة مسجلة لهذا الحساب. تأكد من إعطاء إذن الإشعارات في المتصفح.' };
+        return { 
+          success: false, 
+          message: 'جهازك غير مسجل لاستقبال الإشعارات. يرجى التأكد من الضغط على "Allow" في المتصفح وتحديث الصفحة، ثم المحاولة مرة أخرى.' 
+        };
       }
 
       const message = {
         notification: {
-          title: '🚀 إشعار تجريبي من تسلا',
-          body: 'مبروك! نظام الإشعارات يعمل بنجاح على جهازك.',
+          title: '🚀 اختبار نظام تسلا',
+          body: 'مبروك! جهازك الآن متصل بنظام الإشعارات الفورية بنجاح.',
         },
         webpush: {
           fcmOptions: {
@@ -49,13 +58,23 @@ const sendTestNotificationFlow = ai.defineFlow(
       const response = await getMessaging().sendEachForMulticast(message);
       
       if (response.successCount > 0) {
-        return { success: true, message: `تم إرسال الإشعار بنجاح إلى ${response.successCount} جهاز.` };
+        return { 
+          success: true, 
+          message: `تم إرسال الإشعار بنجاح إلى ${response.successCount} جهاز متصل بحسابك.` 
+        };
       } else {
-        return { success: false, message: 'فشل الإرسال. قد تكون الرموز المخزنة منتهية الصلاحية.' };
+        const errorDetail = response.responses[0]?.error?.message || 'الرموز المخزنة قد تكون منتهية الصلاحية.';
+        return { 
+          success: false, 
+          message: `فشل الإرسال: ${errorDetail}` 
+        };
       }
     } catch (error: any) {
-      console.error('Test Notification Error:', error);
-      return { success: false, message: 'حدث خطأ تقني أثناء الإرسال.' };
+      console.error('Test Notification Flow Error:', error);
+      return { 
+        success: false, 
+        message: `خطأ تقني: ${error.message || 'تأكد من إعداد مفاتيح FCM بشكل صحيح في Firebase Console.'}` 
+      };
     }
   }
 );

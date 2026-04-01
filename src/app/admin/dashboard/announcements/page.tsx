@@ -105,7 +105,6 @@ function AnnouncementForm({
         setIsSearching(true);
         try {
             const studentsRef = collection(firestore, 'users');
-            // تم إزالة القيد (limit) لضمان جلب كافة الطلاب عند البحث
             const snap = await getDocs(studentsRef);
             const term = searchTerm.toLowerCase().trim();
             const results = snap.docs
@@ -220,13 +219,13 @@ function AnnouncementForm({
                     </div>
                 ) : (
                     <div className="space-y-2 text-right">
-                        <Label>ابحث عن الطالب</Label>
+                        <Label>ابحث عن الطالب بالاسم بالكامل</Label>
                         <div className="flex gap-2">
                             <Button type="button" size="icon" onClick={handleSearchStudents} disabled={isSearching}>
                                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                             </Button>
                             <Input 
-                                placeholder="الاسم أو البريد..." 
+                                placeholder="اكتب اسم الطالب بالكامل هنا..." 
                                 value={searchTerm} 
                                 onChange={e => setSearchTerm(e.target.value)}
                                 onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())}
