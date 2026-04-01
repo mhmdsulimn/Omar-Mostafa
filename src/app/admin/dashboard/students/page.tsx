@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2 } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, Clock } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +48,9 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { format } from 'date-fns';
+import { arSA } from 'date-fns/locale/ar-SA';
+import { toArabicDigits } from '@/lib/utils';
 
 const gradeMap: Record<Student['grade'], string> = {
   first_secondary: '1ث',
@@ -375,6 +379,16 @@ function UserRow({ user: student }: { user: Student }) {
             </TableCell>
             <TableCell className="whitespace-nowrap text-right">{student.grade ? gradeMap[student.grade] : '-'}</TableCell>
             <TableCell className="font-medium whitespace-nowrap text-right">{student.balance || 0} جنيه</TableCell>
+            <TableCell className="text-right">
+                {student.lastActiveAt ? (
+                    <div className="flex flex-col text-right text-[10px] md:text-xs">
+                        <span className="font-bold">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
+                        <span className="text-muted-foreground opacity-70">{toArabicDigits(format(new Date(student.lastActiveAt), 'h:mm a', { locale: arSA }))}</span>
+                    </div>
+                ) : (
+                    <span className="text-muted-foreground italic text-[10px] md:text-xs">غير متوفر</span>
+                )}
+            </TableCell>
             <TableCell className="text-center px-2">
                 <div className="flex justify-center gap-1 md:gap-2">
                     <AddBalanceDialog student={student} />
@@ -498,9 +512,10 @@ export default function AdminStudentsPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead className="min-w-[200px] text-right">المستخدم</TableHead>
-                    <TableHead className="w-[15%] text-right">الصف</TableHead>
-                    <TableHead className="w-[15%] text-right">الرصيد</TableHead>
-                    <TableHead className="text-center w-[25%]">الإجراءات</TableHead>
+                    <TableHead className="w-[10%] text-right">الصف</TableHead>
+                    <TableHead className="w-[10%] text-right">الرصيد</TableHead>
+                    <TableHead className="w-[15%] text-right">آخر ظهور</TableHead>
+                    <TableHead className="text-center w-[20%]">الإجراءات</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

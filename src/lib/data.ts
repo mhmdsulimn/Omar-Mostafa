@@ -42,6 +42,7 @@ export type Student = {
   currentSessionId?: string;
   readAnnouncements?: string[];
   deletedAnnouncements?: string[];
+  lastActiveAt?: string; // تاريخ آخر ظهور للطالب
 };
 
 export type CurriculumUnit = {
