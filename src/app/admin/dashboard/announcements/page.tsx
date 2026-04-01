@@ -105,6 +105,7 @@ function AnnouncementForm({
                     const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
                     
+                    // تحسين البحث ليشمل الاسم الكامل المدمج
                     return firstName.includes(term) || 
                            lastName.includes(term) || 
                            fullName.includes(term) || 

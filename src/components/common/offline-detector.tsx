@@ -4,48 +4,61 @@ import * as React from 'react';
 import { OfflineUI } from './offline-ui';
 
 /**
- * مراقب حالة الاتصال الذكي: 
- * 1. يعرض واجهة الأوفلاين فور انقطاع الإنترنت.
- * 2. يعيد الطالب للموقع تلقائياً وفوراً بمجرد عودة الاتصال بفضل مستمعات الأحداث.
+ * مراقب حالة الاتصال الذكي المطوّر:
+ * تم إضافة نظام "تأكيد الانقطاع" لضمان عدم ظهور صفحة الأوفلاين عند حدوث تذبذب لحظي في الشبكة.
  */
 export function OfflineDetector({ children }: { children: React.ReactNode }) {
   const [isOffline, setIsOffline] = React.useState(false);
   const [isMounted, setIsMounted] = React.useState(false);
+  const offlineTimerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   React.useEffect(() => {
     setIsMounted(true);
     
-    // تحديث الحالة بناءً على حالة المتصفح الحالية
     const updateOnlineStatus = () => {
-      setIsOffline(!navigator.onLine);
+      if (navigator.onLine) {
+        // إذا عاد الاتصال، نلغي أي مؤقت للحظر ونخفي واجهة الأوفلاين فوراً
+        if (offlineTimerRef.current) {
+          clearTimeout(offlineTimerRef.current);
+          offlineTimerRef.current = null;
+        }
+        setIsOffline(false);
+      } else {
+        // إذا انقطع الاتصال، ننتظر ثانيتين للتأكد من أنه ليس تذبذباً عابراً
+        if (!offlineTimerRef.current) {
+          offlineTimerRef.current = setTimeout(() => {
+            if (!navigator.onLine) {
+              setIsOffline(true);
+            }
+            offlineTimerRef.current = null;
+          }, 2000); 
+        }
+      }
     };
 
-    // فحص أولي عند التحميل
-    if (typeof window !== 'undefined') {
-      setIsOffline(!navigator.onLine);
-    }
-
-    // الاستماع لتغييرات الشبكة اللحظية للعودة التلقائية
     window.addEventListener('online', updateOnlineStatus);
     window.addEventListener('offline', updateOnlineStatus);
+
+    // فحص أولي عند التحميل
+    if (typeof navigator !== 'undefined' && !navigator.onLine) {
+       updateOnlineStatus();
+    }
 
     return () => {
       window.removeEventListener('online', updateOnlineStatus);
       window.removeEventListener('offline', updateOnlineStatus);
+      if (offlineTimerRef.current) clearTimeout(offlineTimerRef.current);
     };
   }, []);
 
-  // حماية الـ Hydration لضمان توافق الرندر الأول مع السيرفر
   if (!isMounted) {
     return <>{children}</>;
   }
 
-  // إذا كان الطالب أوفلاين، نعرض الواجهة المخصصة بدون لوجو
   if (isOffline) {
     return <OfflineUI />;
   }
 
-  // عند عودة الإنترنت، يختفي المكون ويظهر الموقع تلقائياً
   return (
     <div className="animate-in fade-in duration-500">
       {children}

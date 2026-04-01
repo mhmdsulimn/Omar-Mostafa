@@ -104,7 +104,7 @@ function AddAdminDialog() {
     const nonAdmins = allStudents.filter(s => !adminIds.has(s.id));
     
     const results = nonAdmins.filter(student => {
-        // البحث بالاسم الكامل أو الإيميل
+        // تحسين البحث بالاسم الكامل المدمج أو الإيميل
         const fullName = `${student.firstName || ''} ${student.lastName || ''}`.toLowerCase();
         const email = (student.email || '').toLowerCase();
         return fullName.includes(lowercasedTerm) || email.includes(lowercasedTerm);
