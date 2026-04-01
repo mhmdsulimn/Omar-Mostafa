@@ -370,17 +370,11 @@ export default function AdminDashboardPage() {
                     </Badge>
                 </div>
 
-                <div className="grid gap-3 grid-cols-2 lg:grid-cols-5">
+                <div className="grid gap-3 grid-cols-2 lg:grid-cols-4">
                     <StatCard title="إجمالي الطلاب" value={studentsCount} icon={Users} description="الطلاب المسجلين حالياً" />
                     <StatCard title="إجمالي الاختبارات" value={examsCount} icon={BookOpen} description="الامتحانات المنشورة" />
                     <StatCard title="إجمالي الكورسات" value={coursesCount} icon={BookMarked} description="الدورات التعليمية" />
                     <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
-                    <StatCard 
-                        title="إجمالي الإشعارات" 
-                        value={totalNotifsCount} 
-                        icon={Bell} 
-                        description={`مقروء: ${readNotifsCount} | غير مقروء: ${unreadNotifsCount}`} 
-                    />
                 </div>
 
                 <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
@@ -471,6 +465,30 @@ export default function AdminDashboardPage() {
                                     <div className="flex items-center justify-center gap-1">
                                         <Zap className="h-3 w-3 text-amber-500" />
                                         <span className="text-lg font-bold text-amber-600">نشطة</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* التنبيهات مع مراقب الاستخدام */}
+                            <div className="p-4 bg-muted/10 border-b">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div className="flex items-center gap-2">
+                                        <Bell className="h-4 w-4 text-primary" />
+                                        <span className="text-xs font-bold">حالة الإشعارات في النظام</span>
+                                    </div>
+                                    <div className="flex items-center gap-6">
+                                        <div className="text-center">
+                                            <p className="text-[9px] text-muted-foreground font-bold uppercase">الإجمالي</p>
+                                            <p className="text-sm font-black">{totalNotifsCount}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[9px] text-green-600 font-bold uppercase">مقروء</p>
+                                            <p className="text-sm font-black text-green-600">{readNotifsCount}</p>
+                                        </div>
+                                        <div className="text-center">
+                                            <p className="text-[9px] text-red-500 font-bold uppercase">غير مقروء</p>
+                                            <p className="text-sm font-black text-red-500">{unreadNotifsCount}</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
