@@ -21,7 +21,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink, Activity } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,12 +58,6 @@ const gradeMap: Record<Student['grade'], string> = {
   first_secondary: 'الصف الأول الثانوي',
   second_secondary: 'الصف الثاني الثانوي',
   third_secondary: 'الصف الثالث الثانوي',
-};
-
-const gradeShortMap: Record<Student['grade'], string> = {
-  first_secondary: '1ث',
-  second_secondary: '2ث',
-  third_secondary: '3ث',
 };
 
 function AddBalanceToAllDialog({ students }: { students: Student[] }) {
@@ -319,11 +313,27 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <p className="font-bold text-sm text-muted-foreground italic">منذ بداية المسيرة 🎓</p>
                                 </div>
                             </div>
-                            <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
-                                <div className="p-2 bg-primary/10 rounded-xl text-primary"><ExternalLink className="h-4 w-4" /></div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
+                                    <div className="p-2 bg-primary/10 rounded-xl text-primary"><Activity className="h-4 w-4" /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-primary mb-1 uppercase">الصف الدراسي</p>
+                                        <p className="text-xs font-bold">{gradeMap[student.grade] || 'غير محدد'}</p>
+                                    </div>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 flex items-start gap-3 text-right">
+                                    <div className="p-2 bg-green-500/10 rounded-xl text-green-600"><Wallet className="h-4 w-4" /></div>
+                                    <div>
+                                        <p className="text-[10px] font-black text-green-600 mb-1 uppercase">رصيد المحفظة</p>
+                                        <p className="text-xs font-bold">{student.balance || 0} جنيه</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex items-start gap-3 text-right">
+                                <div className="p-2 bg-muted rounded-xl text-muted-foreground"><ExternalLink className="h-4 w-4" /></div>
                                 <div>
-                                    <p className="text-xs font-black text-primary mb-1">حالة الجلسة</p>
-                                    <p className="text-xs font-bold text-muted-foreground">معرف الجلسة الحالي: <span className="font-mono text-[10px] select-all">{student.currentSessionId || 'لا يوجد'}</span></p>
+                                    <p className="text-[10px] font-black text-muted-foreground mb-1 uppercase">معرف الجلسة</p>
+                                    <p className="text-[10px] font-mono select-all opacity-70">{student.currentSessionId || 'لا يوجد'}</p>
                                 </div>
                             </div>
                         </TabsContent>
@@ -446,18 +456,6 @@ function UserRow({ user: student }: { user: Student }) {
                     </div>
                 </div>
             </TableCell>
-            <TableCell className="whitespace-nowrap text-right font-bold text-xs md:text-sm">{student.grade ? gradeShortMap[student.grade] : '-'}</TableCell>
-            <TableCell className="font-bold whitespace-nowrap text-right text-xs md:text-sm text-primary">{student.balance || 0} ج</TableCell>
-            <TableCell className="text-right">
-                {student.lastActiveAt ? (
-                    <div className="flex flex-col text-right text-[10px] md:text-xs">
-                        <span className="font-bold text-foreground/80">{toArabicDigits(format(new Date(student.lastActiveAt), 'd MMM yyyy', { locale: arSA }))}</span>
-                        <span className="text-muted-foreground opacity-60">{toArabicDigits(format(new Date(student.lastActiveAt), 'h:mm a', { locale: arSA }))}</span>
-                    </div>
-                ) : (
-                    <span className="text-muted-foreground italic text-[10px] md:text-xs opacity-40">غير متوفر</span>
-                )}
-            </TableCell>
         </TableRow>
     );
 }
@@ -518,7 +516,7 @@ export default function AdminStudentsPage() {
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
         <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6">
           <CardTitle className="text-right text-lg">قائمة المنضمين</CardTitle>
-          <CardDescription className="text-right font-medium">إدارة حسابات وأرصدة الطلاب ونشاطهم اللحظي.</CardDescription>
+          <CardDescription className="text-right font-medium">إدارة حسابات الطلاب من خلال ملفاتهم التعريفية.</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -543,10 +541,7 @@ export default function AdminStudentsPage() {
               <Table>
                 <TableHeader className="bg-muted/30">
                   <TableRow>
-                    <TableHead className="min-w-[250px] text-right font-bold">المستخدم</TableHead>
-                    <TableHead className="w-[10%] text-right font-bold">الصف</TableHead>
-                    <TableHead className="w-[10%] text-right font-bold">الرصيد</TableHead>
-                    <TableHead className="w-[15%] text-right font-bold">آخر ظهور</TableHead>
+                    <TableHead className="min-w-[250px] text-right font-bold">الطالب</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
