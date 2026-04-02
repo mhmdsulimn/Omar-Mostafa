@@ -255,7 +255,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <TabsTrigger value="actions" className="rounded-lg font-bold">إدارة المحفظة والتحكم</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             {/* تواصل سريع */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
@@ -351,9 +351,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             </div>
                         </TabsContent>
 
-                        <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
-                                <div className="flex items-center justify-end gap-1.5"><Label className="font-bold text-xs">التحكم في الرصيد</Label><Wallet className="h-3 w-3 text-primary" /></div>
+                                <div className="flex items-center justify-start gap-1.5"><Label className="font-bold text-xs">التحكم في الرصيد</Label><Wallet className="h-3 w-3 text-primary" /></div>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold pr-10" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
                                     <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 font-bold px-6"><Gift className="h-4 w-4" /> شحن</Button>
@@ -427,14 +427,20 @@ export default function AdminStudentsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة الطلاب</h1>
+      <div className="flex items-center gap-4 text-right w-full">
+        <div className="p-4 rounded-[1.5rem] bg-primary/10 border border-primary/20 shadow-xl shadow-primary/5">
+            <Users className="h-8 w-8 text-primary" />
+        </div>
+        <div className="space-y-1">
+            <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة الطلاب</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-bold">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
+        </div>
         <div className="ml-auto"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
       <Card className="rounded-2xl overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
         <CardHeader className="bg-muted/10 pb-6 text-right">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="ابحث بالاسم، الهاتف، أو البريد..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+            <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="ابحث بالاسم، البريد، أو رقم الهاتف..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 rounded-xl bg-background font-bold"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
                 <SelectContent>
