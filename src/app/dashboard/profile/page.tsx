@@ -80,12 +80,17 @@ export default function StudentProfilePage() {
     if (!user || !firestore || !studentData) return;
 
     if (!fullName.trim() || !phoneNumber || !parentPhoneNumber) {
-        toast({ variant: 'destructive', title: 'البيانات ناقصة', description: 'يرجى ملء كافة الحقول بما في ذلك أرقام الهواتف.' });
+        toast({ variant: 'destructive', title: 'البيانات ناقصة', description: 'يرجى ملء كافة الحقول المطلوبة.' });
         return;
     }
 
-    if (phoneNumber.length < 11 || parentPhoneNumber.length < 11) {
-        toast({ variant: 'destructive', title: 'رقم هاتف غير صحيح', description: 'يجب أن يتكون رقم الهاتف من 11 رقم.' });
+    // اشتراط ١١ رقماً بالضبط
+    if (phoneNumber.length !== 11 || parentPhoneNumber.length !== 11) {
+        toast({ 
+            variant: 'destructive', 
+            title: 'رقم هاتف غير مكتمل', 
+            description: 'يجب أن يتكون رقم الهاتف (الطالب وولي الأمر) من ١١ رقماً بالضبط.' 
+        });
         return;
     }
 
@@ -174,7 +179,7 @@ export default function StudentProfilePage() {
         <CardHeader className="text-right">
           <CardTitle className="font-bold">بياناتي الشخصية</CardTitle>
           <CardDescription className="font-medium">
-            تأكد من دقة أرقام الهواتف لتلقي التحديثات الهامة.
+            تأكد من دقة أرقام الهواتف (١١ رقماً) لتلقي التحديثات الهامة.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -222,8 +227,8 @@ export default function StudentProfilePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-primary/5">
-            <div className="space-y-2 text-right">
-              <Label htmlFor="phone" className="font-bold flex items-center justify-start gap-2" dir="rtl">
+            <div className="space-y-2 text-right" dir="rtl">
+              <Label htmlFor="phone" className="font-bold flex items-center justify-start gap-2">
                 <Phone className="h-3 w-3 text-primary" />
                 رقم هاتف الطالب
               </Label>
@@ -237,8 +242,8 @@ export default function StudentProfilePage() {
                 dir="ltr"
               />
             </div>
-            <div className="space-y-2 text-right">
-              <Label htmlFor="parentPhone" className="font-bold flex items-center justify-start gap-2" dir="rtl">
+            <div className="space-y-2 text-right" dir="rtl">
+              <Label htmlFor="parentPhone" className="font-bold flex items-center justify-start gap-2">
                 <UserRound className="h-3 w-3 text-primary" />
                 رقم هاتف ولي الأمر
               </Label>

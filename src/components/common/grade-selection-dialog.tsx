@@ -83,11 +83,12 @@ export function GradeSelectionDialog({
       return;
     }
 
-    if (phoneNumber.length < 11 || parentPhoneNumber.length < 11) {
+    // اشتراط ١١ رقماً بالضبط
+    if (phoneNumber.length !== 11 || parentPhoneNumber.length !== 11) {
       toast({
         variant: 'destructive',
         title: 'رقم هاتف غير صحيح',
-        description: 'يجب أن يتكون رقم الهاتف من 11 رقم.',
+        description: 'يجب أن يتكون رقم الهاتف من ١١ رقماً بالضبط.',
       });
       return;
     }
@@ -146,8 +147,8 @@ export function GradeSelectionDialog({
           </div>
 
           <div className="grid grid-cols-1 gap-4">
-            <div className="space-y-2 text-right">
-              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">
+            <div className="space-y-2 text-right" dir="rtl">
+              <Label className="font-bold flex items-center justify-start gap-2">
                 <Phone className="h-3 w-3 text-primary" />
                 رقم هاتف الطالب
               </Label>
@@ -160,8 +161,8 @@ export function GradeSelectionDialog({
                 dir="ltr"
               />
             </div>
-            <div className="space-y-2 text-right">
-              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">
+            <div className="space-y-2 text-right" dir="rtl">
+              <Label className="font-bold flex items-center justify-start gap-2">
                 <UserRound className="h-3 w-3 text-primary" />
                 رقم هاتف ولي الأمر
               </Label>
