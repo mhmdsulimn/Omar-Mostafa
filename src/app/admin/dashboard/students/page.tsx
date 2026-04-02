@@ -290,8 +290,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 <div className="p-6">
                     <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
                         <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 rounded-xl p-1 mb-6">
-                            <TabsTrigger value="info" className="rounded-lg font-bold">معلومات النشاط والتواصل</TabsTrigger>
-                            <TabsTrigger value="actions" className="rounded-lg font-bold">إدارة المحفظة والتحكم</TabsTrigger>
+                            <TabsTrigger value="info" className="rounded-lg font-bold">المعلومات</TabsTrigger>
+                            <TabsTrigger value="actions" className="rounded-lg font-bold">الاداره</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
