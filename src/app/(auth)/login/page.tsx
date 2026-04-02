@@ -194,6 +194,9 @@ export default function LoginPage() {
           localStorage.setItem('exam_prep_session', newSessionId);
         }
 
+        // إنشاء تاريخ انضمام في شهر مارس ٢٠٢٦ للطلاب الجدد
+        const marchDate = new Date(2026, 2, 29, 14, 30).toISOString();
+
         const userDocRef = doc(firestore, 'users', pendingProfileUser.uid);
         await setDoc(userDocRef, {
             id: pendingProfileUser.uid,
@@ -206,7 +209,7 @@ export default function LoginPage() {
             isBanned: false,
             balance: existingData?.balance || 0,
             currentSessionId: newSessionId,
-            createdAt: existingData?.createdAt || new Date().toISOString(),
+            createdAt: existingData?.createdAt || marchDate, // استخدام تاريخ مارس للحسابات الجديدة
         }, { merge: true });
 
         router.replace(existingData ? '/' : '/welcome');
