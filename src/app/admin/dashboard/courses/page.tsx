@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/card';
 import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2 } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
@@ -190,6 +190,30 @@ export default function AdminCoursesPage() {
     }
   }
 
+  const handleShare = (courseId: string) => {
+    const shareUrl = `${window.location.origin}/dashboard/courses/${courseId}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        toast({
+          title: 'تم نسخ الرابط!',
+          description: 'يمكنك الآن إرسال رابط الكورس المباشر للطلاب.',
+        });
+      });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast({ title: 'تم نسخ الرابط!' });
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'فشل النسخ' });
+      }
+      document.body.removeChild(textArea);
+    }
+  };
+
   const handleDeleteCourse = async () => {
     if (dialogState?.type !== 'delete' || !firestore) return;
     
@@ -339,6 +363,14 @@ export default function AdminCoursesPage() {
                               </Button>
                           </TooltipTrigger>
                           <TooltipContent><p>{course.isPublished ? "إخفاء عن الطلاب" : "إظهار للطلاب"}</p></TooltipContent>
+                      </Tooltip>
+                      <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button variant="outline" size="icon" className='h-8 w-8 bg-card/90 backdrop-blur shadow-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50' onClick={() => handleShare(course.id)}>
+                                  <Share2 className="h-4 w-4" />
+                              </Button>
+                          </TooltipTrigger>
+                          <TooltipContent><p>نسخ رابط الكورس للطلاب</p></TooltipContent>
                       </Tooltip>
                       <Tooltip>
                           <TooltipTrigger asChild>

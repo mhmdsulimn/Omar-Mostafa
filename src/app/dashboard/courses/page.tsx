@@ -3,7 +3,7 @@
 import * as React from 'react';
 import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { ImageIcon, Search, Clock, Library } from 'lucide-react';
+import { ImageIcon, Search, Clock, Library, Share2 } from 'lucide-react';
 import { useUser, useFirestore, useCollection, useMemoFirebase, useDoc, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, query, where, doc, writeBatch } from 'firebase/firestore';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -65,6 +65,29 @@ export default function StudentCoursesPage() {
     return new Map(studentCourses.map(sc => [sc.courseId, sc]));
   }, [studentCourses]);
 
+  const handleShare = (courseId: string) => {
+    const shareUrl = `${window.location.origin}/dashboard/courses/${courseId}`;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        toast({
+          title: 'تم نسخ الرابط!',
+          description: 'تم نسخ رابط الكورس بنجاح، يمكنك الآن مشاركته مع زملائك.',
+        });
+      });
+    } else {
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast({ title: 'تم نسخ الرابط!' });
+      } catch (err) {
+        toast({ variant: 'destructive', title: 'فشل النسخ' });
+      }
+      document.body.removeChild(textArea);
+    }
+  };
 
   const handleSubscribe = async () => {
     if (!firestore || !user || !studentData || !dialogState || dialogState.type !== 'subscribe') return;
@@ -229,6 +252,19 @@ export default function StudentCoursesPage() {
                     ) : (
                         <ImageIcon className="h-12 w-12 md:h-16 md:w-16 text-muted-foreground" />
                     )}
+
+                    {/* Share Button Overlay */}
+                    <div className="absolute top-3 left-3 z-30 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <Button 
+                            variant="secondary" 
+                            size="icon" 
+                            className="h-9 w-9 rounded-full bg-white/90 backdrop-blur-md shadow-lg hover:bg-white text-primary border-none"
+                            onClick={(e) => { e.stopPropagation(); handleShare(course.id); }}
+                            title="نسخ رابط المشاركة"
+                        >
+                            <Share2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="bg-card p-6 pt-7 -mt-8 mx-auto w-[92%] relative z-20 rounded-2xl shadow-xl space-y-4 border">
