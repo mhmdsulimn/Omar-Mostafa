@@ -380,7 +380,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 gap-1 font-bold px-6">
                                         <Gift className="h-4 w-4" /> شحن
                                     </Button>
-                                    <Button variant="outline" onClick={() => handleUpdateBalance('withdraw')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 gap-1 font-bold px-6">
+                                    <Button variant="outline" onClick={() => handleUpdateBalance('withdraw')} disabled={isSaving || amount <= 0 || amount > (student.balance || 0)} className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 gap-1 font-bold px-6">
                                         <Minus className="h-4 w-4" /> سحب
                                     </Button>
                                 </div>
