@@ -106,10 +106,6 @@ const getFallbackJoinDate = (studentId: string) => {
     return new Date(2026, 2, day, hour, minute, second).toISOString();
 };
 
-/**
- * دالة مساعدة لتنظيف قفل المتصفح القسري
- * تمنع تجمد الشاشة عند حذف عناصر الواجهة فجأة
- */
 const forceCleanupBody = () => {
   if (typeof document !== 'undefined') {
     document.body.style.pointerEvents = 'auto';
@@ -223,12 +219,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
     const handleToggleBan = async () => {
         if (!firestore || !student) return;
-        
-        // الخطوة 1: إغلاق النوافذ فوراً قبل العملية
         setIsBanConfirmOpen(false);
         setIsProfileOpen(false);
-        
-        // الخطوة 2: انتظار بسيط لإنهاء حركة الإغلاق
         setTimeout(async () => {
             try {
                 await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: !student.isBanned });
@@ -243,12 +235,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
     const handleDelete = async () => {
         if (!firestore || !student) return;
-        
-        // الخطوة 1: إغلاق النوافذ فوراً قبل العملية
         setIsDeleteConfirmOpen(false);
         setIsProfileOpen(false);
-        
-        // الخطوة 2: انتظار بسيط لإنهاء حركة الإغلاق وتنظيف الـ Overlay
         setTimeout(async () => {
             try {
                 const batch = writeBatch(firestore);
@@ -307,14 +295,13 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         </TabsList>
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
-                            {/* تواصل سريع */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <Phone className="h-4 w-4" />
                                         </div>
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم هاتف الطالب</span>
+                                        <span className="text-[10px] font-headline font-black text-primary uppercase tracking-widest text-right block w-full">رقم هاتف الطالب</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
@@ -333,9 +320,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                                 </>
                                             )}
                                         </div>
-                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">
-                                            {student.phoneNumber || 'غير مسجل'}
-                                        </p>
+                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
                                     </div>
                                 </div>
 
@@ -344,7 +329,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <UserRound className="h-4 w-4" />
                                         </div>
-                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم ولي الأمر</span>
+                                        <span className="text-[10px] font-headline font-black text-primary uppercase tracking-widest text-right block w-full">رقم ولي الأمر</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
@@ -363,39 +348,28 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                                 </>
                                             )}
                                         </div>
-                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">
-                                            {student.parentPhoneNumber || 'غير مسجل'}
-                                        </p>
+                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
                                     </div>
                                 </div>
                             </div>
 
-                            {/* حالة النشاط */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-dashed border-border/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
-                                            <Clock className="h-5 w-5" />
-                                        </div>
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                    <div className="flex items-center gap-3 w-full">
+                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground"><Clock className="h-5 w-5" /></div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
-                                            <p className="font-bold text-xs text-foreground">
-                                                {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
-                                            </p>
+                                            <p className="text-[10px] font-headline font-black text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
+                                            <p className="font-bold text-xs text-foreground">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}</p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-dashed border-border/50 overflow-hidden relative">
-                                    <div className="flex items-center gap-3 relative z-10">
-                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
-                                            <History className="h-5 w-5" />
-                                        </div>
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-slate-600 border border-slate-500 shadow-inner overflow-hidden relative group/join">
+                                    <div className="flex items-center gap-3 relative z-10 w-full">
+                                        <div className="p-2.5 rounded-2xl bg-white/10 text-white backdrop-blur-sm group-hover/join:scale-110 transition-transform"><History className="h-5 w-5" /></div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
-                                            <p className="font-bold text-xs text-foreground">
-                                                {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
-                                            </p>
+                                            <p className="text-[10px] font-headline font-black text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
+                                            <p className="font-bold text-xs text-white">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -405,10 +379,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-start gap-2 w-full mb-1">
-                                    <div className="bg-primary/10 p-2 rounded-xl text-primary">
-                                        <Wallet className="h-4 w-4" />
-                                    </div>
-                                    <Label className="font-bold text-xs">التحكم في الرصيد</Label>
+                                    <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm"><Wallet className="h-4 w-4" /></div>
+                                    <Label className="font-headline font-black text-xs text-primary">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold pr-10" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
