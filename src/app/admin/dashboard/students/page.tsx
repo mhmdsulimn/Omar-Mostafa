@@ -103,7 +103,7 @@ const getFallbackJoinDate = (studentId: string) => {
     const hour = 12 + (n % 9);
     const minute = n % 60;
     const second = (n * 7) % 60;
-    return new Date(2026, 2, day, hour, minute, second).toISOString();
+    return new Date(2026, 3, day, hour, minute, second).toISOString();
 };
 
 const forceCleanupBody = () => {
@@ -266,7 +266,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     <span>عرض الملف</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-card" dir="rtl">
+            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 max-h-[90vh] overflow-y-auto scrollbar-hide border-none shadow-2xl bg-card" dir="rtl">
                 <DialogHeader className="p-0"><DialogTitle className="sr-only">ملف الطالب</DialogTitle><DialogDescription className="sr-only">إدارة بيانات الطالب</DialogDescription></DialogHeader>
 
                 <div className="bg-primary/5 p-8 border-b text-right relative overflow-hidden">
@@ -296,96 +296,74 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="text-primary transition-transform group-hover:scale-110">
-                                            <Phone className="h-5 w-5" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم هاتف الطالب</span>
-                                    </div>
+                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block text-right">رقم هاتف الطالب</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.phoneNumber && (
                                                 <>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-colors" asChild>
-                                                        <a href={`https://wa.me/20${student.phoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
-                                                            <WhatsAppIcon className="h-5 w-5" />
-                                                        </a>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white" asChild>
+                                                        <a href={`https://wa.me/20${student.phoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-5 w-5" /></a>
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors" asChild>
-                                                        <a href={`tel:${student.phoneNumber}`}>
-                                                            <Phone className="h-5 w-5" />
-                                                        </a>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white" asChild>
+                                                        <a href={`tel:${student.phoneNumber}`}><Phone className="h-5 w-5" /></a>
                                                     </Button>
                                                 </>
                                             )}
                                         </div>
-                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
+                                        <p className="font-bold text-lg font-mono" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
                                     </div>
                                 </div>
 
-                                <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
-                                    <div className="flex items-center justify-between mb-3">
-                                        <div className="text-primary transition-transform group-hover:scale-110">
-                                            <UserRound className="h-5 w-5" />
-                                        </div>
-                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم ولي الأمر</span>
-                                    </div>
+                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block text-right">رقم ولي الأمر</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.parentPhoneNumber && (
                                                 <>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-colors" asChild>
-                                                        <a href={`https://wa.me/20${student.parentPhoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
-                                                            <WhatsAppIcon className="h-5 w-5" />
-                                                        </a>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white" asChild>
+                                                        <a href={`https://wa.me/20${student.parentPhoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-5 w-5" /></a>
                                                     </Button>
-                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors" asChild>
-                                                        <a href={`tel:${student.parentPhoneNumber}`}>
-                                                            <Phone className="h-5 w-5" />
-                                                        </a>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white" asChild>
+                                                        <a href={`tel:${student.parentPhoneNumber}`}><Phone className="h-5 w-5" /></a>
                                                     </Button>
                                                 </>
                                             )}
                                         </div>
-                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
+                                        <p className="font-bold text-lg font-mono" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
                                     </div>
                                 </div>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
-                                    <div className="flex items-center gap-3 w-full">
-                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground"><Clock className="h-5 w-5" /></div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
-                                            <p className="font-bold text-xs text-foreground">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}</p>
-                                        </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
+                                        <p className="font-bold text-xs">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول'}</p>
                                     </div>
+                                    <Clock className="h-5 w-5 text-muted-foreground" />
                                 </div>
 
                                 <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
-                                    <div className="flex items-center gap-3 w-full">
-                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground"><History className="h-5 w-5" /></div>
-                                        <div className="text-right">
-                                            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
-                                            <p className="font-bold text-xs text-foreground">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
-                                        </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
+                                        <p className="font-bold text-xs">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
                                     </div>
+                                    <History className="h-5 w-5 text-muted-foreground" />
                                 </div>
                             </div>
                         </TabsContent>
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
-                                <div className="flex items-center justify-start gap-2 w-full mb-1">
-                                    <div className="text-primary"><Wallet className="h-5 w-5" /></div>
-                                    <Label className="font-bold text-xs text-primary">التحكم في الرصيد</Label>
+                                <div className="flex items-center justify-start gap-2 mb-1">
+                                    <Wallet className="h-5 w-5 text-primary" />
+                                    <Label className="font-bold text-xs">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
-                                    <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold pr-10" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
-                                    <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 font-bold px-6"><Gift className="h-4 w-4" /> شحن</Button>
-                                    <Button variant="outline" onClick={() => handleUpdateBalance('withdraw')} disabled={isSaving || amount <= 0 || amount > (student.balance || 0)} className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 font-bold px-6"><Minus className="h-4 w-4" /> سحب</Button>
+                                    <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
+                                    <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 font-bold px-6">شحن</Button>
+                                    <Button variant="outline" onClick={() => handleUpdateBalance('withdraw')} disabled={isSaving || amount <= 0 || amount > (student.balance || 0)} className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 font-bold px-6">سحب</Button>
                                 </div>
                             </div>
                             <Separator className="bg-border/50" />
@@ -399,7 +377,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
             </DialogContent>
 
             <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} دخول الطالب للمنصة.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")}> تأكيد </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold"> حذف نهائي </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold"> حذف نهائي </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
         </Dialog>
     );
 }
