@@ -53,6 +53,13 @@ import { toArabicDigits, cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const gradeMap: Record<Student['grade'], string> = {
   first_secondary: 'الصف الأول الثانوي',
