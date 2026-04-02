@@ -355,41 +355,6 @@ export default function AdminCoursesPage() {
 
             return (
               <div key={course.id} className={cn("relative transition-all duration-300 w-full sm:w-[420px] shrink-0 group", !course.isPublished && "opacity-60 hover:opacity-100")}>
-                  <div className="absolute top-3 right-3 flex flex-col gap-2 z-30">
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className='h-8 w-8 bg-card/90 backdrop-blur shadow-sm' onClick={() => handleTogglePublish(course)}>
-                                  {course.isPublished ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>{course.isPublished ? "إخفاء عن الطلاب" : "إظهار للطلاب"}</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className='h-8 w-8 bg-card/90 backdrop-blur shadow-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50' onClick={() => handleShare(course.id)}>
-                                  <Share2 className="h-4 w-4" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>نسخ رابط الكورس للطلاب</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="outline" size="icon" className='h-8 w-8 bg-card/90 backdrop-blur shadow-sm text-primary hover:text-primary hover:bg-primary/10' onClick={() => setDialogState({ type: 'subscribers', course })}>
-                                  <Users className="h-4 w-4" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>الطلاب المشتركين</p></TooltipContent>
-                      </Tooltip>
-                      <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button variant="destructive" size="icon" className='h-8 w-8 shadow-sm' onClick={() => setDialogState({ type: 'delete', course })}>
-                                  <Trash2 className="h-4 w-4" />
-                              </Button>
-                          </TooltipTrigger>
-                          <TooltipContent><p>حذف الكورس</p></TooltipContent>
-                      </Tooltip>
-                  </div>
-                  
                   <div className={cn("relative aspect-video w-full rounded-2xl bg-muted flex items-center justify-center overflow-hidden shadow-lg transition-all", !course.isPublished && "ring-2 ring-dashed ring-muted-foreground")}>
                       {course.thumbnailUrl ? (
                           <Image src={course.thumbnailUrl} alt={course.title} fill className="object-cover transition-transform duration-300 group-hover:scale-110" />
@@ -412,8 +377,45 @@ export default function AdminCoursesPage() {
                                   {course.description}
                               </p>
                           </div>
-                          <div className="w-full mt-4">
+                          
+                          <div className="w-full mt-4 space-y-3">
                               <Button variant="outline" className='h-11 text-sm w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold' onClick={() => router.push(`/admin/dashboard/courses/${course.id}`)}>إدارة الكورس</Button>
+                              
+                              {/* New Action Buttons Row */}
+                              <div className="flex items-center justify-between gap-2">
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-muted transition-colors' onClick={() => handleTogglePublish(course)}>
+                                              {course.isPublished ? <EyeOff className="h-4 w-4 text-amber-600" /> : <Eye className="h-4 w-4 text-green-600" />}
+                                          </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>{course.isPublished ? "إخفاء عن الطلاب" : "إظهار للطلاب"}</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-muted text-blue-600' onClick={() => handleShare(course.id)}>
+                                              <Share2 className="h-4 w-4" />
+                                          </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>نسخ رابط الكورس للطلاب</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-muted text-primary' onClick={() => setDialogState({ type: 'subscribers', course })}>
+                                              <Users className="h-4 w-4" />
+                                          </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>الطلاب المشتركين</p></TooltipContent>
+                                  </Tooltip>
+                                  <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-destructive/10 hover:border-destructive/20 text-destructive' onClick={() => setDialogState({ type: 'delete', course })}>
+                                              <Trash2 className="h-4 w-4" />
+                                          </Button>
+                                      </TooltipTrigger>
+                                      <TooltipContent><p>حذف الكورس</p></TooltipContent>
+                                  </Tooltip>
+                              </div>
                           </div>
                       </div>
 

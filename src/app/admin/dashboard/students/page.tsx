@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -295,8 +294,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
-                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block text-right">رقم هاتف الطالب</Label>
+                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 text-right">
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">رقم هاتف الطالب</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.phoneNumber && (
@@ -314,8 +313,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     </div>
                                 </div>
 
-                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
-                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block text-right">رقم ولي الأمر</Label>
+                                <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 text-right">
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">رقم ولي الأمر</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.parentPhoneNumber && (
