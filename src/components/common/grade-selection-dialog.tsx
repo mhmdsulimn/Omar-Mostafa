@@ -147,7 +147,10 @@ export function GradeSelectionDialog({
 
           <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2 text-right">
-              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">رقم هاتف الطالب <Phone className="h-3 w-3 text-primary" /></Label>
+              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">
+                <Phone className="h-3 w-3 text-primary" />
+                رقم هاتف الطالب
+              </Label>
               <Input
                 value={phoneNumber}
                 onChange={(e) => handlePhoneChange(e, 'student')}
@@ -158,7 +161,10 @@ export function GradeSelectionDialog({
               />
             </div>
             <div className="space-y-2 text-right">
-              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">رقم هاتف ولي الأمر <UserRound className="h-3 w-3 text-primary" /></Label>
+              <Label className="font-bold flex items-center justify-start gap-2" dir="rtl">
+                <UserRound className="h-3 w-3 text-primary" />
+                رقم هاتف ولي الأمر
+              </Label>
               <Input
                 value={parentPhoneNumber}
                 onChange={(e) => handlePhoneChange(e, 'parent')}
