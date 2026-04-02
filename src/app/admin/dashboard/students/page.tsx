@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/table';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
+import { collection, doc, writeBatch, runTransaction, getDocs, documentId, query } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
 import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, Sparkles, Users } from 'lucide-react';
@@ -42,6 +42,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -53,13 +60,6 @@ import { toArabicDigits, cn } from '@/lib/utils';
 import { useSearchParams } from 'next/navigation';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 const gradeMap: Record<Student['grade'], string> = {
   first_secondary: 'الصف الأول الثانوي',
@@ -84,6 +84,18 @@ const getFallbackJoinDate = (studentId: string) => {
     const minute = n % 60;
     const second = (n * 7) % 60;
     return new Date(2026, 2, day, hour, minute, second).toISOString();
+};
+
+/**
+ * دالة مساعدة لتنظيف قفل المتصفح القسري
+ * تمنع تجمد الشاشة عند حذف عناصر الواجهة فجأة
+ */
+const forceCleanupBody = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.pointerEvents = 'auto';
+    document.body.style.overflow = 'auto';
+    document.body.classList.remove('no-scroll');
+  }
 };
 
 function AddBalanceToAllDialog({ students }: { students: Student[] }) {
@@ -190,31 +202,49 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
     const handleToggleBan = async () => {
         if (!firestore || !student) return;
-        setIsSaving(true);
-        try {
-            await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: !student.isBanned });
-            toast({ title: `تمت العملية بنجاح` });
-            setIsBanConfirmOpen(false); setIsProfileOpen(false);
-            window.location.reload(); 
-        } catch (error) { toast({ variant: 'destructive', title: 'فشل التحديث' }); setIsSaving(false); }
+        
+        // الخطوة 1: إغلاق النوافذ فوراً قبل العملية
+        setIsBanConfirmOpen(false);
+        setIsProfileOpen(false);
+        
+        // الخطوة 2: انتظار بسيط لإنهاء حركة الإغلاق
+        setTimeout(async () => {
+            try {
+                await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: !student.isBanned });
+                toast({ title: `تمت العملية بنجاح` });
+                forceCleanupBody();
+            } catch (error) { 
+                toast({ variant: 'destructive', title: 'فشل التحديث' }); 
+                forceCleanupBody();
+            }
+        }, 100);
     };
 
     const handleDelete = async () => {
         if (!firestore || !student) return;
-        setIsSaving(true);
-        try {
-            const batch = writeBatch(firestore);
-            const collections = ['studentExams', 'studentCourses', 'depositRequests', 'notifications'];
-            for (const col of collections) {
-                const snap = await getDocs(collection(firestore, 'users', student.id, col));
-                snap.docs.forEach(d => batch.delete(d.ref));
+        
+        // الخطوة 1: إغلاق النوافذ فوراً قبل العملية
+        setIsDeleteConfirmOpen(false);
+        setIsProfileOpen(false);
+        
+        // الخطوة 2: انتظار بسيط لإنهاء حركة الإغلاق وتنظيف الـ Overlay
+        setTimeout(async () => {
+            try {
+                const batch = writeBatch(firestore);
+                const collections = ['studentExams', 'studentCourses', 'depositRequests', 'notifications'];
+                for (const col of collections) {
+                    const snap = await getDocs(collection(firestore, 'users', student.id, col));
+                    snap.docs.forEach(d => batch.delete(d.ref));
+                }
+                batch.delete(doc(firestore, 'users', student.id));
+                await batch.commit();
+                toast({ title: 'تم الحذف بنجاح' });
+                forceCleanupBody();
+            } catch (error) { 
+                toast({ variant: 'destructive', title: 'فشل الحذف' }); 
+                forceCleanupBody();
             }
-            batch.delete(doc(firestore, 'users', student.id));
-            await batch.commit();
-            toast({ title: 'تم الحذف بنجاح' });
-            setIsDeleteConfirmOpen(false); setIsProfileOpen(false);
-            window.location.reload();
-        } catch (error) { toast({ variant: 'destructive', title: 'فشل الحذف' }); setIsSaving(false); }
+        }, 100);
     };
 
     const joinDate = student.createdAt || getFallbackJoinDate(student.id);
@@ -354,7 +384,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-start gap-1.5 w-full">
-                                    <Wallet className="h-3 w-3 text-primary" />
+                                    <Wallet className="h-3 w-3 text-primary order-last" />
                                     <Label className="font-bold text-xs">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
@@ -373,8 +403,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 </div>
             </DialogContent>
 
-            <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} دخول الطالب للمنصة.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")} disabled={isSaving}>{isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} تأكيد</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold" disabled={isSaving}>{isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} حذف نهائي</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+            <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} دخول الطالب للمنصة.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")}> تأكيد </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold"> حذف نهائي </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
         </Dialog>
     );
 }
