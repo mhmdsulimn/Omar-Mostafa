@@ -223,7 +223,7 @@ export default function StudentProfilePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-primary/5">
             <div className="space-y-2 text-right">
-              <Label htmlFor="phone" className="font-bold flex items-center justify-end gap-2">رقم هاتف الطالب <Phone className="h-3 w-3 text-primary" /></Label>
+              <Label htmlFor="phone" className="font-bold flex items-center justify-start gap-2" dir="rtl">رقم هاتف الطالب <Phone className="h-3 w-3 text-primary" /></Label>
               <Input
                 id="phone"
                 value={phoneNumber}
@@ -235,7 +235,7 @@ export default function StudentProfilePage() {
               />
             </div>
             <div className="space-y-2 text-right">
-              <Label htmlFor="parentPhone" className="font-bold flex items-center justify-end gap-2">رقم هاتف ولي الأمر <UserRound className="h-3 w-3 text-primary" /></Label>
+              <Label htmlFor="parentPhone" className="font-bold flex items-center justify-start gap-2" dir="rtl">رقم هاتف ولي الأمر <UserRound className="h-3 w-3 text-primary" /></Label>
               <Input
                 id="parentPhone"
                 value={parentPhoneNumber}

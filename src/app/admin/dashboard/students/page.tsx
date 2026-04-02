@@ -295,7 +295,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 text-right">
-                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">رقم هاتف الطالب</Label>
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block" dir="rtl">رقم هاتف الطالب</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.phoneNumber && (
@@ -314,7 +314,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                 </div>
 
                                 <div className="p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 text-right">
-                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block">رقم ولي الأمر</Label>
+                                    <Label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block" dir="rtl">رقم هاتف ولي الأمر</Label>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
                                             {student.parentPhoneNumber && (
@@ -336,7 +336,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
                                     <div className="text-right">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5" dir="rtl">آخر ظهور</p>
                                         <p className="font-bold text-xs">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول'}</p>
                                     </div>
                                     <Clock className="h-5 w-5 text-muted-foreground" />
@@ -344,7 +344,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                                 <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
                                     <div className="text-right">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5" dir="rtl">تاريخ الانضمام</p>
                                         <p className="font-bold text-xs">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
                                     </div>
                                     <History className="h-5 w-5 text-muted-foreground" />
@@ -354,7 +354,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
-                                <div className="flex items-center justify-start gap-2 mb-1">
+                                <div className="flex items-center justify-start gap-2 mb-1" dir="rtl">
                                     <Wallet className="h-5 w-5 text-primary" />
                                     <Label className="font-bold text-xs">التحكم في الرصيد</Label>
                                 </div>
