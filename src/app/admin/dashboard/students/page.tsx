@@ -256,31 +256,98 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         </TabsList>
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-2 text-right group transition-all hover:bg-primary/10">
-                                    <div className="flex items-center justify-end gap-2 text-primary text-[10px] font-bold uppercase"><p>رقم هاتف الطالب</p><Phone className="h-3.5 w-3.5" /></div>
-                                    <div className="flex items-center justify-between flex-row-reverse gap-2">
-                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
-                                        <div className="flex gap-1.5">{student.phoneNumber && <><Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white" asChild><a href={`https://wa.me/20${student.phoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-4 w-4" /></a></Button><Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white" asChild><a href={`tel:${student.phoneNumber}`}><Phone className="h-4 w-4" /></a></Button></>}</div>
+                            {/* تواصل سريع - بطاقات الهواتف المحدثة */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                                            <Phone className="h-4 w-4" />
+                                        </div>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم هاتف الطالب</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex gap-2">
+                                            {student.phoneNumber && (
+                                                <>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-colors" asChild>
+                                                        <a href={`https://wa.me/20${student.phoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
+                                                            <WhatsAppIcon className="h-5 w-5" />
+                                                        </a>
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors" asChild>
+                                                        <a href={`tel:${student.phoneNumber}`}>
+                                                            <Phone className="h-5 w-5" />
+                                                        </a>
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">
+                                            {student.phoneNumber || 'غير مسجل'}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-2 text-right group transition-all hover:bg-primary/10">
-                                    <div className="flex items-center justify-end gap-2 text-primary text-[10px] font-bold uppercase"><p>رقم ولي الأمر</p><UserRound className="h-3.5 w-3.5" /></div>
-                                    <div className="flex items-center justify-between flex-row-reverse gap-2">
-                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
-                                        <div className="flex gap-1.5">{student.parentPhoneNumber && <><Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white" asChild><a href={`https://wa.me/20${student.parentPhoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer"><WhatsAppIcon className="h-4 w-4" /></a></Button><Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white" asChild><a href={`tel:${student.parentPhoneNumber}`}><Phone className="h-4 w-4" /></a></Button></>}</div>
+
+                                <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                                            <UserRound className="h-4 w-4" />
+                                        </div>
+                                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم ولي الأمر</span>
+                                    </div>
+                                    <div className="flex items-center justify-between gap-4">
+                                        <div className="flex gap-2">
+                                            {student.parentPhoneNumber && (
+                                                <>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-colors" asChild>
+                                                        <a href={`https://wa.me/20${student.parentPhoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
+                                                            <WhatsAppIcon className="h-5 w-5" />
+                                                        </a>
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="h-9 w-9 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-colors" asChild>
+                                                        <a href={`tel:${student.parentPhoneNumber}`}>
+                                                            <Phone className="h-5 w-5" />
+                                                        </a>
+                                                    </Button>
+                                                </>
+                                            )}
+                                        </div>
+                                        <p className="font-black text-lg font-mono tracking-tighter text-foreground/80" dir="ltr">
+                                            {student.parentPhoneNumber || 'غير مسجل'}
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-6">
-                                <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1.5"><Clock className="h-3 w-3" /> آخر ظهور</p>
-                                    <p className="font-bold text-sm">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}</p>
+                            {/* حالة النشاط - بطاقات التواريخ المحدثة */}
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
+                                            <Clock className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
+                                            <p className="font-bold text-xs">
+                                                {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-primary border border-primary/20 flex flex-col gap-1 text-right shadow-md" dir="rtl">
-                                    <p className="text-[10px] font-bold text-white/80 uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
-                                    <p className="font-bold text-sm text-white">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
+
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-primary shadow-lg shadow-primary/20 border border-primary/20 overflow-hidden relative">
+                                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '12px 12px' }}></div>
+                                    <div className="flex items-center gap-3 relative z-10">
+                                        <div className="p-2.5 rounded-xl bg-white/20 text-white">
+                                            <History className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-[10px] font-black text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
+                                            <p className="font-bold text-xs text-white">
+                                                {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </TabsContent>
