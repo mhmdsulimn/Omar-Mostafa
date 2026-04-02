@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -94,18 +95,26 @@ export function GradeSelectionDialog({
     if (fullName.trim().split(' ').length < 2) {
       toast({
         variant: 'destructive',
-        title: 'الاسم غير مكتمل',
+        title: 'اسم غير مكتمل',
         description: 'يرجى كتابة الاسم ثنائياً على الأقل.',
       });
       return;
     }
 
-    // اشتراط ١١ رقماً بالضبط (فحص إضافي عند الحفظ)
     if (phoneNumber.length !== 11 || parentPhoneNumber.length !== 11) {
       toast({
         variant: 'destructive',
         title: 'رقم هاتف غير صحيح',
         description: 'يجب أن يتكون رقم الهاتف من ١١ رقماً بالضبط.',
+      });
+      return;
+    }
+
+    if (phoneNumber === parentPhoneNumber) {
+      toast({
+        variant: 'destructive',
+        title: 'أرقام متطابقة',
+        description: 'لا يمكن أن يكون رقم الطالب هو نفسه رقم ولي الأمر.',
       });
       return;
     }
@@ -124,13 +133,13 @@ export function GradeSelectionDialog({
     setParentPhoneNumber('');
   };
 
-  // الزر يكون معطلاً إذا كان أي حقل ناقص أو إذا كانت أرقام الهواتف لا تحتوي على 11 رقماً
   const isButtonDisabled = 
     isSaving || 
     !grade || 
     !fullName.trim() || 
     phoneNumber.length !== 11 || 
-    parentPhoneNumber.length !== 11;
+    parentPhoneNumber.length !== 11 ||
+    phoneNumber === parentPhoneNumber;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && isOpen && toast({ title: 'مطلوب إكمال التسجيل', variant: 'destructive' })}>
@@ -201,6 +210,9 @@ export function GradeSelectionDialog({
               />
             </div>
           </div>
+          {phoneNumber && parentPhoneNumber && phoneNumber === parentPhoneNumber && (
+            <p className="text-[10px] text-destructive font-bold text-center animate-in fade-in">عذراً، يجب أن يكون رقم ولي الأمر مختلفاً عن رقم الطالب.</p>
+          )}
         </div>
         <DialogFooter>
           <Button onClick={handleSave} disabled={isButtonDisabled} className="w-full h-12 font-bold rounded-xl shadow-lg">
