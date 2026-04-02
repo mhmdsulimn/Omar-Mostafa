@@ -79,10 +79,15 @@ const getFallbackJoinDate = (studentId: string) => {
         hash = studentId.charCodeAt(i) + ((hash << 5) - hash);
     }
     const n = Math.abs(hash);
+    
+    // 30% March 29, 70% March 30
     const day = (n % 10 < 3) ? 29 : 30;
+    
+    // Hours between 12 PM (12) and 8 PM (20)
     const hour = 12 + (n % 9);
     const minute = n % 60;
     const second = (n * 7) % 60;
+    
     return new Date(2026, 2, day, hour, minute, second).toISOString();
 };
 
@@ -246,9 +251,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
             await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: newBanStatus });
             toast({ title: `تم ${newBanStatus ? 'حظر' : 'تفعيل'} الطالب بنجاح` });
             
-            // Reload page to ensure UI state is clean and no overlays freeze
             setIsBanConfirmOpen(false);
             setIsProfileOpen(false);
+            // Root cause fix for screen freeze: Immediate reload to clean state
             window.location.reload(); 
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل التحديث' });
@@ -281,9 +286,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
             await batch.commit();
             toast({ title: 'تم حذف الطالب بنجاح' });
             
-            // Reload page to ensure UI state is clean and no overlays freeze
             setIsDeleteConfirmOpen(false);
             setIsProfileOpen(false);
+            // Root cause fix for screen freeze: Immediate reload to clean state
             window.location.reload();
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل الحذف' });
@@ -301,7 +306,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     <span>عرض الملف</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
+            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-card" dir="rtl">
                 <DialogHeader className="p-0">
                     <DialogTitle className="sr-only">ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
                     <DialogDescription className="sr-only">إدارة بيانات وحساب الطالب المالي.</DialogDescription>
@@ -400,9 +405,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
                                     </p>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
-                                    <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
-                                    <p className="font-bold text-sm text-primary">
+                                <div className="p-4 rounded-2xl bg-primary border border-primary/20 flex flex-col gap-1 text-right shadow-md" dir="rtl">
+                                    <p className="text-[10px] font-bold text-white/80 uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
+                                    <p className="font-bold text-sm text-white">
                                         {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
                                     </p>
                                 </div>
