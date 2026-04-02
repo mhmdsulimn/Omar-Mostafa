@@ -22,7 +22,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink, Activity, Phone, UserRound } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, MessageSquare } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,6 +60,12 @@ const gradeMap: Record<Student['grade'], string> = {
   second_secondary: 'الصف الثاني الثانوي',
   third_secondary: 'الصف الثالث الثانوي',
 };
+
+const WhatsAppIcon = ({ className }: { className?: string }) => (
+  <svg role="img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className={className} fill="currentColor">
+    <path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.79.52 3.48 1.47 4.94L2 22l5.25-1.38c1.41.87 3.02 1.38 4.79 1.38h.01c5.46 0 9.91-4.45 9.91-9.91 0-5.46-4.45-9.91-9.91-9.91zM18.1 16.51c-.14-.28-.52-.45-.78-.52-.26-.07-1.52-.75-1.75-.83s-.39-.14-.56.14c-.17.28-.66.83-.81.99-.15.17-.29.19-.54.06s-1.05-.38-2-1.23c-.74-.66-1.23-1.47-1.38-1.72s-.03-.39.11-.51c.13-.13.28-.34.42-.51.14-.17.19-.28.28-.47.09-.19.05-.36-.02-.51s-.56-1.34-.76-1.84c-.2-.48-.41-.42-.56-.42h-.48c-.17 0-.45.09-.68.34-.23.25-.87.85-.87 2.07s.9 2.4.99 2.57.87 1.33 2.08 1.84c.31.13.56.21.75.26.33.09.65.07.87-.04.25-.13.78-.31.89-.62.11-.3.11-.56.08-.62s-.11-.14-.26-.25z" />
+  </svg>
+);
 
 const getFallbackJoinDate = (studentId: string) => {
     let hash = 0;
@@ -329,12 +335,21 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         <p className="text-[10px] font-bold text-primary uppercase">رقم هاتف الطالب</p>
                                         <Phone className="h-3.5 w-3.5 text-primary" />
                                     </div>
-                                    <div className="flex items-center justify-between flex-row-reverse">
-                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
+                                    <div className="flex items-center justify-between flex-row-reverse gap-2">
+                                        <p className="font-bold text-sm font-mono tracking-wider flex-1 text-right" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
                                         {student.phoneNumber && (
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-primary/20 text-primary" asChild>
-                                                <a href={`tel:${student.phoneNumber}`}><Phone className="h-3.5 w-3.5" /></a>
-                                            </Button>
+                                            <div className="flex gap-1.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm" asChild>
+                                                    <a href={`https://wa.me/20${student.phoneNumber.startsWith('0') ? student.phoneNumber.slice(1) : student.phoneNumber}`} target="_blank" rel="noopener noreferrer">
+                                                        <WhatsAppIcon className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-all shadow-sm" asChild>
+                                                    <a href={`tel:${student.phoneNumber}`}>
+                                                        <Phone className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
@@ -343,12 +358,21 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         <p className="text-[10px] font-bold text-primary uppercase">رقم ولي الأمر</p>
                                         <UserRound className="h-3.5 w-3.5 text-primary" />
                                     </div>
-                                    <div className="flex items-center justify-between flex-row-reverse">
-                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
+                                    <div className="flex items-center justify-between flex-row-reverse gap-2">
+                                        <p className="font-bold text-sm font-mono tracking-wider flex-1 text-right" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
                                         {student.parentPhoneNumber && (
-                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-primary/20 text-primary" asChild>
-                                                <a href={`tel:${student.parentPhoneNumber}`}><Phone className="h-3.5 w-3.5" /></a>
-                                            </Button>
+                                            <div className="flex gap-1.5 shrink-0">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm" asChild>
+                                                    <a href={`https://wa.me/20${student.parentPhoneNumber.startsWith('0') ? student.parentPhoneNumber.slice(1) : student.parentPhoneNumber}`} target="_blank" rel="noopener noreferrer">
+                                                        <WhatsAppIcon className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-blue-500/10 text-blue-600 hover:bg-blue-500 hover:text-white transition-all shadow-sm" asChild>
+                                                    <a href={`tel:${student.parentPhoneNumber}`}>
+                                                        <Phone className="h-4 w-4" />
+                                                    </a>
+                                                </Button>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
