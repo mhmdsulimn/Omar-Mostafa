@@ -61,6 +61,26 @@ const gradeMap: Record<Student['grade'], string> = {
   third_secondary: 'الصف الثالث الثانوي',
 };
 
+/**
+ * دالة لتوليد تاريخ انضمام عشوائي منظم (Fallback) للطلاب الحاليين
+ */
+const getFallbackJoinDate = (studentId: string) => {
+    let hash = 0;
+    for (let i = 0; i < studentId.length; i++) {
+        hash = studentId.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const n = Math.abs(hash);
+    
+    // 30% يوم 29، 70% يوم 30 مارس 2026
+    const day = (n % 10 < 3) ? 29 : 30;
+    // من الساعة 12 مساءً (12) حتى 8 مساءً (20)
+    const hour = 12 + (n % 9);
+    const minute = n % 60;
+    const second = (n * 7) % 60;
+    
+    return new Date(2026, 2, day, hour, minute, second).toISOString();
+};
+
 function AddBalanceToAllDialog({ students }: { students: Student[] }) {
     const firestore = useFirestore();
     const { toast } = useToast();
@@ -126,30 +146,30 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
                 <DialogHeader className="text-right">
-                    <DialogTitle>شحن رصيد لجميع الطلاب</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="font-bold">شحن رصيد لجميع الطلاب</DialogTitle>
+                    <DialogDescription className="font-medium">
                         إضافة رصيد إلى محفظة جميع الطلاب ({students.length} طالب) في القائمة الحالية.
                     </DialogDescription>
                 </DialogHeader>
                  <Tabs value={tab} onValueChange={setTab} className="w-full" dir="rtl">
                     <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl">
-                        <TabsTrigger value="fixed" className="rounded-lg">مبلغ ثابت</TabsTrigger>
-                        <TabsTrigger value="random" className="rounded-lg">مبلغ عشوائي</TabsTrigger>
+                        <TabsTrigger value="fixed" className="rounded-lg font-bold">مبلغ ثابت</TabsTrigger>
+                        <TabsTrigger value="random" className="rounded-lg font-bold">مبلغ عشوائي</TabsTrigger>
                     </TabsList>
                     <TabsContent value="fixed" className="pt-4">
                         <div className="space-y-2">
-                            <Label htmlFor="fixedAmount">المبلغ المراد إضافته (بالجنيه)</Label>
+                            <Label htmlFor="fixedAmount" className="font-bold">المبلغ المراد إضافته (بالجنيه)</Label>
                             <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
                         </div>
                     </TabsContent>
                     <TabsContent value="random" className="pt-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
-                                <Label htmlFor="minAmount">الحد الأدنى</Label>
+                                <Label htmlFor="minAmount" className="font-bold">الحد الأدنى</Label>
                                 <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="maxAmount">الحد الأقصى</Label>
+                                <Label htmlFor="maxAmount" className="font-bold">الحد الأقصى</Label>
                                 <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl" />
                             </div>
                         </div>
@@ -157,7 +177,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                 </Tabs>
                 <DialogFooter className="mt-6 gap-2">
                     <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
-                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl">
+                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                         تأكيد الشحن
                     </Button>
@@ -256,6 +276,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
         }
     };
 
+    // حساب تاريخ الانضمام (إما الحقيقي أو العشوائي للأقدم)
+    const joinDate = student.createdAt || getFallbackJoinDate(student.id);
+
     return (
         <Dialog>
             <DialogTrigger asChild>
@@ -274,23 +297,23 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     <div className="absolute top-0 left-0 w-full h-full opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
                     <div className="relative z-10 flex flex-col items-center sm:items-start gap-6 sm:flex-row-reverse">
                         <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
-                            <AvatarFallback className="text-3xl font-black">{student.firstName?.charAt(0)}</AvatarFallback>
+                            <AvatarFallback className="text-3xl font-bold">{student.firstName?.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="flex-1 space-y-2 text-center sm:text-right">
                             <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
                                 {student.isBanned && <Badge variant="destructive" className="font-bold gap-1"><ShieldOff className="h-3 w-3" /> محظور</Badge>}
-                                <h2 className="text-2xl font-black">{student.firstName} {student.lastName}</h2>
+                                <h2 className="text-2xl font-bold">{student.firstName} {student.lastName}</h2>
                             </div>
                             <div className="flex items-center justify-center sm:justify-end gap-2 text-muted-foreground text-sm font-bold">
                                 <span dir="ltr">{student.email}</span>
                                 <Mail className="h-4 w-4" />
                             </div>
                             <div className="flex items-center justify-center sm:justify-end gap-4 mt-2">
-                                <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full text-primary text-xs font-black">
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full text-primary text-xs font-bold">
                                     <GraduationCap className="h-3.5 w-3.5" />
                                     {gradeMap[student.grade] || 'غير محدد'}
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-green-500/10 px-3 py-1 rounded-full text-green-600 text-xs font-black">
+                                <div className="flex items-center gap-1.5 bg-primary/10 px-3 py-1 rounded-full text-primary text-xs font-bold">
                                     <Wallet className="h-3.5 w-3.5" />
                                     {student.balance || 0} ج
                                 </div>
@@ -309,17 +332,15 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <TabsContent value="info" className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><Clock className="h-3 w-3" /> آخر ظهور</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1.5"><Clock className="h-3 w-3" /> آخر ظهور</p>
                                     <p className="font-bold text-sm">
                                         {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
                                     </p>
                                 </div>
                                 <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
-                                    <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
-                                    <p className="font-bold text-sm">
-                                        {student.createdAt 
-                                          ? toArabicDigits(format(new Date(student.createdAt), 'd MMM yyyy', { locale: arSA })) 
-                                          : '٢٩ - ٣٠ مارس ٢٠٢٥'}
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
+                                    <p className="font-bold text-sm text-primary">
+                                        {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
                                     </p>
                                 </div>
                             </div>
@@ -327,14 +348,14 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
                                     <div className="p-2 bg-primary/10 rounded-xl text-primary"><Activity className="h-4 w-4" /></div>
                                     <div>
-                                        <p className="text-[10px] font-black text-primary mb-1 uppercase">الصف الدراسي</p>
+                                        <p className="text-[10px] font-bold text-primary mb-1 uppercase">الصف الدراسي</p>
                                         <p className="text-xs font-bold">{gradeMap[student.grade] || 'غير محدد'}</p>
                                     </div>
                                 </div>
-                                <div className="p-4 rounded-2xl bg-green-500/5 border border-green-500/10 flex items-start gap-3 text-right">
-                                    <div className="p-2 bg-green-500/10 rounded-xl text-green-600"><Wallet className="h-4 w-4" /></div>
+                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
+                                    <div className="p-2 bg-primary/10 rounded-xl text-primary"><Wallet className="h-4 w-4" /></div>
                                     <div>
-                                        <p className="text-[10px] font-black text-green-600 mb-1 uppercase">رصيد المحفظة</p>
+                                        <p className="text-[10px] font-bold text-primary mb-1 uppercase">رصيد المحفظة</p>
                                         <p className="text-xs font-bold">{student.balance || 0} جنيه</p>
                                     </div>
                                 </div>
@@ -342,7 +363,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex items-start gap-3 text-right">
                                 <div className="p-2 bg-muted rounded-xl text-muted-foreground"><ExternalLink className="h-4 w-4" /></div>
                                 <div>
-                                    <p className="text-[10px] font-black text-muted-foreground mb-1 uppercase">معرف الجلسة</p>
+                                    <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase">معرف الجلسة</p>
                                     <p className="text-[10px] font-mono select-all opacity-70">{student.currentSessionId || 'لا يوجد'}</p>
                                 </div>
                             </div>
@@ -416,12 +437,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
             <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
                 <AlertDialogContent className="rounded-2xl max-w-md">
                     <AlertDialogHeader className="text-right">
-                        <AlertDialogTitle>تأكيد الإجراء</AlertDialogTitle>
+                        <AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle>
                         <AlertDialogDescription className="font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl", !student.isBanned && "bg-destructive")} disabled={isSaving}>
+                        <AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")} disabled={isSaving}>
                             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} تأكيد
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -431,7 +452,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
             <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
                 <AlertDialogContent className="rounded-2xl max-w-md">
                     <AlertDialogHeader className="text-right">
-                        <AlertDialogTitle className="text-destructive">حذف نهائي للملف</AlertDialogTitle>
+                        <AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle>
                         <AlertDialogDescription className="font-medium leading-relaxed">
                             أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
                             <br /><br />
@@ -440,7 +461,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl" disabled={isSaving}>
+                        <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold" disabled={isSaving}>
                             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} حذف نهائي
                         </AlertDialogAction>
                     </AlertDialogFooter>
@@ -528,7 +549,7 @@ export default function AdminStudentsPage() {
       </div>
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
         <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6 text-right">
-          <CardTitle className="text-lg">قائمة المنضمين</CardTitle>
+          <CardTitle className="text-lg font-bold">قائمة المنضمين</CardTitle>
           <CardDescription className="font-medium">إدارة حسابات الطلاب من خلال ملفاتهم التعريفية.</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <div className="relative">
@@ -536,12 +557,12 @@ export default function AdminStudentsPage() {
                 <Input placeholder="ابحث بالاسم الكامل أو البريد..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
-                <SelectTrigger className="h-11 rounded-xl bg-background"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
+                <SelectTrigger className="h-11 rounded-xl bg-background font-bold"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
                 <SelectContent>
-                    <SelectItem value="all">كل الصفوف</SelectItem>
-                    <SelectItem value="first_secondary">الصف الأول الثانوي</SelectItem>
-                    <SelectItem value="second_secondary">الصف الثاني الثانوي</SelectItem>
-                    <SelectItem value="third_secondary">الصف الثالث الثانوي</SelectItem>
+                    <SelectItem value="all" className="font-bold">كل الصفوف</SelectItem>
+                    <SelectItem value="first_secondary" className="font-bold">الصف الأول الثانوي</SelectItem>
+                    <SelectItem value="second_secondary" className="font-bold">الصف الثاني الثانوي</SelectItem>
+                    <SelectItem value="third_secondary" className="font-bold">الصف الثالث الثانوي</SelectItem>
                 </SelectContent>
             </Select>
           </div>
