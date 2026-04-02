@@ -11,9 +11,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { useUser, useFirestore } from '@/firebase';
+import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { updateProfile } from 'firebase/auth';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { doc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -29,22 +29,26 @@ export default function AdminProfilePage() {
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
+  const { data: adminData, isLoading: isAdminDataLoading } = useDoc<Student>(userDocRef);
 
   useEffect(() => {
-    if (user && firestore) {
-      setFullName(user.displayName || '');
-      setEmail(user.email || '');
-
-      const userDocRef = doc(firestore, 'users', user.uid);
-      const unsub = onSnapshot(userDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data() as Student;
-          setFullName(`${data.firstName} ${data.lastName}`.trim());
-        }
-      });
-      return () => unsub();
+    if (adminData && !isInitialized) {
+      setFullName(`${adminData.firstName} ${adminData.lastName}`.trim());
+      setIsInitialized(true);
     }
-  }, [user, firestore]);
+    if (user) {
+      setEmail(user.email || '');
+    }
+  }, [adminData, user, isInitialized]);
+
+  const hasChanges = React.useMemo(() => {
+    if (!adminData) return false;
+    const dbFullName = `${adminData.firstName} ${adminData.lastName}`.trim();
+    return fullName.trim() !== dbFullName;
+  }, [fullName, adminData]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -101,7 +105,7 @@ export default function AdminProfilePage() {
     }
   };
 
-  if (isUserLoading || !user) {
+  if (isUserLoading || isAdminDataLoading || !user) {
     return (
         <div className="flex h-full w-full items-center justify-center" style={{ minHeight: '50vh' }}>
             <LoadingAnimation size="md" />
@@ -149,7 +153,7 @@ export default function AdminProfilePage() {
               className="text-left"
             />
           </div>
-          <Button onClick={() => handleSaveChanges()} disabled={isSaving}>
+          <Button onClick={() => handleSaveChanges()} disabled={isSaving || !hasChanges}>
             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
             {isSaving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}
           </Button>

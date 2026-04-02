@@ -1,4 +1,3 @@
-
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -34,21 +33,34 @@ export default function StudentProfilePage() {
   const [grade, setGrade] = useState<Student['grade'] | ''>('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [parentPhoneNumber, setParentPhoneNumber] = useState('');
+  const [hasInitialized, setHasInitialized] = useState(false);
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
 
   useEffect(() => {
-    if (studentData) {
+    if (studentData && !hasInitialized) {
       setGrade(studentData.grade);
       setFullName(`${studentData.firstName} ${studentData.lastName}`.trim());
       setPhoneNumber(studentData.phoneNumber || '');
       setParentPhoneNumber(studentData.parentPhoneNumber || '');
+      setHasInitialized(true);
     }
     if(user) {
         setEmail(user.email || '');
     }
-  }, [studentData, user]);
+  }, [studentData, user, hasInitialized]);
+
+  const hasChanges = React.useMemo(() => {
+    if (!studentData) return false;
+    const dbFullName = `${studentData.firstName} ${studentData.lastName}`.trim();
+    return (
+      fullName.trim() !== dbFullName ||
+      grade !== studentData.grade ||
+      phoneNumber !== (studentData.phoneNumber || '') ||
+      parentPhoneNumber !== (studentData.parentPhoneNumber || '')
+    );
+  }, [fullName, grade, phoneNumber, parentPhoneNumber, studentData]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -236,7 +248,7 @@ export default function StudentProfilePage() {
             </div>
           </div>
 
-          <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full md:w-auto px-8 h-12 font-bold rounded-xl shadow-md">
+          <Button onClick={handleSaveChanges} disabled={isSaving || !hasChanges} className="w-full md:w-auto px-8 h-12 font-bold rounded-xl shadow-md">
             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
             حفظ التغييرات
           </Button>
