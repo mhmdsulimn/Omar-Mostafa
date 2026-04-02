@@ -46,7 +46,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
@@ -235,50 +234,60 @@ function StudentProfileDialog({ student }: { student: Student }) {
         if (!firestore || !student) return;
         setIsSaving(true);
         const newBanStatus = !student.isBanned;
-        try {
-            // Close the dialog first to prevent layout freeze
-            setIsBanConfirmOpen(false);
-            setIsProfileOpen(false);
-            
-            await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: newBanStatus });
-            toast({ title: `تم ${newBanStatus ? 'حظر' : 'تفعيل'} الطالب بنجاح` });
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'فشل التحديث' });
-            setIsSaving(false);
-        }
+        
+        // فك ارتباط النوافذ فوراً لمنع التجمد
+        setIsBanConfirmOpen(false);
+        setIsProfileOpen(false);
+
+        // انتظار بسيط لضمان إغلاق النوافذ برمجياً في المتصفح
+        setTimeout(async () => {
+            try {
+                await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: newBanStatus });
+                toast({ title: `تم ${newBanStatus ? 'حظر' : 'تفعيل'} الطالب بنجاح` });
+            } catch (error) {
+                toast({ variant: 'destructive', title: 'فشل التحديث' });
+            } finally {
+                setIsSaving(false);
+            }
+        }, 100);
     };
 
     const handleDelete = async () => {
         if (!firestore || !student) return;
         setIsSaving(true);
-        try {
-            // CRITICAL: Close the dialogs before deletion to prevent body scroll lock freeze
-            setIsDeleteConfirmOpen(false);
-            setIsProfileOpen(false);
 
-            const batch = writeBatch(firestore);
-            const examsSnap = await getDocs(collection(firestore, 'users', student.id, 'studentExams'));
-            const coursesSnap = await getDocs(collection(firestore, 'users', student.id, 'studentCourses'));
-            const depositsSnap = await getDocs(collection(firestore, 'users', student.id, 'depositRequests'));
-            const notifsSnap = await getDocs(collection(firestore, 'users', student.id, 'notifications'));
-            
-            examsSnap.docs.forEach(d => batch.delete(d.ref));
-            depositsSnap.docs.forEach(d => batch.delete(d.ref));
-            notifsSnap.docs.forEach(d => batch.delete(d.ref));
-            
-            for (const courseDoc of coursesSnap.docs) {
-                const progressSnap = await getDocs(collection(courseDoc.ref, 'progress'));
-                progressSnap.docs.forEach(p => p.ref && batch.delete(p.ref));
-                batch.delete(courseDoc.ref);
+        // فك ارتباط النوافذ فوراً لمنع التجمد
+        setIsDeleteConfirmOpen(false);
+        setIsProfileOpen(false);
+
+        // انتظار بسيط لضمان إغلاق النوافذ برمجياً في المتصفح قبل حذف السجل من القائمة
+        setTimeout(async () => {
+            try {
+                const batch = writeBatch(firestore);
+                const examsSnap = await getDocs(collection(firestore, 'users', student.id, 'studentExams'));
+                const coursesSnap = await getDocs(collection(firestore, 'users', student.id, 'studentCourses'));
+                const depositsSnap = await getDocs(collection(firestore, 'users', student.id, 'depositRequests'));
+                const notifsSnap = await getDocs(collection(firestore, 'users', student.id, 'notifications'));
+                
+                examsSnap.docs.forEach(d => batch.delete(d.ref));
+                depositsSnap.docs.forEach(d => batch.delete(d.ref));
+                notifsSnap.docs.forEach(d => batch.delete(d.ref));
+                
+                for (const courseDoc of coursesSnap.docs) {
+                    const progressSnap = await getDocs(collection(courseDoc.ref, 'progress'));
+                    progressSnap.docs.forEach(p => p.ref && batch.delete(p.ref));
+                    batch.delete(courseDoc.ref);
+                }
+                batch.delete(doc(firestore, 'users', student.id));
+                
+                await batch.commit();
+                toast({ title: 'تم حذف الطالب وكافة سجلاته بنجاح' });
+            } catch (error) {
+                toast({ variant: 'destructive', title: 'فشل الحذف' });
+            } finally {
+                setIsSaving(false);
             }
-            batch.delete(doc(firestore, 'users', student.id));
-            
-            await batch.commit();
-            toast({ title: 'تم حذف الطالب وكافة سجلاته بنجاح' });
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'فشل الحذف' });
-            setIsSaving(false);
-        }
+        }, 100);
     };
 
     const joinDate = student.createdAt || getFallbackJoinDate(student.id);
