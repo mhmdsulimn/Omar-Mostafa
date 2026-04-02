@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -168,6 +169,7 @@ export default function LoginPage() {
             isBanned: false,
             balance: 0,
             currentSessionId: newSessionId,
+            createdAt: new Date().toISOString(), // حفظ تاريخ الانضمام
         }, { merge: true });
 
         router.replace('/welcome');

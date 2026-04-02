@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -264,7 +265,6 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
-                {/* Accessibility Fix: Added sr-only DialogHeader components */}
                 <DialogHeader className="sr-only">
                     <DialogTitle>ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
                     <DialogDescription>عرض تفاصيل الطالب وإدارة حسابه المالي وحالته على المنصة.</DialogDescription>
@@ -316,7 +316,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                 </div>
                                 <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
                                     <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
-                                    <p className="font-bold text-sm text-muted-foreground italic">منذ بداية المسيرة 🎓</p>
+                                    <p className="font-bold text-sm">
+                                        {student.createdAt ? toArabicDigits(format(new Date(student.createdAt), 'd MMM yyyy', { locale: arSA })) : 'منذ بداية المسيرة 🎓'}
+                                    </p>
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

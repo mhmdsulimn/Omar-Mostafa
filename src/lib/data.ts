@@ -43,6 +43,7 @@ export type Student = {
   readAnnouncements?: string[];
   deletedAnnouncements?: string[];
   lastActiveAt?: string; // تاريخ آخر ظهور للطالب
+  createdAt?: string; // تاريخ إنشاء الحساب (الانضمام)
 };
 
 export type CurriculumUnit = {
