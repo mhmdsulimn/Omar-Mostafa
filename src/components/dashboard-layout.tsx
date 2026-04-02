@@ -189,7 +189,6 @@ export function DashboardLayout({
   // --- Keyboard Shortcuts Logic ---
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Check for Ctrl or Meta (Command on Mac)
       if ((e.ctrlKey || e.metaKey)) {
         const key = e.key.toLowerCase();
         
@@ -300,11 +299,11 @@ export function DashboardLayout({
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => { setOptimisticPath(profilePath); startLoader(); router.push(profilePath); }}>
             <User className="ml-2 h-4 w-4" />
-            <span>الملف الشخصي (Ctrl+P)</span>
+            <span>الملف الشخصي</span>
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => { setOptimisticPath(settingsPath); startLoader(); router.push(settingsPath); }}>
               <Settings className="ml-2 h-4 w-4" />
-              <span>الإعدادات (Ctrl+S)</span>
+              <span>الإعدادات</span>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleLogout}>
@@ -372,7 +371,6 @@ export function DashboardLayout({
             <SidebarFooter className="p-4 pt-3 flex flex-col items-center justify-center shrink-0 overflow-hidden w-full">
               <DeveloperInfoDialog>
                 <button className="relative group flex items-center justify-center px-6 py-2 text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground/60 hover:text-primary transition-all duration-500 focus:outline-none whitespace-nowrap active:scale-95 animate-pulse-slow hover:scale-105 w-fit">
-                  {/* Floating Sparkling Stars */}
                   <Sparkles className="absolute -top-1 left-2 h-2 w-2 text-amber-400 opacity-70 group-hover:opacity-100 animate-pulse transition-all duration-700" />
                   <Sparkles className="absolute top-1 right-2 h-1.5 w-1.5 text-amber-300 opacity-60 group-hover:opacity-100 animate-ping transition-all duration-1000 delay-300" />
                   <Sparkles className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-2 w-2 text-amber-500 opacity-70 group-hover:opacity-100 animate-bounce transition-all duration-500 delay-150" />
