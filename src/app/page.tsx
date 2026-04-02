@@ -6,6 +6,7 @@ import { useUser, useFirestore, useAuth } from '@/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import type { Student } from '@/lib/data';
 
 /**
  * الصفحة الرئيسية: بوابة التوجيه الذكية.
@@ -48,10 +49,20 @@ export default function Home() {
                 return;
             }
 
-            if (userDocSnap.data()?.isBanned) {
+            const userData = userDocSnap.data() as Student;
+
+            if (userData.isBanned) {
                 // تسجيل خروج فوري للحسابات المحظورة
                 await signOut(auth);
                 localStorage.removeItem('exam_prep_session');
+                router.replace('/login');
+                return;
+            }
+
+            // --- شرط إكمال البيانات الإلزامي ---
+            // إذا كان الصف أو رقم الطالب أو رقم ولي الأمر مفقوداً
+            const isIncomplete = !userData.grade || !userData.phoneNumber || !userData.parentPhoneNumber;
+            if (isIncomplete) {
                 router.replace('/login');
                 return;
             }

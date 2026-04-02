@@ -35,6 +35,7 @@ interface GradeSelectionDialogProps {
     parentPhoneNumber: string;
   }) => Promise<void>;
   user: User | null;
+  initialData?: Student | null;
 }
 
 export function GradeSelectionDialog({
@@ -42,6 +43,7 @@ export function GradeSelectionDialog({
   onClose,
   onSave,
   user,
+  initialData,
 }: GradeSelectionDialogProps) {
   const [grade, setGrade] = React.useState<Student['grade'] | ''>('');
   const [fullName, setFullName] = React.useState('');
@@ -49,6 +51,21 @@ export function GradeSelectionDialog({
   const [parentPhoneNumber, setParentPhoneNumber] = React.useState('');
   const [isSaving, setIsSaving] = React.useState(false);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    if (isOpen && initialData) {
+      if (initialData.grade) setGrade(initialData.grade);
+      if (initialData.firstName || initialData.lastName) {
+        setFullName(`${initialData.firstName} ${initialData.lastName}`.trim());
+      } else if (user?.displayName) {
+        setFullName(user.displayName);
+      }
+      if (initialData.phoneNumber) setPhoneNumber(initialData.phoneNumber);
+      if (initialData.parentPhoneNumber) setParentPhoneNumber(initialData.parentPhoneNumber);
+    } else if (isOpen && user?.displayName) {
+      setFullName(user.displayName);
+    }
+  }, [isOpen, initialData, user]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -179,7 +196,7 @@ export function GradeSelectionDialog({
         </div>
         <DialogFooter>
           <Button onClick={handleSave} disabled={isSaving || !grade || !fullName.trim() || !phoneNumber || !parentPhoneNumber} className="w-full h-12 font-bold rounded-xl shadow-lg">
-            {isSaving ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : 'بدء الرحلة التعليمية'}
+            {isSaving ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : (initialData ? 'حفظ وإكمال الدخول' : 'بدء الرحلة التعليمية')}
           </Button>
         </DialogFooter>
       </DialogContent>

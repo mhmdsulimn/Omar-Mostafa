@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -24,6 +23,7 @@ import {
  * 2. يراقب الحظر اللحظي (Banned) ويقوم بطرد المستخدم فوراً.
  * 3. يراقب حذف الحساب (Ghost Session) مع حماية ضد ضعف الإنترنت.
  * 4. يحمي المحتوى من أدوات المطور والنسخ (للطلاب فقط).
+ * 5. يمنع الوصول إذا كانت البيانات الشخصية ناقصة.
  */
 export function SessionGuard({ children }: { children: React.ReactNode }) {
   const { user, isUserLoading } = useUser();
@@ -87,7 +87,16 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
         setShowBannedDialog(true);
         return;
     }
-  }, [studentData, isUserLoading, isLoadingStudent, user, studentError, isAdmin, isAdminLoading]);
+
+    // --- شرط إكمال البيانات الإلزامي للطالب ---
+    if (studentData && !isAdmin && !isAdminLoading) {
+        const isIncomplete = !studentData.grade || !studentData.phoneNumber || !studentData.parentPhoneNumber;
+        if (isIncomplete) {
+            router.replace('/login');
+            return;
+        }
+    }
+  }, [studentData, isUserLoading, isLoadingStudent, user, studentError, isAdmin, isAdminLoading, router]);
 
   const handleForceLogout = async () => {
     if (auth) {

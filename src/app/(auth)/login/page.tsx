@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -40,6 +39,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = React.useState(false);
   const [showGradeDialog, setShowGradeDialog] = React.useState(false);
   const [pendingProfileUser, setPendingProfileUser] = React.useState<User | null>(null);
+  const [existingData, setExistingData] = React.useState<Student | null>(null);
 
   // Interaction Refs
   const cardRef = React.useRef<HTMLDivElement>(null);
@@ -101,6 +101,11 @@ export default function LoginPage() {
         if (userData.isBanned) {
           toast({ variant: 'destructive', title: 'الحساب محظور', description: 'تم حظر هذا الحساب. يرجى التواصل مع المسؤول.' });
           await signOut(auth);
+        } else if (!userData.grade || !userData.phoneNumber || !userData.parentPhoneNumber) {
+          // بيانات الطالب ناقصة
+          setPendingProfileUser(currentUser);
+          setExistingData(userData);
+          setShowGradeDialog(true);
         } else {
           const newSessionId = generateUUID();
           if (typeof window !== 'undefined') {
@@ -111,6 +116,7 @@ export default function LoginPage() {
         }
       } else {
         setPendingProfileUser(currentUser);
+        setExistingData(null);
         setShowGradeDialog(true);
       }
     } catch (error) {
@@ -198,12 +204,12 @@ export default function LoginPage() {
             phoneNumber: phoneNumber,
             parentPhoneNumber: parentPhoneNumber,
             isBanned: false,
-            balance: 0,
+            balance: existingData?.balance || 0,
             currentSessionId: newSessionId,
-            createdAt: new Date().toISOString(),
+            createdAt: existingData?.createdAt || new Date().toISOString(),
         }, { merge: true });
 
-        router.replace('/welcome');
+        router.replace(existingData ? '/' : '/welcome');
     } catch (error) {
          toast({ variant: 'destructive', title: 'فشل حفظ البيانات' });
          setIsLoading(false);
@@ -225,6 +231,7 @@ export default function LoginPage() {
           onClose={() => setShowGradeDialog(false)}
           onSave={handleGradeSelection}
           user={pendingProfileUser}
+          initialData={existingData}
       />
 
       <div className="w-full max-w-md px-4 relative z-10">
