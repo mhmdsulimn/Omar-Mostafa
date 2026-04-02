@@ -168,10 +168,10 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
               <TabsTrigger value="fixed" className="rounded-lg font-bold h-full">مبلغ ثابت</TabsTrigger>
               <TabsTrigger value="random" className="rounded-lg font-bold h-full">مبلغ عشوائي</TabsTrigger>
             </TabsList>
-            <TabsContent value="fixed" className="pt-4"><Label className="font-bold mb-2 block">المبلغ (جنيه)</Label><Input type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} className="h-12 rounded-xl font-bold text-center" /></TabsContent>
+            <TabsContent value="fixed" className="pt-4"><Label className="font-bold mb-2 block text-right">المبلغ (جنيه)</Label><Input type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} className="h-12 rounded-xl font-bold text-center" /></TabsContent>
             <TabsContent value="random" className="pt-4 grid grid-cols-2 gap-4">
-                <div><Label className="font-bold mb-2 block">الحد الأدنى</Label><Input type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-12 rounded-xl text-center" /></div>
-                <div><Label className="font-bold mb-2 block">الحد الأقصى</Label><Input type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} className="h-12 rounded-xl text-center" /></div>
+                <div><Label className="font-bold mb-2 block text-right">الحد الأدنى</Label><Input type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} className="h-12 rounded-xl text-center" /></div>
+                <div><Label className="font-bold mb-2 block text-right">الحد الأقصى</Label><Input type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} className="h-12 rounded-xl text-center" /></div>
             </TabsContent>
           </Tabs>
           <DialogFooter className="mt-6 gap-2 sm:justify-start">
@@ -298,8 +298,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
-                                            <Phone className="h-4 w-4" />
+                                        <div className="text-primary transition-transform group-hover:scale-110">
+                                            <Phone className="h-5 w-5" />
                                         </div>
                                         <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم هاتف الطالب</span>
                                     </div>
@@ -326,8 +326,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
-                                            <UserRound className="h-4 w-4" />
+                                        <div className="text-primary transition-transform group-hover:scale-110">
+                                            <UserRound className="h-5 w-5" />
                                         </div>
                                         <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم ولي الأمر</span>
                                     </div>
@@ -364,7 +364,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-slate-600 border border-slate-500 shadow-inner overflow-hidden relative group/join">
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-zinc-800 border border-zinc-700 shadow-inner overflow-hidden relative group/join">
                                     <div className="flex items-center gap-3 relative z-10 w-full">
                                         <div className="p-2.5 rounded-2xl bg-white/10 text-white backdrop-blur-sm group-hover/join:scale-110 transition-transform"><History className="h-5 w-5" /></div>
                                         <div className="text-right">
@@ -379,7 +379,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-start gap-2 w-full mb-1">
-                                    <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm"><Wallet className="h-4 w-4" /></div>
+                                    <div className="text-primary"><Wallet className="h-5 w-5" /></div>
                                     <Label className="font-bold text-xs text-primary">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
