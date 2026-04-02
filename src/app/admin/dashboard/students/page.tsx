@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -63,6 +62,7 @@ const gradeMap: Record<Student['grade'], string> = {
 
 /**
  * دالة لتوليد تاريخ انضمام عشوائي منظم (Fallback) للطلاب الحاليين
+ * التوزيع: 30% يوم 29 مارس، 70% يوم 30 مارس 2026. الوقت بين 12م و 8م.
  */
 const getFallbackJoinDate = (studentId: string) => {
     let hash = 0;
@@ -71,10 +71,8 @@ const getFallbackJoinDate = (studentId: string) => {
     }
     const n = Math.abs(hash);
     
-    // 30% يوم 29، 70% يوم 30 مارس 2026
     const day = (n % 10 < 3) ? 29 : 30;
-    // من الساعة 12 مساءً (12) حتى 8 مساءً (20)
-    const hour = 12 + (n % 9);
+    const hour = 12 + (n % 9); // من 12 إلى 20 (8 مساءً)
     const minute = n % 60;
     const second = (n * 7) % 60;
     
@@ -175,7 +173,7 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                         </div>
                     </TabsContent>
                 </Tabs>
-                <DialogFooter className="mt-6 gap-2">
+                <DialogFooter className="mt-6 gap-2 sm:justify-start">
                     <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
                     <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
@@ -276,7 +274,6 @@ function StudentProfileDialog({ student }: { student: Student }) {
         }
     };
 
-    // حساب تاريخ الانضمام (إما الحقيقي أو العشوائي للأقدم)
     const joinDate = student.createdAt || getFallbackJoinDate(student.id);
 
     return (
@@ -360,13 +357,6 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     </div>
                                 </div>
                             </div>
-                            <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex items-start gap-3 text-right">
-                                <div className="p-2 bg-muted rounded-xl text-muted-foreground"><ExternalLink className="h-4 w-4" /></div>
-                                <div>
-                                    <p className="text-[10px] font-bold text-muted-foreground mb-1 uppercase">معرف الجلسة</p>
-                                    <p className="text-[10px] font-mono select-all opacity-70">{student.currentSessionId || 'لا يوجد'}</p>
-                                </div>
-                            </div>
                         </TabsContent>
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
@@ -379,7 +369,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <div className="relative flex-1">
                                         <Input 
                                             type="number" 
-                                            placeholder="أدخل المبلغ..." 
+                                            placeholder="المبلغ..." 
                                             className="h-12 rounded-xl text-center font-bold pr-10" 
                                             value={amount || ''} 
                                             onChange={e => setAmount(Number(e.target.value))}
@@ -387,19 +377,10 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         />
                                         <DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                     </div>
-                                    <Button 
-                                        onClick={() => handleUpdateBalance('add')} 
-                                        disabled={isSaving || amount <= 0} 
-                                        className="h-12 rounded-xl bg-green-600 hover:bg-green-700 gap-1 font-bold px-6"
-                                    >
+                                    <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 gap-1 font-bold px-6">
                                         <Gift className="h-4 w-4" /> شحن
                                     </Button>
-                                    <Button 
-                                        variant="outline" 
-                                        onClick={() => handleUpdateBalance('withdraw')} 
-                                        disabled={isSaving || amount <= 0} 
-                                        className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 gap-1 font-bold px-6"
-                                    >
+                                    <Button variant="outline" onClick={() => handleUpdateBalance('withdraw')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl border-destructive text-destructive hover:bg-destructive/10 gap-1 font-bold px-6">
                                         <Minus className="h-4 w-4" /> سحب
                                     </Button>
                                 </div>
@@ -408,29 +389,15 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <Separator className="bg-border/50" />
 
                             <div className="flex flex-col sm:flex-row gap-3">
-                                <Button 
-                                    variant={student.isBanned ? 'default' : 'destructive'} 
-                                    onClick={() => setIsBanConfirmOpen(true)}
-                                    disabled={isSaving}
-                                    className="flex-1 h-12 rounded-xl font-bold gap-2"
-                                >
+                                <Button variant={student.isBanned ? 'default' : 'destructive'} onClick={() => setIsBanConfirmOpen(true)} disabled={isSaving} className="flex-1 h-12 rounded-xl font-bold gap-2">
                                     {student.isBanned ? <><ShieldCheck className="h-4 w-4" /> تفعيل الحساب</> : <><ShieldOff className="h-4 w-4" /> حظر الطالب</>}
                                 </Button>
-                                <Button 
-                                    variant="outline" 
-                                    onClick={() => setIsDeleteConfirmOpen(true)}
-                                    disabled={isSaving}
-                                    className="flex-1 h-12 rounded-xl font-bold gap-2 border-destructive text-destructive hover:bg-destructive/10"
-                                >
-                                    <Trash2 className="h-4 w-4" /> حذف الحساب نهائياً
+                                <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(true)} disabled={isSaving} className="flex-1 h-12 rounded-xl font-bold gap-2 border-destructive text-destructive hover:bg-destructive/10">
+                                    <Trash2 className="h-4 w-4" /> حذف الطالب
                                 </Button>
                             </div>
                         </TabsContent>
                     </Tabs>
-                </div>
-
-                <div className="bg-muted/30 p-4 border-t px-6">
-                    <p className="text-[10px] text-muted-foreground font-bold text-center w-full">إدارة شؤون الطلاب - منصة الأستاذ عمر مصطفى</p>
                 </div>
             </DialogContent>
 
@@ -440,7 +407,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         <AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle>
                         <AlertDialogDescription className="font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-2">
+                    <AlertDialogFooter className="gap-2 sm:justify-start">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
                         <AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")} disabled={isSaving}>
                             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} تأكيد
@@ -453,13 +420,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 <AlertDialogContent className="rounded-2xl max-w-md">
                     <AlertDialogHeader className="text-right">
                         <AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle>
-                        <AlertDialogDescription className="font-medium leading-relaxed">
-                            أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
-                            <br /><br />
-                            <span className="text-destructive font-bold">لا يمكن التراجع عن هذا الإجراء!</span>
-                        </AlertDialogDescription>
+                        <AlertDialogDescription className="font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
                     </AlertDialogHeader>
-                    <AlertDialogFooter className="gap-2">
+                    <AlertDialogFooter className="gap-2 sm:justify-start">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
                         <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold" disabled={isSaving}>
                             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />} حذف نهائي
