@@ -111,7 +111,15 @@ export default function LoginPage() {
           if (typeof window !== 'undefined') {
             localStorage.setItem('exam_prep_session', newSessionId);
           }
-          await setDoc(userDocRef, { currentSessionId: newSessionId }, { merge: true });
+          
+          // تأكيد وجود تاريخ انضمام للحسابات القديمة (مارس ٢٠٢٦)
+          const marchDate = new Date(2026, 2, 29, 14, 30).toISOString();
+          
+          await setDoc(userDocRef, { 
+            currentSessionId: newSessionId,
+            createdAt: userData.createdAt || marchDate
+          }, { merge: true });
+          
           router.replace('/');
         }
       } else {
@@ -194,8 +202,13 @@ export default function LoginPage() {
           localStorage.setItem('exam_prep_session', newSessionId);
         }
 
-        // إنشاء تاريخ انضمام في شهر مارس ٢٠٢٦ للطلاب الجدد
+        // منطق التاريخ الجديد:
+        // إذا كان حساب قديم (لديه وثيقة سابقة) نستخدم تاريخ مارس أو تاريخه القديم
+        // إذا كان حساب جديد تماماً (signup لأول مرة) نستخدم الوقت الحالي
         const marchDate = new Date(2026, 2, 29, 14, 30).toISOString();
+        const now = new Date().toISOString();
+        
+        const finalJoinDate = existingData ? (existingData.createdAt || marchDate) : now;
 
         const userDocRef = doc(firestore, 'users', pendingProfileUser.uid);
         await setDoc(userDocRef, {
@@ -209,7 +222,7 @@ export default function LoginPage() {
             isBanned: false,
             balance: existingData?.balance || 0,
             currentSessionId: newSessionId,
-            createdAt: existingData?.createdAt || marchDate, // استخدام تاريخ مارس للحسابات الجديدة
+            createdAt: finalJoinDate,
         }, { merge: true });
 
         router.replace(existingData ? '/' : '/welcome');

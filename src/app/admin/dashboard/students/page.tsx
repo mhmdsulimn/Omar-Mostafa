@@ -101,7 +101,6 @@ const getFallbackJoinDate = (studentId: string) => {
     const hour = 12 + (n % 9);
     const minute = n % 60;
     const second = (n * 7) % 60;
-    // تم تغيير الشهر من 3 (أبريل) إلى 2 (مارس)
     return new Date(2026, 2, day, hour, minute, second).toISOString();
 };
 
@@ -388,20 +387,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
 }
 
 function UserRow({ user: student }: { user: Student }) {
-    const joinDate = student.createdAt || getFallbackJoinDate(student.id);
-
     return (
         <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/5' : 'hover:bg-muted/50')}>
             <TableCell className="text-right p-4">
                 <div className="flex items-center gap-3" dir="rtl">
                     <Avatar className="h-10 w-10 md:h-12 md:w-12 shrink-0 border-2 border-primary/10 shadow-sm"><AvatarFallback className="font-bold text-lg">{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
                     <div className="flex flex-col gap-0.5 min-w-0 text-right"><span className="font-bold whitespace-nowrap text-sm md:text-base text-foreground/90">{student?.firstName} {student?.lastName}</span><div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70 font-medium">{student?.email}</div></div>
-                </div>
-            </TableCell>
-            <TableCell className="text-right p-4 hidden sm:table-cell">
-                <div className="flex flex-col gap-0.5" dir="rtl">
-                    <span className="text-xs font-bold text-foreground/80">{toArabicDigits(format(new Date(joinDate), 'd MMM yyyy', { locale: arSA }))}</span>
-                    <span className="text-[10px] text-muted-foreground opacity-70">{toArabicDigits(format(new Date(joinDate), 'h:mm a', { locale: arSA }))}</span>
                 </div>
             </TableCell>
             <TableCell className="text-center p-4 w-[140px]"><StudentProfileDialog student={student} /></TableCell>
@@ -477,7 +468,6 @@ export default function AdminStudentsPage() {
                 <TableHeader className="bg-muted/30">
                     <TableRow>
                         <TableHead className="text-right font-bold p-4">بيانات الطالب</TableHead>
-                        <TableHead className="text-right font-bold p-4 hidden sm:table-cell">تاريخ الانضمام</TableHead>
                         <TableHead className="text-center font-bold p-4">الإجراءات</TableHead>
                     </TableRow>
                 </TableHeader>
