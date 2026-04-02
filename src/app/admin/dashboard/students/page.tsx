@@ -22,7 +22,27 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs, documentId, query } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, Sparkles, Users } from 'lucide-react';
+import { 
+  Search, 
+  Loader2, 
+  ShieldOff, 
+  ShieldCheck, 
+  DollarSign, 
+  Gift, 
+  Minus, 
+  Trash2, 
+  UserCircle2, 
+  Mail, 
+  GraduationCap, 
+  Wallet, 
+  Clock, 
+  History, 
+  Phone, 
+  UserRound, 
+  Sparkles, 
+  Users,
+  CheckCircle2
+} from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -95,6 +115,7 @@ const forceCleanupBody = () => {
     document.body.style.pointerEvents = 'auto';
     document.body.style.overflow = 'auto';
     document.body.classList.remove('no-scroll');
+    document.documentElement.style.pointerEvents = 'auto';
   }
 };
 
@@ -290,7 +311,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                                        <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <Phone className="h-4 w-4" />
                                         </div>
                                         <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم هاتف الطالب</span>
@@ -320,7 +341,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
-                                        <div className="bg-primary/20 p-2 rounded-xl text-primary">
+                                        <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <UserRound className="h-4 w-4" />
                                         </div>
                                         <span className="text-[10px] font-black text-primary uppercase tracking-widest">رقم ولي الأمر</span>
@@ -351,7 +372,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                             {/* حالة النشاط */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-dashed border-border/50">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
                                             <Clock className="h-5 w-5" />
@@ -365,7 +386,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 overflow-hidden relative">
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/20 border border-dashed border-border/50 overflow-hidden relative">
                                     <div className="flex items-center gap-3 relative z-10">
                                         <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
                                             <History className="h-5 w-5" />
@@ -383,8 +404,10 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
-                                <div className="flex items-center justify-start gap-1.5 w-full">
-                                    <Wallet className="h-3 w-3 text-primary order-last" />
+                                <div className="flex items-center justify-start gap-2 w-full mb-1">
+                                    <div className="bg-primary/10 p-2 rounded-xl text-primary">
+                                        <Wallet className="h-4 w-4" />
+                                    </div>
                                     <Label className="font-bold text-xs">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
