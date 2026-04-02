@@ -22,7 +22,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, MessageSquare } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,61 +134,62 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-            <DialogTrigger asChild>
-                <Button size="sm" className="h-8 gap-1">
-                    <Gift className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap font-bold">
-                        شحن رصيد للجميع
-                    </span>
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
-                <DialogHeader className="text-right">
-                    <DialogTitle className="font-bold text-xl">شحن رصيد جماعي</DialogTitle>
-                    <DialogDescription className="font-medium">
-                        إضافة رصيد إلى محفظة جميع الطلاب ({students.length} طالب) في القائمة الحالية.
-                    </DialogDescription>
-                </DialogHeader>
-                 <Tabs value={tab} onValueChange={setTab} className="w-full" dir="rtl">
-                    <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl">
-                        <TabsTrigger value="fixed" className="rounded-lg font-bold">مبلغ ثابت</TabsTrigger>
-                        <TabsTrigger value="random" className="rounded-lg font-bold">مبلغ عشوائي</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="fixed" className="pt-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="fixedAmount" className="font-bold">المبلغ المراد إضافته (بالجنيه)</Label>
-                            <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="random" className="pt-4 space-y-4">
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="minAmount" className="font-bold">الحد الأدنى</Label>
-                                <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="maxAmount" className="font-bold">الحد الأقصى</Label>
-                                <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl font-bold" />
-                            </div>
-                        </div>
-                    </TabsContent>
-                </Tabs>
-                <DialogFooter className="mt-6 gap-2 sm:justify-start">
-                    <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
-                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold px-8">
-                        {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                        تأكيد الشحن
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogTrigger asChild>
+          <Button size="sm" className="h-8 gap-1">
+            <Gift className="h-3.5 w-3.5" />
+            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap font-bold">
+              شحن رصيد للجميع
+            </span>
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
+          <DialogHeader className="text-right">
+            <DialogTitle className="font-bold text-xl">شحن رصيد جماعي</DialogTitle>
+            <DialogDescription className="font-medium">
+              إضافة رصيد إلى محفظة جميع الطلاب ({students.length} طالب) في القائمة الحالية.
+            </DialogDescription>
+          </DialogHeader>
+          <Tabs value={tab} onValueChange={setTab} className="w-full" dir="rtl">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50 p-1 rounded-xl">
+              <TabsTrigger value="fixed" className="rounded-lg font-bold">مبلغ ثابت</TabsTrigger>
+              <TabsTrigger value="random" className="rounded-lg font-bold">مبلغ عشوائي</TabsTrigger>
+            </TabsList>
+            <TabsContent value="fixed" className="pt-4">
+              <div className="space-y-2">
+                <Label htmlFor="fixedAmount" className="font-bold">المبلغ المراد إضافته (بالجنيه)</Label>
+                <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
+              </div>
+            </TabsContent>
+            <TabsContent value="random" className="pt-4 space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="minAmount" className="font-bold">الحد الأدنى</Label>
+                  <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="maxAmount" className="font-bold">الحد الأقصى</Label>
+                  <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl font-bold" />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+          <DialogFooter className="mt-6 gap-2 sm:justify-start">
+            <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
+            <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold px-8">
+              {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+              تأكيد الشحن
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     );
 }
 
 function StudentProfileDialog({ student }: { student: Student }) {
     const firestore = useFirestore();
     const { toast } = useToast();
+    const [isProfileOpen, setIsProfileOpen] = React.useState(false);
     const [amount, setAmount] = React.useState(0);
     const [isSaving, setIsSaving] = React.useState(false);
     const [isBanConfirmOpen, setIsBanConfirmOpen] = React.useState(false);
@@ -235,12 +236,14 @@ function StudentProfileDialog({ student }: { student: Student }) {
         setIsSaving(true);
         const newBanStatus = !student.isBanned;
         try {
+            // Close the dialog first to prevent layout freeze
+            setIsBanConfirmOpen(false);
+            setIsProfileOpen(false);
+            
             await updateDocumentNonBlocking(doc(firestore, 'users', student.id), { isBanned: newBanStatus });
             toast({ title: `تم ${newBanStatus ? 'حظر' : 'تفعيل'} الطالب بنجاح` });
-            setIsBanConfirmOpen(false);
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل التحديث' });
-        } finally {
             setIsSaving(false);
         }
     };
@@ -249,6 +252,10 @@ function StudentProfileDialog({ student }: { student: Student }) {
         if (!firestore || !student) return;
         setIsSaving(true);
         try {
+            // CRITICAL: Close the dialogs before deletion to prevent body scroll lock freeze
+            setIsDeleteConfirmOpen(false);
+            setIsProfileOpen(false);
+
             const batch = writeBatch(firestore);
             const examsSnap = await getDocs(collection(firestore, 'users', student.id, 'studentExams'));
             const coursesSnap = await getDocs(collection(firestore, 'users', student.id, 'studentCourses'));
@@ -265,12 +272,11 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 batch.delete(courseDoc.ref);
             }
             batch.delete(doc(firestore, 'users', student.id));
+            
             await batch.commit();
             toast({ title: 'تم حذف الطالب وكافة سجلاته بنجاح' });
-            setIsDeleteConfirmOpen(false);
         } catch (error) {
             toast({ variant: 'destructive', title: 'فشل الحذف' });
-        } finally {
             setIsSaving(false);
         }
     };
@@ -278,9 +284,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
     const joinDate = student.createdAt || getFallbackJoinDate(student.id);
 
     return (
-        <Dialog>
+        <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm">
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-primary hover:text-primary hover:bg-primary/10 border-primary/20 rounded-xl font-bold transition-all shadow-sm">
                     <UserCircle2 className="h-4 w-4" />
                     <span>عرض الملف</span>
                 </Button>
@@ -328,7 +334,6 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         </TabsList>
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                            {/* Phone Numbers Section */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                 <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-2 text-right group transition-all hover:bg-primary/10">
                                     <div className="flex items-center justify-end gap-2">
@@ -340,7 +345,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         {student.phoneNumber && (
                                             <div className="flex gap-1.5 shrink-0">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm" asChild>
-                                                    <a href={`https://wa.me/20${student.phoneNumber.startsWith('0') ? student.phoneNumber.slice(1) : student.phoneNumber}`} target="_blank" rel="noopener noreferrer">
+                                                    <a href={`https://wa.me/20${student.phoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
                                                         <WhatsAppIcon className="h-4 w-4" />
                                                     </a>
                                                 </Button>
@@ -363,7 +368,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         {student.parentPhoneNumber && (
                                             <div className="flex gap-1.5 shrink-0">
                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-xl bg-[#25D366]/10 text-[#25D366] hover:bg-[#25D366] hover:text-white transition-all shadow-sm" asChild>
-                                                    <a href={`https://wa.me/20${student.parentPhoneNumber.startsWith('0') ? student.parentPhoneNumber.slice(1) : student.parentPhoneNumber}`} target="_blank" rel="noopener noreferrer">
+                                                    <a href={`https://wa.me/20${student.parentPhoneNumber.replace(/^0/, '')}`} target="_blank" rel="noopener noreferrer">
                                                         <WhatsAppIcon className="h-4 w-4" />
                                                     </a>
                                                 </Button>
@@ -436,11 +441,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 </div>
             </DialogContent>
 
+            {/* Sub-Dialogs for Confirmation */}
             <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
                 <AlertDialogContent className="rounded-2xl max-w-md">
                     <AlertDialogHeader className="text-right">
                         <AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle>
-                        <AlertDialogDescription className="font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
+                        <AlertDialogDescription className="font-medium text-right">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} الطالب ودخوله للمنصة.</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2 sm:justify-start">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
@@ -455,7 +461,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 <AlertDialogContent className="rounded-2xl max-w-md">
                     <AlertDialogHeader className="text-right">
                         <AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle>
-                        <AlertDialogDescription className="font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
+                        <AlertDialogDescription className="font-medium text-right leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. لا يمكن التراجع عن هذا الإجراء!</AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2 sm:justify-start">
                         <AlertDialogCancel disabled={isSaving} className="rounded-xl">إلغاء</AlertDialogCancel>
