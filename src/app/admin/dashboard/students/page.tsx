@@ -364,12 +364,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-zinc-800 border border-zinc-700 shadow-inner overflow-hidden relative group/join">
-                                    <div className="flex items-center gap-3 relative z-10 w-full">
-                                        <div className="p-2.5 rounded-2xl bg-white/10 text-white backdrop-blur-sm group-hover/join:scale-110 transition-transform"><History className="h-5 w-5" /></div>
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
+                                    <div className="flex items-center gap-3 w-full">
+                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground"><History className="h-5 w-5" /></div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-bold text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
-                                            <p className="font-bold text-xs text-white">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
+                                            <p className="font-bold text-xs text-foreground">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
                                         </div>
                                     </div>
                                 </div>
