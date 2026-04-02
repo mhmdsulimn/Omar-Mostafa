@@ -260,14 +260,14 @@ function StudentProfileDialog({ student }: { student: Student }) {
         <Dialog>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm">
-                    <UserCircle2 className="h-4.5 w-4.5" />
+                    <UserCircle2 className="h-4 w-4" />
                     <span>عرض الملف</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
-                    <DialogDescription>عرض تفاصيل الطالب وإدارة حسابه المالي وحالته على المنصة.</DialogDescription>
+                <DialogHeader className="p-0">
+                    <DialogTitle className="sr-only">ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
+                    <DialogDescription className="sr-only">عرض تفاصيل الطالب وإدارة حسابه المالي وحالته على المنصة.</DialogDescription>
                 </DialogHeader>
 
                 <div className="bg-primary/5 p-8 border-b text-right relative overflow-hidden">
@@ -317,7 +317,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                 <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
                                     <p className="text-[10px] font-black text-muted-foreground uppercase flex items-center justify-end gap-1.5"><History className="h-3 w-3" /> تاريخ الانضمام</p>
                                     <p className="font-bold text-sm">
-                                        {student.createdAt ? toArabicDigits(format(new Date(student.createdAt), 'd MMM yyyy', { locale: arSA })) : 'منذ بداية المسيرة 🎓'}
+                                        {student.createdAt 
+                                          ? toArabicDigits(format(new Date(student.createdAt), 'd MMM yyyy', { locale: arSA })) 
+                                          : '٢٩ - ٣٠ مارس ٢٠٢٥'}
                                     </p>
                                 </div>
                             </div>
@@ -348,13 +350,16 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="space-y-3">
-                                <Label className="font-bold text-xs flex items-center justify-end gap-1.5">التحكم في الرصيد <Wallet className="h-3 w-3" /></Label>
+                                <div className="flex items-center justify-end gap-1.5">
+                                    <Label className="font-bold text-xs">التحكم في الرصيد</Label>
+                                    <Wallet className="h-3 w-3 text-primary" />
+                                </div>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1">
                                         <Input 
                                             type="number" 
                                             placeholder="أدخل المبلغ..." 
-                                            className="h-12 rounded-xl text-center font-black pr-10" 
+                                            className="h-12 rounded-xl text-center font-bold pr-10" 
                                             value={amount || ''} 
                                             onChange={e => setAmount(Number(e.target.value))}
                                             disabled={isSaving}
@@ -403,9 +408,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     </Tabs>
                 </div>
 
-                <DialogFooter className="bg-muted/30 p-4 border-t px-6">
+                <div className="bg-muted/30 p-4 border-t px-6">
                     <p className="text-[10px] text-muted-foreground font-bold text-center w-full">إدارة شؤون الطلاب - منصة الأستاذ عمر مصطفى</p>
-                </DialogFooter>
+                </div>
             </DialogContent>
 
             <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}>
@@ -428,9 +433,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     <AlertDialogHeader className="text-right">
                         <AlertDialogTitle className="text-destructive">حذف نهائي للملف</AlertDialogTitle>
                         <AlertDialogDescription className="font-medium leading-relaxed">
-                            أنت على وشك حذف الطالب <span className="font-black">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
+                            أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته ودرجاته واشتراكاته بشكل نهائي. 
                             <br /><br />
-                            <span className="text-destructive font-black">لا يمكن التراجع عن هذا الإجراء!</span>
+                            <span className="text-destructive font-bold">لا يمكن التراجع عن هذا الإجراء!</span>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="gap-2">

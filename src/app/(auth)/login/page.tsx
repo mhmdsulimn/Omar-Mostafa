@@ -134,7 +134,7 @@ export default function LoginPage() {
               </div>
             );
         } else if (error.code === 'auth/popup-closed-by-user') {
-            errorTitle = 'تم إغلاق النافذة';
+            errorTitle = 'تم إإغلاق النافذة';
             errorDescription = 'لقد قمت بإغلاق نافذة تسجيل الدخول قبل الإكمال.';
         }
 
@@ -169,7 +169,7 @@ export default function LoginPage() {
             isBanned: false,
             balance: 0,
             currentSessionId: newSessionId,
-            createdAt: new Date().toISOString(), // حفظ تاريخ الانضمام
+            createdAt: new Date().toISOString(), // حفظ تاريخ الانضمام الدقيق من الآن
         }, { merge: true });
 
         router.replace('/welcome');
