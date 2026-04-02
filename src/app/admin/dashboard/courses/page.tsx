@@ -10,9 +10,9 @@ import {
 } from '@/components/ui/card';
 import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, useUser, errorEmitter, FirestorePermissionError } from '@/firebase';
+import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -55,7 +55,6 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
     const router = useRouter();
     const [searchTerm, setSearchTerm] = React.useState('');
 
-    // جلب كافة الاشتراكات عبر collectionGroup والفلترة برمجياً لضمان الاستقرار
     const subscriptionsQuery = useMemoFirebase(
         () => (firestore && course ? collectionGroup(firestore, 'studentCourses') : null),
         [firestore, course?.id]
@@ -64,13 +63,11 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
 
     const studentIds = React.useMemo(() => {
         if (!allSubscriptions || !course) return [];
-        // الفلترة البرمجية لتجنب الحاجة لفهارس معقدة في بيئة التطوير
         return allSubscriptions
             .filter(sub => sub.courseId === course.id)
             .map(s => s.studentId);
     }, [allSubscriptions, course?.id]);
 
-    // جلب بيانات الطلاب الذين تم العثور على اشتراكات لهم
     const studentsQuery = useMemoFirebase(
         () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
         [firestore, studentIds]
@@ -90,7 +87,6 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
             const fullName = `${firstName} ${lastName}`.trim();
             const email = (s.email || '').toLowerCase();
             
-            // نظام البحث الذكي بالاسم الكامل المدمج
             return searchParts.every(part => 
                 fullName.includes(part) || email.includes(part)
             );
@@ -141,16 +137,16 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                                             </div>
                                         </div>
                                         <Button 
-                                            variant="ghost" 
+                                            variant="outline" 
                                             size="sm" 
-                                            className="rounded-lg h-8 gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                                            className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm"
                                             onClick={() => {
                                                 onOpenChange(false);
                                                 router.push(`/admin/dashboard/students?search=${student.email}`);
                                             }}
                                         >
+                                            <UserCircle2 className="h-4 w-4" />
                                             <span>عرض الملف</span>
-                                            <ArrowRight className="h-3.5 w-3.5" />
                                         </Button>
                                     </div>
                                 ))}
