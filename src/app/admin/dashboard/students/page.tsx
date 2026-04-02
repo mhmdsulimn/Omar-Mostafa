@@ -301,7 +301,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <Phone className="h-4 w-4" />
                                         </div>
-                                        <span className="text-[10px] font-headline font-black text-primary uppercase tracking-widest text-right block w-full">رقم هاتف الطالب</span>
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم هاتف الطالب</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
@@ -329,7 +329,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm transition-transform group-hover:scale-110">
                                             <UserRound className="h-4 w-4" />
                                         </div>
-                                        <span className="text-[10px] font-headline font-black text-primary uppercase tracking-widest text-right block w-full">رقم ولي الأمر</span>
+                                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest text-right block w-full">رقم ولي الأمر</span>
                                     </div>
                                     <div className="flex items-center justify-between gap-4">
                                         <div className="flex gap-2">
@@ -358,7 +358,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <div className="flex items-center gap-3 w-full">
                                         <div className="p-2.5 rounded-xl bg-muted text-muted-foreground"><Clock className="h-5 w-5" /></div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-headline font-black text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
+                                            <p className="text-[10px] font-bold text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
                                             <p className="font-bold text-xs text-foreground">{student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}</p>
                                         </div>
                                     </div>
@@ -368,7 +368,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <div className="flex items-center gap-3 relative z-10 w-full">
                                         <div className="p-2.5 rounded-2xl bg-white/10 text-white backdrop-blur-sm group-hover/join:scale-110 transition-transform"><History className="h-5 w-5" /></div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-headline font-black text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
+                                            <p className="text-[10px] font-bold text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
                                             <p className="font-bold text-xs text-white">{toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}</p>
                                         </div>
                                     </div>
@@ -380,7 +380,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                             <div className="space-y-3">
                                 <div className="flex items-center justify-start gap-2 w-full mb-1">
                                     <div className="bg-primary/10 p-2.5 rounded-2xl text-primary border border-primary/10 shadow-sm"><Wallet className="h-4 w-4" /></div>
-                                    <Label className="font-headline font-black text-xs text-primary">التحكم في الرصيد</Label>
+                                    <Label className="font-bold text-xs text-primary">التحكم في الرصيد</Label>
                                 </div>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold pr-10" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
@@ -460,8 +460,8 @@ export default function AdminStudentsPage() {
             <Users className="h-8 w-8 text-primary" />
         </div>
         <div className="space-y-1">
-            <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة الطلاب</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-bold">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
+            <h1 className="text-xl font-bold md:text-3xl tracking-tight text-right">إدارة الطلاب</h1>
+            <p className="text-xs md:text-sm text-muted-foreground font-bold text-right">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
         </div>
         <div className="ml-auto"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
