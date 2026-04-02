@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -146,11 +147,16 @@ export default function LoginPage() {
     }
   };
 
-  const handleGradeSelection = async (details: { grade: Student['grade']; fullName: string; }) => {
+  const handleGradeSelection = async (details: { 
+    grade: Student['grade']; 
+    fullName: string; 
+    phoneNumber: string; 
+    parentPhoneNumber: string; 
+  }) => {
     if (!pendingProfileUser || !firestore) return;
     setIsLoading(true);
     try {
-        const { grade, fullName } = details;
+        const { grade, fullName, phoneNumber, parentPhoneNumber } = details;
         const [firstName, ...lastNameParts] = fullName.split(' ');
         const lastName = lastNameParts.join(' ');
         
@@ -165,10 +171,12 @@ export default function LoginPage() {
             lastName: lastName || '',
             email: pendingProfileUser.email,
             grade: grade,
+            phoneNumber: phoneNumber,
+            parentPhoneNumber: parentPhoneNumber,
             isBanned: false,
             balance: 0,
             currentSessionId: newSessionId,
-            createdAt: new Date().toISOString(), // تسجيل التاريخ والوقت الفعلي والدقيق للمشتركين الجدد
+            createdAt: new Date().toISOString(),
         }, { merge: true });
 
         router.replace('/welcome');

@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useEffect, useState } from 'react';
@@ -17,7 +18,7 @@ import { doc, setDoc, collection, getDocs, writeBatch } from 'firebase/firestore
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Phone, UserRound } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { Student } from '@/lib/data';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
@@ -31,6 +32,8 @@ export default function StudentProfilePage() {
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [grade, setGrade] = useState<Student['grade'] | ''>('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [parentPhoneNumber, setParentPhoneNumber] = useState('');
 
   const userDocRef = useMemoFirebase(() => user ? doc(firestore, 'users', user.uid) : null, [user, firestore]);
   const { data: studentData, isLoading: isStudentDataLoading } = useDoc<Student>(userDocRef);
@@ -39,6 +42,8 @@ export default function StudentProfilePage() {
     if (studentData) {
       setGrade(studentData.grade);
       setFullName(`${studentData.firstName} ${studentData.lastName}`.trim());
+      setPhoneNumber(studentData.phoneNumber || '');
+      setParentPhoneNumber(studentData.parentPhoneNumber || '');
     }
     if(user) {
         setEmail(user.email || '');
@@ -47,16 +52,28 @@ export default function StudentProfilePage() {
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // منع الحروف غير العربية والمسافات فورياً
     const filteredValue = value.replace(/[^\u0600-\u06FF\s]/g, '');
     setFullName(filteredValue);
+  };
+
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'student' | 'parent') => {
+    const value = e.target.value.replace(/[^0-9]/g, '');
+    if (value.length <= 11) {
+      if (type === 'student') setPhoneNumber(value);
+      else setParentPhoneNumber(value);
+    }
   };
 
   const handleSaveChanges = async () => {
     if (!user || !firestore || !studentData) return;
 
-    if (!fullName.trim()) {
-        toast({ variant: 'destructive', title: 'الاسم مطلوب' });
+    if (!fullName.trim() || !phoneNumber || !parentPhoneNumber) {
+        toast({ variant: 'destructive', title: 'البيانات ناقصة', description: 'يرجى ملء كافة الحقول بما في ذلك أرقام الهواتف.' });
+        return;
+    }
+
+    if (phoneNumber.length < 11 || parentPhoneNumber.length < 11) {
+        toast({ variant: 'destructive', title: 'رقم هاتف غير صحيح', description: 'يجب أن يتكون رقم الهاتف من 11 رقم.' });
         return;
     }
 
@@ -73,6 +90,8 @@ export default function StudentProfilePage() {
         firstName: firstName || '',
         lastName: lastName || '',
         grade: grade as Student['grade'],
+        phoneNumber: phoneNumber,
+        parentPhoneNumber: parentPhoneNumber,
       };
 
       if (gradeHasChanged) {
@@ -88,7 +107,7 @@ export default function StudentProfilePage() {
             batch.delete(courseDoc.ref);
             const progressRef = collection(courseDoc.ref, 'progress');
             const progressSnap = await getDocs(progressRef);
-            progressSnap.forEach(progressDoc => batch.delete(progressDoc.ref));
+            progressSnap.forEach(progressDoc => progressDoc.ref && batch.delete(progressDoc.ref));
         }
 
         userDataToUpdate.rewardedExams = [];
@@ -96,15 +115,15 @@ export default function StudentProfilePage() {
         await batch.commit();
         
         toast({
-          title: 'تم تحديث الملف الشخصي بنجاح!',
-          description: 'تم تغيير صفك الدراسي ومسح اشتراكاتك ونتائجك السابقة للبدء من جديد.',
+          title: 'تم تحديث الملف بنجاح!',
+          description: 'تم تغيير الصف الدراسي ومسح البيانات القديمة لبدء صف جديد.',
         });
 
       } else {
         await setDoc(userDocRef!, userDataToUpdate, { merge: true });
         toast({
-            title: 'تم تحديث الملف الشخصي',
-            description: 'تم حفظ معلوماتك بنجاح.',
+            title: 'تم حفظ التعديلات',
+            description: 'تم تحديث بياناتك الشخصية بنجاح.',
         });
       }
 
@@ -116,8 +135,8 @@ export default function StudentProfilePage() {
       console.error('Failed to update profile:', error);
       toast({
         variant: 'destructive',
-        title: 'فشل تحديث الملف الشخصي',
-        description: error.message || 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
+        title: 'فشل التحديث',
+        description: 'حدث خطأ غير متوقع، يرجى المحاولة لاحقاً.',
       });
     } finally {
       setIsSaving(false);
@@ -137,61 +156,89 @@ export default function StudentProfilePage() {
   return (
     <>
       <div className="flex items-center mb-4">
-        <h1 className="text-lg font-semibold md:text-2xl">الملف الشخصي</h1>
+        <h1 className="text-lg font-semibold md:text-2xl text-primary font-bold">تعديل الملف الشخصي</h1>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>تعديل الملف الشخصي</CardTitle>
-          <CardDescription>
-            قم بتحديث معلوماتك. يرجى استخدام <span className="font-bold text-primary">اللغة العربية</span> لكتابة الاسم.
+      <Card className="rounded-2xl shadow-lg border-primary/5">
+        <CardHeader className="text-right">
+          <CardTitle className="font-bold">بياناتي الشخصية</CardTitle>
+          <CardDescription className="font-medium">
+            تأكد من دقة أرقام الهواتف لتلقي التحديثات الهامة.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex justify-center">
-             <Avatar className="h-24 w-24">
-                <AvatarFallback className="text-2xl font-bold">{fullName?.charAt(0) || user.email?.charAt(0)}</AvatarFallback>
+             <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                <AvatarFallback className="text-2xl font-bold">{fullName?.charAt(0) || '؟'}</AvatarFallback>
               </Avatar>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="name">الاسم (باللغة العربية)</Label>
+            <Label htmlFor="name" className="font-bold">الاسم الكامل (باللغة العربية)</Label>
             <Input
               id="name"
               value={fullName}
               onChange={handleFullNameChange}
               placeholder="اكتب اسمك بالعربي فقط"
               disabled={isSaving}
-              autoComplete="off"
+              className="h-11 rounded-xl font-bold"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="email" className="font-bold">البريد الإلكتروني</Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 disabled 
                 dir="ltr"
-                className="text-left placeholder:text-left"
+                className="text-left h-11 rounded-xl opacity-70"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="grade">الصف الدراسي</Label>
+              <Label htmlFor="grade" className="font-bold">الصف الدراسي</Label>
               <Select dir="rtl" value={grade} onValueChange={(value) => setGrade(value as Student['grade'])} disabled={isSaving}>
-                <SelectTrigger id="grade">
+                <SelectTrigger id="grade" className="h-11 rounded-xl font-bold">
                   <SelectValue placeholder="اختر صفك الدراسي" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="first_secondary">الصف الأول الثانوي</SelectItem>
-                  <SelectItem value="second_secondary">الصف الثاني الثانوي</SelectItem>
-                  <SelectItem value="third_secondary">الصف الثالث الثانوي</SelectItem>
+                  <SelectItem value="first_secondary" className="font-bold">الصف الأول الثانوي</SelectItem>
+                  <SelectItem value="second_secondary" className="font-bold">الصف الثاني الثانوي</SelectItem>
+                  <SelectItem value="third_secondary" className="font-bold">الصف الثالث الثانوي</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
-          <Button onClick={handleSaveChanges} disabled={isSaving}>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-primary/5">
+            <div className="space-y-2 text-right">
+              <Label htmlFor="phone" className="font-bold flex items-center justify-end gap-2">رقم هاتف الطالب <Phone className="h-3 w-3 text-primary" /></Label>
+              <Input
+                id="phone"
+                value={phoneNumber}
+                onChange={(e) => handlePhoneChange(e, 'student')}
+                placeholder="01xxxxxxxxx"
+                disabled={isSaving}
+                className="text-center h-11 rounded-xl font-mono"
+                dir="ltr"
+              />
+            </div>
+            <div className="space-y-2 text-right">
+              <Label htmlFor="parentPhone" className="font-bold flex items-center justify-end gap-2">رقم هاتف ولي الأمر <UserRound className="h-3 w-3 text-primary" /></Label>
+              <Input
+                id="parentPhone"
+                value={parentPhoneNumber}
+                onChange={(e) => handlePhoneChange(e, 'parent')}
+                placeholder="01xxxxxxxxx"
+                disabled={isSaving}
+                className="text-center h-11 rounded-xl font-mono"
+                dir="ltr"
+              />
+            </div>
+          </div>
+
+          <Button onClick={handleSaveChanges} disabled={isSaving} className="w-full md:w-auto px-8 h-12 font-bold rounded-xl shadow-md">
             {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-            {isSaving ? 'جارِ الحفظ...' : 'حفظ التغييرات'}
+            حفظ التغييرات
           </Button>
         </CardContent>
       </Card>

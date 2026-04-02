@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink, Activity } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, ExternalLink, Activity, Phone, UserRound } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -60,22 +61,16 @@ const gradeMap: Record<Student['grade'], string> = {
   third_secondary: 'الصف الثالث الثانوي',
 };
 
-/**
- * دالة لتوليد تاريخ انضمام عشوائي منظم (Fallback) للطلاب الحاليين
- * التوزيع: 30% يوم 29 مارس، 70% يوم 30 مارس 2026. الوقت بين 12م و 8م.
- */
 const getFallbackJoinDate = (studentId: string) => {
     let hash = 0;
     for (let i = 0; i < studentId.length; i++) {
         hash = studentId.charCodeAt(i) + ((hash << 5) - hash);
     }
     const n = Math.abs(hash);
-    
     const day = (n % 10 < 3) ? 29 : 30;
-    const hour = 12 + (n % 9); // من 12 إلى 20 (8 مساءً)
+    const hour = 12 + (n % 9);
     const minute = n % 60;
     const second = (n * 7) % 60;
-    
     return new Date(2026, 2, day, hour, minute, second).toISOString();
 };
 
@@ -137,14 +132,14 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
             <DialogTrigger asChild>
                 <Button size="sm" className="h-8 gap-1">
                     <Gift className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap font-bold">
                         شحن رصيد للجميع
                     </span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-[500px] rounded-2xl">
                 <DialogHeader className="text-right">
-                    <DialogTitle className="font-bold">شحن رصيد لجميع الطلاب</DialogTitle>
+                    <DialogTitle className="font-bold text-xl">شحن رصيد جماعي</DialogTitle>
                     <DialogDescription className="font-medium">
                         إضافة رصيد إلى محفظة جميع الطلاب ({students.length} طالب) في القائمة الحالية.
                     </DialogDescription>
@@ -157,25 +152,25 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
                     <TabsContent value="fixed" className="pt-4">
                         <div className="space-y-2">
                             <Label htmlFor="fixedAmount" className="font-bold">المبلغ المراد إضافته (بالجنيه)</Label>
-                            <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
+                            <Input id="fixedAmount" type="number" value={fixedAmount} onChange={(e) => setFixedAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
                         </div>
                     </TabsContent>
                     <TabsContent value="random" className="pt-4 space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="minAmount" className="font-bold">الحد الأدنى</Label>
-                                <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl" />
+                                <Input id="minAmount" type="number" value={minAmount} onChange={(e) => setMinAmount(Number(e.target.value))} min="1" disabled={isSaving} className="rounded-xl font-bold" />
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="maxAmount" className="font-bold">الحد الأقصى</Label>
-                                <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl" />
+                                <Input id="maxAmount" type="number" value={maxAmount} onChange={(e) => setMaxAmount(Number(e.target.value))} min={minAmount} disabled={isSaving} className="rounded-xl font-bold" />
                             </div>
                         </div>
                     </TabsContent>
                 </Tabs>
                 <DialogFooter className="mt-6 gap-2 sm:justify-start">
                     <Button variant="outline" onClick={() => setIsOpen(false)} disabled={isSaving} className="rounded-xl">إلغاء</Button>
-                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold">
+                    <Button onClick={handleBulkAddBalance} disabled={isSaving} className="rounded-xl font-bold px-8">
                         {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
                         تأكيد الشحن
                     </Button>
@@ -260,7 +255,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
             
             for (const courseDoc of coursesSnap.docs) {
                 const progressSnap = await getDocs(collection(courseDoc.ref, 'progress'));
-                progressSnap.docs.forEach(p => batch.delete(p.ref));
+                progressSnap.docs.forEach(p => p.ref && batch.delete(p.ref));
                 batch.delete(courseDoc.ref);
             }
             batch.delete(doc(firestore, 'users', student.id));
@@ -284,10 +279,10 @@ function StudentProfileDialog({ student }: { student: Student }) {
                     <span>عرض الملف</span>
                 </Button>
             </DialogTrigger>
-            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
+            <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 overflow-hidden border-none shadow-2xl bg-card">
                 <DialogHeader className="p-0">
                     <DialogTitle className="sr-only">ملف الطالب: {student.firstName} {student.lastName}</DialogTitle>
-                    <DialogDescription className="sr-only">عرض تفاصيل الطالب وإدارة حسابه المالي وحالته على المنصة.</DialogDescription>
+                    <DialogDescription className="sr-only">إدارة بيانات وحساب الطالب المالي.</DialogDescription>
                 </DialogHeader>
 
                 <div className="bg-primary/5 p-8 border-b text-right relative overflow-hidden">
@@ -322,12 +317,44 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 <div className="p-6">
                     <Tabs value={activeTab} onValueChange={setActiveTab} dir="rtl">
                         <TabsList className="grid w-full grid-cols-2 h-12 bg-muted/50 rounded-xl p-1 mb-6">
-                            <TabsTrigger value="info" className="rounded-lg font-bold">معلومات النشاط</TabsTrigger>
+                            <TabsTrigger value="info" className="rounded-lg font-bold">معلومات النشاط والتواصل</TabsTrigger>
                             <TabsTrigger value="actions" className="rounded-lg font-bold">إدارة المحفظة والتحكم</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="info" className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                        <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                            {/* Phone Numbers Section */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-2 text-right group transition-all hover:bg-primary/10">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <p className="text-[10px] font-bold text-primary uppercase">رقم هاتف الطالب</p>
+                                        <Phone className="h-3.5 w-3.5 text-primary" />
+                                    </div>
+                                    <div className="flex items-center justify-between flex-row-reverse">
+                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.phoneNumber || 'غير مسجل'}</p>
+                                        {student.phoneNumber && (
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-primary/20 text-primary" asChild>
+                                                <a href={`tel:${student.phoneNumber}`}><Phone className="h-3.5 w-3.5" /></a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex flex-col gap-2 text-right group transition-all hover:bg-primary/10">
+                                    <div className="flex items-center justify-end gap-2">
+                                        <p className="text-[10px] font-bold text-primary uppercase">رقم ولي الأمر</p>
+                                        <UserRound className="h-3.5 w-3.5 text-primary" />
+                                    </div>
+                                    <div className="flex items-center justify-between flex-row-reverse">
+                                        <p className="font-bold text-sm font-mono tracking-wider" dir="ltr">{student.parentPhoneNumber || 'غير مسجل'}</p>
+                                        {student.parentPhoneNumber && (
+                                            <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-primary/20 text-primary" asChild>
+                                                <a href={`tel:${student.parentPhoneNumber}`}><Phone className="h-3.5 w-3.5" /></a>
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 border-t pt-6">
                                 <div className="p-4 rounded-2xl bg-muted/30 border border-dashed border-border/50 flex flex-col gap-1 text-right">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase flex items-center justify-end gap-1.5"><Clock className="h-3 w-3" /> آخر ظهور</p>
                                     <p className="font-bold text-sm">
@@ -339,22 +366,6 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                     <p className="font-bold text-sm text-primary">
                                         {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
                                     </p>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
-                                    <div className="p-2 bg-primary/10 rounded-xl text-primary"><Activity className="h-4 w-4" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-primary mb-1 uppercase">الصف الدراسي</p>
-                                        <p className="text-xs font-bold">{gradeMap[student.grade] || 'غير محدد'}</p>
-                                    </div>
-                                </div>
-                                <div className="p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-start gap-3 text-right">
-                                    <div className="p-2 bg-primary/10 rounded-xl text-primary"><Wallet className="h-4 w-4" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-primary mb-1 uppercase">رصيد المحفظة</p>
-                                        <p className="text-xs font-bold">{student.balance || 0} جنيه</p>
-                                    </div>
                                 </div>
                             </div>
                         </TabsContent>
@@ -489,9 +500,14 @@ export default function AdminStudentsPage() {
         const lastName = (student.lastName || '').toLowerCase();
         const fullName = `${firstName} ${lastName}`.trim();
         const email = (student.email || '').toLowerCase();
+        const phone = (student.phoneNumber || '');
+        const parentPhone = (student.parentPhoneNumber || '');
         
         const searchMatch = searchParts.length === 0 || searchParts.every(part => 
-            fullName.includes(part) || email.includes(part)
+            fullName.includes(part) || 
+            email.includes(part) || 
+            phone.includes(part) || 
+            parentPhone.includes(part)
         );
         
         const gradeMatch = gradeFilter === 'all' || student.grade === gradeFilter;
@@ -513,11 +529,11 @@ export default function AdminStudentsPage() {
       <Card className="animate-fade-in border-none shadow-none md:border md:shadow-lg rounded-2xl overflow-hidden">
         <CardHeader className="px-4 md:px-6 bg-muted/10 pb-6 text-right">
           <CardTitle className="text-lg font-bold">قائمة المنضمين</CardTitle>
-          <CardDescription className="font-medium">إدارة حسابات الطلاب من خلال ملفاتهم التعريفية.</CardDescription>
+          <CardDescription className="font-medium">إدارة حسابات وتواصل الطلاب.</CardDescription>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
             <div className="relative">
                 <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="ابحث بالاسم الكامل أو البريد..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                <Input placeholder="ابحث بالاسم، البريد، أو رقم الهاتف..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 rounded-xl bg-background font-bold"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>

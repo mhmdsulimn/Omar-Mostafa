@@ -12,86 +12,17 @@
         "email": { "type": "string", "format": "email" },
         "grade": { "type": "string", "enum": ["first_secondary", "second_secondary", "third_secondary"] },
         "balance": { "type": "number" },
+        "phoneNumber": { "type": "string" },
+        "parentPhoneNumber": { "type": "string" },
         "isBanned": { "type": "boolean" },
         "currentSessionId": { "type": "string" },
         "rewardedExams": { "type": "array", "items": { "type": "string" } },
         "fcmTokens": { "type": "array", "items": { "type": "string" } },
         "readAnnouncements": { "type": "array", "items": { "type": "string" } },
-        "lastActiveAt": { "type": "string", "format": "date-time" }
-      },
-      "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
-    },
-    "LabExperiment": {
-      "title": "LabExperiment",
-      "type": "object",
-      "description": "Virtual physics laboratory experiment.",
-      "properties": {
-        "id": { "type": "string" },
-        "title": { "type": "string" },
-        "description": { "type": "string" },
-        "embedUrl": { "type": "string" },
-        "grade": { "type": "string", "enum": ["all", "first_secondary", "second_secondary", "third_secondary"] },
+        "lastActiveAt": { "type": "string", "format": "date-time" },
         "createdAt": { "type": "string", "format": "date-time" }
       },
-      "required": ["id", "title", "embedUrl", "grade"]
-    },
-    "Curriculum": {
-      "title": "Curriculum",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "gradeTitle": { "type": "string" },
-        "story": { "type": "string" },
-        "units": { "type": "array" },
-        "lastUpdated": { "type": "string", "format": "date-time" }
-      }
-    },
-    "AppSettings": {
-      "title": "AppSettings",
-      "type": "object",
-      "properties": {
-        "isMaintenanceMode": { "type": "boolean" },
-        "isLeaderboardEnabled": { "type": "boolean" },
-        "isLabsEnabled": { "type": "boolean" },
-        "supportPhoneNumber": { "type": "string" },
-        "vodafoneCashNumber": { "type": "string" },
-        "imgbbApiKey": { "type": "string" }
-      }
-    },
-    "Announcement": {
-      "title": "Announcement",
-      "type": "object",
-      "properties": {
-        "id": { "type": "string" },
-        "message": { "type": "string" },
-        "isActive": { "type": "boolean" },
-        "updatedAt": { "type": "string", "format": "date-time" },
-        "targetGrade": { "type": "string" },
-        "type": { "type": "string", "enum": ["normal", "congratulation", "warning"] }
-      }
-    }
-  },
-  "auth": { "providers": ["google.com"] },
-  "firestore": {
-    "/users/{userId}": {
-      "schema": { "$ref": "#/backend/entities/Student" },
-      "description": "Student profiles and data."
-    },
-    "/labs/{labId}": {
-      "schema": { "$ref": "#/backend/entities/LabExperiment" },
-      "description": "Virtual lab experiments catalog."
-    },
-    "/curriculum/{gradeId}": {
-      "schema": { "$ref": "#/backend/entities/Curriculum" },
-      "description": "Academic curriculum data."
-    },
-    "/settings/global": {
-      "schema": { "$ref": "#/backend/entities/AppSettings" },
-      "description": "Global application configuration."
-    },
-    "/announcements/{id}": {
-      "schema": { "$ref": "#/backend/entities/Announcement" },
-      "description": "Global administrative announcements."
+      "required": ["id", "firstName", "lastName", "email", "grade", "balance"]
     }
   }
 }

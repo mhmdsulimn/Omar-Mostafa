@@ -34,6 +34,8 @@ export type Student = {
   photoURL?: string; 
   isBanned?: boolean;
   balance: number;
+  phoneNumber?: string; // رقم هاتف الطالب
+  parentPhoneNumber?: string; // رقم هاتف ولي الأمر
   theme?: {
     primaryColor: string; 
   };
