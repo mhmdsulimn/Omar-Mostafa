@@ -101,7 +101,8 @@ const getFallbackJoinDate = (studentId: string) => {
     const hour = 12 + (n % 9);
     const minute = n % 60;
     const second = (n * 7) % 60;
-    return new Date(2026, 3, day, hour, minute, second).toISOString();
+    // تم تغيير الشهر من 3 (أبريل) إلى 2 (مارس)
+    return new Date(2026, 2, day, hour, minute, second).toISOString();
 };
 
 const forceCleanupBody = () => {
