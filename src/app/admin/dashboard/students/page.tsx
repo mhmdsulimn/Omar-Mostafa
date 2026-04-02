@@ -22,7 +22,7 @@ import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNo
 import { collection, doc, writeBatch, runTransaction, getDocs } from 'firebase/firestore';
 import type { Student } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, Sparkles } from 'lucide-react';
+import { Search, Loader2, ShieldOff, ShieldCheck, DollarSign, Gift, Minus, Trash2, UserCircle2, Mail, GraduationCap, Wallet, Clock, History, Phone, UserRound, Sparkles, Users } from 'lucide-react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -353,7 +353,10 @@ function StudentProfileDialog({ student }: { student: Student }) {
 
                         <TabsContent value="actions" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300" dir="rtl">
                             <div className="space-y-3">
-                                <div className="flex items-center justify-start gap-1.5"><Label className="font-bold text-xs">التحكم في الرصيد</Label><Wallet className="h-3 w-3 text-primary" /></div>
+                                <div className="flex items-center justify-start gap-1.5 w-full">
+                                    <Wallet className="h-3 w-3 text-primary" />
+                                    <Label className="font-bold text-xs">التحكم في الرصيد</Label>
+                                </div>
                                 <div className="flex gap-2">
                                     <div className="relative flex-1"><Input type="number" placeholder="المبلغ..." className="h-12 rounded-xl text-center font-bold pr-10" value={amount || ''} onChange={e => setAmount(Number(e.target.value))} /><DollarSign className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /></div>
                                     <Button onClick={() => handleUpdateBalance('add')} disabled={isSaving || amount <= 0} className="h-12 rounded-xl bg-green-600 hover:bg-green-700 font-bold px-6"><Gift className="h-4 w-4" /> شحن</Button>
