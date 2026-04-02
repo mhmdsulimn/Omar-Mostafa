@@ -29,7 +29,6 @@ import {
   ShieldCheck, 
   DollarSign, 
   Gift, 
-  Minus, 
   Trash2, 
   UserCircle2, 
   Mail, 

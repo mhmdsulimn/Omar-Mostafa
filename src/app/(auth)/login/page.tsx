@@ -16,6 +16,20 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { Button } from '@/components/ui/button';
 
+/**
+ * دالة توليد معرف فريد متوافقة مع كافة المتصفحات والأجهزة (حتى القديمة)
+ */
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    try {
+      return crypto.randomUUID();
+    } catch (e) {
+      // Fallback if randomUUID fails for any reason
+    }
+  }
+  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const auth = useAuth();
@@ -32,7 +46,7 @@ export default function LoginPage() {
   const shineRef = React.useRef<HTMLDivElement>(null);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current || window.innerWidth < 768) return;
+    if (!cardRef.current || typeof window === 'undefined' || window.innerWidth < 768) return;
     const { clientX, clientY, currentTarget } = e;
     const { left, top, width, height } = currentTarget.getBoundingClientRect();
     const x = clientX - left;
@@ -68,33 +82,39 @@ export default function LoginPage() {
   const processUser = async (currentUser: User) => {
     if (!firestore || !auth) return;
 
-    // 1. Check if user is an ADMIN first
-    const adminRoleDoc = doc(firestore, 'roles_admin', currentUser.uid);
-    const adminDocSnap = await getDoc(adminRoleDoc);
+    try {
+      // 1. Check if user is an ADMIN first
+      const adminRoleDoc = doc(firestore, 'roles_admin', currentUser.uid);
+      const adminDocSnap = await getDoc(adminRoleDoc);
 
-    if (adminDocSnap.exists()) {
-      router.replace('/admin/dashboard');
-      return;
-    }
-
-    // 2. If not admin, check student profiles
-    const userDocRef = doc(firestore, 'users', currentUser.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (userDocSnap.exists()) {
-      const userData = userDocSnap.data() as Student;
-      if (userData.isBanned) {
-        toast({ variant: 'destructive', title: 'الحساب محظور', description: 'تم حظر هذا الحساب. يرجى التواصل مع المسؤول.' });
-        await signOut(auth);
-      } else {
-        const newSessionId = crypto.randomUUID();
-        localStorage.setItem('exam_prep_session', newSessionId);
-        await setDoc(userDocRef, { currentSessionId: newSessionId }, { merge: true });
-        router.replace('/');
+      if (adminDocSnap.exists()) {
+        router.replace('/admin/dashboard');
+        return;
       }
-    } else {
-      setPendingProfileUser(currentUser);
-      setShowGradeDialog(true);
+
+      // 2. If not admin, check student profiles
+      const userDocRef = doc(firestore, 'users', currentUser.uid);
+      const userDocSnap = await getDoc(userDocRef);
+
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data() as Student;
+        if (userData.isBanned) {
+          toast({ variant: 'destructive', title: 'الحساب محظور', description: 'تم حظر هذا الحساب. يرجى التواصل مع المسؤول.' });
+          await signOut(auth);
+        } else {
+          const newSessionId = generateUUID();
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('exam_prep_session', newSessionId);
+          }
+          await setDoc(userDocRef, { currentSessionId: newSessionId }, { merge: true });
+          router.replace('/');
+        }
+      } else {
+        setPendingProfileUser(currentUser);
+        setShowGradeDialog(true);
+      }
+    } catch (error) {
+      console.error("Process user error:", error);
     }
   };
   
@@ -123,8 +143,10 @@ export default function LoginPage() {
                     variant="ghost" 
                     className="h-6 w-6" 
                     onClick={() => {
-                      navigator.clipboard.writeText(currentDomain);
-                      toast({ title: "تم النسخ!" });
+                      if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                        navigator.clipboard.writeText(currentDomain);
+                        toast({ title: "تم النسخ!" });
+                      }
                     }}
                   >
                     <Copy className="h-3 w-3" />
@@ -161,8 +183,10 @@ export default function LoginPage() {
         const lastName = lastNameParts.join(' ');
         
         await updateProfile(pendingProfileUser, { displayName: fullName });
-        const newSessionId = crypto.randomUUID();
-        localStorage.setItem('exam_prep_session', newSessionId);
+        const newSessionId = generateUUID();
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('exam_prep_session', newSessionId);
+        }
 
         const userDocRef = doc(firestore, 'users', pendingProfileUser.uid);
         await setDoc(userDocRef, {

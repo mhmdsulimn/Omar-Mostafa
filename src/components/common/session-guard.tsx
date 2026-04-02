@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -55,12 +56,14 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!studentData || !user || isAdmin || isAdminLoading) return;
 
-    const localSessionId = localStorage.getItem('exam_prep_session');
-    const cloudSessionId = studentData.currentSessionId;
+    if (typeof window !== 'undefined') {
+      const localSessionId = localStorage.getItem('exam_prep_session');
+      const cloudSessionId = studentData.currentSessionId;
 
-    // إذا كان هناك معرف جلسة مختلف في السحابة، فهذا يعني أن جهازاً آخر قد سجل الدخول
-    if (cloudSessionId && localSessionId && cloudSessionId !== localSessionId) {
-      setShowLogoutDialog(true);
+      // إذا كان هناك معرف جلسة مختلف في السحابة، فهذا يعني أن جهازاً آخر قد سجل الدخول
+      if (cloudSessionId && localSessionId && cloudSessionId !== localSessionId) {
+        setShowLogoutDialog(true);
+      }
     }
   }, [studentData, user, isAdmin, isAdminLoading]);
 
@@ -90,17 +93,21 @@ export function SessionGuard({ children }: { children: React.ReactNode }) {
     if (auth) {
       try {
         await signOut(auth);
-        localStorage.removeItem('exam_prep_session');
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('exam_prep_session');
+        }
         router.replace('/login');
       } catch (e) {
-        window.location.href = '/login';
+        if (typeof window !== 'undefined') {
+          window.location.href = '/login';
+        }
       }
     }
   };
 
   // 3. حماية المتصفح من أدوات المطور (يتم تعطيل الحماية للمسؤولين لتسهيل عملهم)
   React.useEffect(() => {
-    if (isAdmin) return;
+    if (isAdmin || typeof window === 'undefined') return;
 
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
     const handleKeyDown = (e: KeyboardEvent) => {
