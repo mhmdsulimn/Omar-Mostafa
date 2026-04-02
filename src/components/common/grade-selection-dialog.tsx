@@ -100,7 +100,7 @@ export function GradeSelectionDialog({
       return;
     }
 
-    // اشتراط ١١ رقماً بالضبط
+    // اشتراط ١١ رقماً بالضبط (فحص إضافي عند الحفظ)
     if (phoneNumber.length !== 11 || parentPhoneNumber.length !== 11) {
       toast({
         variant: 'destructive',
@@ -123,6 +123,14 @@ export function GradeSelectionDialog({
     setPhoneNumber('');
     setParentPhoneNumber('');
   };
+
+  // الزر يكون معطلاً إذا كان أي حقل ناقص أو إذا كانت أرقام الهواتف لا تحتوي على 11 رقماً
+  const isButtonDisabled = 
+    isSaving || 
+    !grade || 
+    !fullName.trim() || 
+    phoneNumber.length !== 11 || 
+    parentPhoneNumber.length !== 11;
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && isOpen && toast({ title: 'مطلوب إكمال التسجيل', variant: 'destructive' })}>
@@ -195,7 +203,7 @@ export function GradeSelectionDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button onClick={handleSave} disabled={isSaving || !grade || !fullName.trim() || !phoneNumber || !parentPhoneNumber} className="w-full h-12 font-bold rounded-xl shadow-lg">
+          <Button onClick={handleSave} disabled={isButtonDisabled} className="w-full h-12 font-bold rounded-xl shadow-lg">
             {isSaving ? <Loader2 className="ml-2 h-4 w-4 animate-spin" /> : (initialData ? 'حفظ وإكمال الدخول' : 'بدء الرحلة التعليمية')}
           </Button>
         </DialogFooter>
