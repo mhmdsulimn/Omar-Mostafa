@@ -256,7 +256,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                         </TabsList>
 
                         <TabsContent value="info" className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
-                            {/* تواصل سريع - بطاقات الهواتف المحدثة */}
+                            {/* تواصل سريع */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="relative group overflow-hidden rounded-2xl border border-primary/10 bg-primary/5 p-5 transition-all hover:bg-primary/10 hover:shadow-md">
                                     <div className="flex items-center justify-between mb-3">
@@ -319,7 +319,7 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                 </div>
                             </div>
 
-                            {/* حالة النشاط - بطاقات التواريخ المحدثة */}
+                            {/* حالة النشاط */}
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50">
                                     <div className="flex items-center gap-3">
@@ -328,22 +328,21 @@ function StudentProfileDialog({ student }: { student: Student }) {
                                         </div>
                                         <div className="text-right">
                                             <p className="text-[10px] font-black text-muted-foreground uppercase mb-0.5">آخر ظهور</p>
-                                            <p className="font-bold text-xs">
+                                            <p className="font-bold text-xs text-foreground">
                                                 {student.lastActiveAt ? toArabicDigits(format(new Date(student.lastActiveAt), 'pp - d MMM yyyy', { locale: arSA })) : 'لم يسجل دخول بعد'}
                                             </p>
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="flex items-center justify-between p-5 rounded-2xl bg-primary shadow-lg shadow-primary/20 border border-primary/20 overflow-hidden relative">
-                                    <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle, #fff 1px, transparent 1px)', backgroundSize: '12px 12px' }}></div>
+                                <div className="flex items-center justify-between p-5 rounded-2xl bg-muted/30 border border-dashed border-border/50 overflow-hidden relative">
                                     <div className="flex items-center gap-3 relative z-10">
-                                        <div className="p-2.5 rounded-xl bg-white/20 text-white">
+                                        <div className="p-2.5 rounded-xl bg-muted text-muted-foreground">
                                             <History className="h-5 w-5" />
                                         </div>
                                         <div className="text-right">
-                                            <p className="text-[10px] font-black text-white/70 uppercase mb-0.5">تاريخ الانضمام</p>
-                                            <p className="font-bold text-xs text-white">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase mb-0.5">تاريخ الانضمام</p>
+                                            <p className="font-bold text-xs text-foreground">
                                                 {toArabicDigits(format(new Date(joinDate), 'pp - d MMM yyyy', { locale: arSA }))}
                                             </p>
                                         </div>
