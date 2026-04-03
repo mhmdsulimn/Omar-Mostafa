@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -21,7 +22,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
@@ -56,6 +57,13 @@ const gradeMap: Record<string, string> = {
   first_secondary: '1ث',
   second_secondary: '2ث',
   third_secondary: '3ث',
+};
+
+const typeLabelMap: Record<string, { label: string, color: string, icon: any }> = {
+    wallet: { label: 'شحن رصيد', color: 'bg-green-100 text-green-700 border-green-200', icon: Wallet },
+    reward: { label: 'مكافأة', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Award },
+    general: { label: 'رسالة إدارية', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Mail },
+    exam: { label: 'نتيجة امتحان', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: MessageSquare },
 };
 
 function AnnouncementForm({
@@ -217,11 +225,10 @@ export default function AdminAnnouncementsPage() {
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
   const { data: announcements, isLoading: isLoadingAnn } = useCollection<Announcement>(announcementsQuery, { ignorePermissionErrors: true });
 
-  // جلب الرسائل الخاصة غير المقروءة عبر جميع الطلاب
+  // جلب كافة الرسائل غير المقروءة عبر جميع الطلاب للمزامنة مع الإحصائيات
   const privateMessagesQuery = useMemoFirebase(
     () => (firestore && user ? query(
         collectionGroup(firestore, 'notifications'),
-        where('fromAdmin', '==', true),
         where('isRead', '==', false)
     ) : null),
     [firestore, user]
@@ -289,8 +296,8 @@ export default function AdminAnnouncementsPage() {
       <div className="grid gap-8">
         {/* جدول الإعلانات العامة */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
-            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
-                <div className='text-right w-full' dir="rtl">
+            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6" dir="rtl">
+                <div className='text-right w-full'>
                     <CardTitle className="text-lg font-bold flex items-center gap-2 justify-start">
                         <Megaphone className='h-4 w-4 text-primary' />
                         الإعلانات العامة
@@ -339,23 +346,23 @@ export default function AdminAnnouncementsPage() {
             </CardContent>
         </Card>
 
-        {/* جدول الرسائل الخاصة غير المقروءة */}
+        {/* جدول مراقبة إشعارات الطلاب */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
-            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
-                <div className='text-right w-full' dir="rtl">
+            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6" dir="rtl">
+                <div className='text-right w-full'>
                     <CardTitle className="text-lg font-bold flex items-center gap-2 justify-start">
                         <Mail className='h-4 w-4 text-amber-500' />
-                        الرسائل الخاصة (قيد الانتظار)
+                        مراقب إشعارات الطلاب (غير مقروءة)
                     </CardTitle>
-                    <CardDescription className='font-medium text-xs pr-6'>رسائل فردية أرسلت لطلاب محددين ولم يفتحوها بعد.</CardDescription>
+                    <CardDescription className='font-medium text-xs pr-6'>كافة التنبيهات التي وصلت للطلاب ولم يفتحوها بعد.</CardDescription>
                 </div>
-                {privateMessages && privateMessages.length > 0 && <Badge className='bg-amber-100 text-amber-700 hover:bg-amber-100 font-bold border-amber-200'>{privateMessages.length} رسالة</Badge>}
+                {privateMessages && privateMessages.length > 0 && <Badge className='bg-amber-100 text-amber-700 hover:bg-amber-100 font-bold border-amber-200'>{privateMessages.length} تنبيه</Badge>}
             </CardHeader>
             <CardContent className="p-0">
                 {(!privateMessages || privateMessages.length === 0) ? (
                     <div className="text-center py-16 opacity-50 font-bold flex flex-col items-center gap-2">
                         <MessageSquare className='h-8 w-8 opacity-20' />
-                        <span>لا توجد رسائل خاصة غير مقروءة حالياً.</span>
+                        <span>لا توجد تنبيهات قيد الانتظار حالياً.</span>
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
@@ -363,36 +370,44 @@ export default function AdminAnnouncementsPage() {
                             <TableHeader className="bg-muted/20">
                                 <TableRow>
                                     <TableHead className="text-right font-bold">الطالب</TableHead>
-                                    <TableHead className="text-right font-bold">محتوى الرسالة</TableHead>
-                                    <TableHead className="text-center font-bold">الحالة</TableHead>
+                                    <TableHead className="text-right font-bold">محتوى التنبيه</TableHead>
+                                    <TableHead className="text-center font-bold">نوع التنبيه</TableHead>
                                     <TableHead className="text-center font-bold w-[100px]">إجراء</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
-                                {privateMessages.map((msg) => (
-                                    <TableRow key={msg.id} className="hover:bg-muted/30">
-                                        <TableCell className="text-right">
-                                            <div className='flex items-center gap-2 justify-end'>
-                                                <div className='text-right'>
-                                                    <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
-                                                    <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp', { locale: arSA }))}</p>
+                                {privateMessages.map((msg) => {
+                                    const typeInfo = typeLabelMap[msg.type || 'general'] || { label: 'عام', color: 'bg-muted text-muted-foreground border-border', icon: Bell };
+                                    const TypeIcon = typeInfo.icon;
+
+                                    return (
+                                        <TableRow key={msg.id} className="hover:bg-muted/30">
+                                            <TableCell className="text-right">
+                                                <div className='flex items-center gap-2 justify-end'>
+                                                    <div className='text-right'>
+                                                        <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
+                                                        <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp', { locale: arSA }))}</p>
+                                                    </div>
+                                                    <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center'><User className='h-4 w-4 opacity-40' /></div>
                                                 </div>
-                                                <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center'><User className='h-4 w-4 opacity-40' /></div>
-                                            </div>
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <p className="line-clamp-1 text-sm font-medium opacity-80" dir="rtl">{msg.message}</p>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <Badge variant="outline" className="rounded-lg bg-amber-50 text-amber-600 border-amber-100 font-bold text-[10px]">غير مقروءة</Badge>
-                                        </TableCell>
-                                        <TableCell className="text-center">
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: msg.id, type: 'notification', studentId: msg.studentId})}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
-                                ))}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <p className="line-clamp-1 text-sm font-medium opacity-80" dir="rtl">{msg.message}</p>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Badge variant="outline" className={cn("rounded-lg font-bold text-[10px] gap-1 px-2 py-0.5", typeInfo.color)}>
+                                                    <TypeIcon className="h-3 w-3" />
+                                                    {typeInfo.label}
+                                                </Badge>
+                                            </TableCell>
+                                            <TableCell className="text-center">
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: msg.id, type: 'notification', studentId: msg.studentId})}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                })}
                             </TableBody>
                         </Table>
                     </div>
