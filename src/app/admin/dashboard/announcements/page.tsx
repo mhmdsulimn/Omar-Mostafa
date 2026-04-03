@@ -407,7 +407,7 @@ export default function AdminAnnouncementsPage() {
                                     return (
                                         <TableRow key={msg.id} className="hover:bg-muted/30">
                                             <TableCell className="text-right">
-                                                <div className='flex items-center gap-2 justify-end'>
+                                                <div className='flex items-center gap-2 justify-end' dir="rtl">
                                                     <div className='text-right'>
                                                         <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
                                                         <p className='text-[9px] text-muted-foreground font-bold' dir="rtl">{toArabicDigits(format(new Date(msg.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
@@ -440,7 +440,7 @@ export default function AdminAnnouncementsPage() {
       </Dialog>
 
       <AlertDialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
-        <AlertDialogContent className="rounded-2xl max-w-md">
+        <AlertDialogContent className="rounded-2xl max-md">
             <AlertDialogHeader className="text-right">
                 <AlertDialogTitle className="font-bold">تأكيد الحذف النهائي</AlertDialogTitle>
                 <AlertDialogDescription className="text-right font-medium leading-relaxed">
