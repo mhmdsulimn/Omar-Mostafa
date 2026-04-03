@@ -259,9 +259,9 @@ function StudentProfileDialog({ student }: { student: Student }) {
     return (
         <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm">
-                    <UserCircle2 className="h-4 w-4" />
-                    <span>عرض الملف</span>
+                <Button variant="outline" size="sm" className="h-9 w-9 sm:w-auto sm:px-3 sm:gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm">
+                    <UserCircle2 className="h-4 w-4 shrink-0" />
+                    <span className="hidden sm:inline">عرض الملف</span>
                 </Button>
             </DialogTrigger>
             <DialogContent className="max-w-[95vw] sm:max-w-xl rounded-[2.5rem] p-0 max-h-[90vh] overflow-y-auto scrollbar-hide border-none shadow-2xl bg-card" dir="rtl">
@@ -380,8 +380,8 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 </div>
             </DialogContent>
 
-            <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} دخول الطالب للمنصة.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")}> تأكيد </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
-            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-w-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold"> حذف نهائي </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+            <AlertDialog open={isBanConfirmOpen} onOpenChange={setIsBanConfirmOpen}><AlertDialogContent className="rounded-2xl max-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="font-bold">تأكيد الإجراء</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيؤدي هذا إلى {student.isBanned ? 'إلغاء حظر' : 'حظر'} دخول الطالب للمنصة.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleToggleBan} className={cn("rounded-xl font-bold", !student.isBanned && "bg-destructive")}> تأكيد </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+            <AlertDialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}><AlertDialogContent className="rounded-2xl max-md"><AlertDialogHeader className="text-right"><AlertDialogTitle className="text-destructive font-bold">حذف نهائي للملف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium leading-relaxed">أنت على وشك حذف الطالب <span className="font-bold">{student.firstName}</span> وكافة سجلاته نهائياً.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter className="gap-2 sm:justify-start"><AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel><AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl font-bold"> حذف نهائي </AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
         </Dialog>
     );
 }
@@ -389,13 +389,16 @@ function StudentProfileDialog({ student }: { student: Student }) {
 function UserRow({ user: student }: { user: Student }) {
     return (
         <TableRow className={cn("transition-colors", student.isBanned ? 'bg-destructive/5' : 'hover:bg-muted/50')}>
-            <TableCell className="text-right p-4">
-                <div className="flex items-center gap-3" dir="rtl">
-                    <Avatar className="h-10 w-10 md:h-12 md:w-12 shrink-0 border-2 border-primary/10 shadow-sm"><AvatarFallback className="font-bold text-lg">{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
-                    <div className="flex flex-col gap-0.5 min-w-0 text-right"><span className="font-bold whitespace-nowrap text-sm md:text-base text-foreground/90">{student?.firstName} {student?.lastName}</span><div className="text-[10px] md:text-xs text-muted-foreground break-all opacity-70 font-medium">{student?.email}</div></div>
+            <TableCell className="text-right p-3 sm:p-4">
+                <div className="flex items-center gap-2 sm:gap-3" dir="rtl">
+                    <Avatar className="h-9 w-9 md:h-12 md:w-12 shrink-0 border-2 border-primary/10 shadow-sm"><AvatarFallback className="font-bold text-base md:text-lg">{student?.firstName?.charAt(0)}</AvatarFallback></Avatar>
+                    <div className="flex flex-col gap-0 min-w-0 text-right">
+                        <span className="font-bold whitespace-nowrap text-xs sm:text-sm md:text-base text-foreground/90 truncate">{student?.firstName} {student?.lastName}</span>
+                        <div className="text-[9px] md:text-xs text-muted-foreground break-all opacity-70 font-medium truncate max-w-[120px] sm:max-w-none">{student?.email}</div>
+                    </div>
                 </div>
             </TableCell>
-            <TableCell className="text-center p-4 w-[140px]"><StudentProfileDialog student={student} /></TableCell>
+            <TableCell className="text-center p-3 sm:p-4"><StudentProfileDialog student={student} /></TableCell>
         </TableRow>
     );
 }
@@ -438,19 +441,19 @@ export default function AdminStudentsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4 text-right w-full">
-        <div className="p-4 rounded-[1.5rem] bg-primary/10 border border-primary/20 shadow-xl shadow-primary/5">
-            <Users className="h-8 w-8 text-primary" />
+        <div className="p-3 md:p-4 rounded-[1.2rem] md:rounded-[1.5rem] bg-primary/10 border border-primary/20 shadow-xl shadow-primary/5">
+            <Users className="h-6 w-6 md:h-8 md:w-8 text-primary" />
         </div>
-        <div className="space-y-1">
-            <h1 className="text-xl font-bold md:text-3xl tracking-tight text-right">إدارة الطلاب</h1>
-            <p className="text-xs md:text-sm text-muted-foreground font-bold text-right">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
+        <div className="space-y-0.5">
+            <h1 className="text-lg font-bold md:text-3xl tracking-tight text-right">إدارة الطلاب</h1>
+            <p className="text-[10px] md:text-sm text-muted-foreground font-bold text-right hidden xs:block">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
         </div>
         <div className="ml-auto"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>
       <Card className="rounded-2xl overflow-hidden border-none shadow-xl bg-card/50 backdrop-blur-sm">
-        <CardHeader className="bg-muted/10 pb-6 text-right">
+        <CardHeader className="bg-muted/10 pb-6 text-right px-4 sm:px-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="ابحث بالاسم، البريد، أو رقم الهاتف..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+            <div className="relative"><Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="ابحث بالاسم، البريد، أو الهاتف..." className="pr-10 text-right h-11 rounded-xl bg-background" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
             <Select dir="rtl" value={gradeFilter} onValueChange={setGradeFilter}>
                 <SelectTrigger className="h-11 rounded-xl bg-background font-bold"><SelectValue placeholder="فلترة بالصف" /></SelectTrigger>
                 <SelectContent>
@@ -467,8 +470,8 @@ export default function AdminStudentsPage() {
             <Table>
                 <TableHeader className="bg-muted/30">
                     <TableRow>
-                        <TableHead className="text-right font-bold p-4">بيانات الطالب</TableHead>
-                        <TableHead className="text-center font-bold p-4">الإجراءات</TableHead>
+                        <TableHead className="text-right font-bold p-3 sm:p-4">بيانات الطالب</TableHead>
+                        <TableHead className="text-center font-bold p-3 sm:p-4 w-[80px] sm:w-[140px]">إجراء</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>{filteredUsers?.map((user) => (<UserRow key={user.id} user={user} />))}</TableBody>
