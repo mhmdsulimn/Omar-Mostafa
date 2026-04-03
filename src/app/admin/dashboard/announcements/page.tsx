@@ -50,7 +50,7 @@ import { Input } from '@/components/ui/input';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 import { format } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
-import { toArabicDigits } from '@/lib/utils';
+import { toArabicDigits, cn } from '@/lib/utils';
 
 const gradeMap: Record<string, string> = {
   all: 'الكل',
@@ -225,15 +225,35 @@ export default function AdminAnnouncementsPage() {
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
   const { data: announcements, isLoading: isLoadingAnn } = useCollection<Announcement>(announcementsQuery, { ignorePermissionErrors: true });
 
-  // جلب كافة الرسائل غير المقروءة عبر جميع الطلاب للمزامنة مع الإحصائيات
-  const privateMessagesQuery = useMemoFirebase(
-    () => (firestore && user ? query(
-        collectionGroup(firestore, 'notifications'),
-        where('isRead', '==', false)
-    ) : null),
+  // جلب كافة الطلاب لربط الأسماء (لضمان الدقة في العرض)
+  const usersQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'users') : null), [firestore, user]);
+  const { data: allUsers, isLoading: isLoadingUsers } = useCollection<Student>(usersQuery, { ignorePermissionErrors: true });
+
+  // جلب كافة الرسائل عبر كافة الطلاب (بدون فلتر لتجنب أخطاء الفهارس في Firestore)
+  const notificationsQuery = useMemoFirebase(
+    () => (firestore && user ? query(collectionGroup(firestore, 'notifications')) : null),
     [firestore, user]
   );
-  const { data: privateMessages, isLoading: isLoadingPrivate } = useCollection<Notification>(privateMessagesQuery, { ignorePermissionErrors: true });
+  const { data: allNotifications, isLoading: isLoadingAllNotifs } = useCollection<Notification>(notificationsQuery, { ignorePermissionErrors: true });
+
+  // تصفية الرسائل غير المقروءة ومعالجتها برمجياً لضمان ظهورها
+  const privateMessages = React.useMemo(() => {
+    if (!allNotifications || !allUsers) return [];
+    
+    const usersMap = new Map(allUsers.map(u => [u.id, u]));
+    
+    return allNotifications
+        .filter(n => !n.isRead)
+        .map(n => {
+            // محاولة جلب اسم الطالب الحقيقي إذا لم يكن مسجلاً في وثيقة التنبيه
+            const student = usersMap.get(n.studentId || '');
+            return {
+                ...n,
+                studentName: student ? `${student.firstName} ${student.lastName}` : (n.studentName || 'طالب غير معروف')
+            };
+        })
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [allNotifications, allUsers]);
 
   const handleSave = async (formData: any) => {
     if (!firestore) return;
@@ -282,15 +302,17 @@ export default function AdminAnnouncementsPage() {
     await updateDocumentNonBlocking(doc(firestore, 'announcements', announcement.id), { isActive: !announcement.isActive, updatedAt: new Date().toISOString() });
   }
 
-  if (isLoadingAnn || isLoadingPrivate) {
+  const isLoading = isLoadingAnn || isLoadingUsers || isLoadingAllNotifs;
+
+  if (isLoading) {
     return <div className="flex h-[60vh] w-full items-center justify-center"><LoadingAnimation size="md" /></div>;
   }
 
   return (
     <>
-      <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة المراسلات</h1>
-        <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2 font-bold h-10 px-5 shadow-lg shadow-primary/20"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
+      <div className="flex items-center gap-4 mb-6" dir="rtl">
+        <h1 className="text-xl font-bold md:text-3xl tracking-tight text-right w-full">إدارة المراسلات</h1>
+        <div className="mr-auto shrink-0"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2 font-bold h-10 px-5 shadow-lg shadow-primary/20"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
       </div>
 
       <div className="grid gap-8">
