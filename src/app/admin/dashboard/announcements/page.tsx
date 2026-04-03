@@ -210,6 +210,7 @@ export default function AdminAnnouncementsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
+  const [isMarking, setIsMarking] = React.useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
   const [viewMessage, setViewMessage] = React.useState<any>(null);
@@ -441,7 +442,7 @@ export default function AdminAnnouncementsPage() {
                     <MessageSquare className="h-5 w-5 text-primary" />
                     محتوى الرسالة المرسلة
                 </DialogTitle>
-                <DialogDescription className="font-bold pt-2 text-right" dir="rtl">
+                <DialogDescription className="font-bold pt-2 text-right" dir="rtl" asChild>
                     <div className="flex flex-col gap-1">
                         <span className="text-foreground">مرسلة إلى: {viewMessage?.studentName}</span>
                         <span className="text-[10px] text-muted-foreground">{viewMessage?.createdAt && toArabicDigits(format(new Date(viewMessage.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</span>
