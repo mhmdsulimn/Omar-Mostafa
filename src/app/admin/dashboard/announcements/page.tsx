@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell, Eye } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
@@ -56,13 +56,6 @@ const gradeMap: Record<string, string> = {
   first_secondary: '1ث',
   second_secondary: '2ث',
   third_secondary: '3ث',
-};
-
-const typeLabelMap: Record<string, { label: string, color: string, icon: any }> = {
-    wallet: { label: 'شحن رصيد', color: 'bg-green-100 text-green-700 border-green-200', icon: Wallet },
-    reward: { label: 'مكافأة', color: 'bg-amber-100 text-amber-700 border-amber-200', icon: Award },
-    general: { label: 'رسالة إدارية', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: Mail },
-    exam: { label: 'نتيجة امتحان', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: MessageSquare },
 };
 
 function AnnouncementForm({
@@ -219,6 +212,7 @@ export default function AdminAnnouncementsPage() {
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
+  const [viewMessage, setViewMessage] = React.useState<any>(null);
 
   // جلب الإعلانات العامة
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
@@ -355,9 +349,14 @@ export default function AdminAnnouncementsPage() {
                                             <Badge variant="outline" className="rounded-lg font-bold text-[10px]">{gradeMap[ann.targetGrade]}</Badge>
                                         </TableCell>
                                         <TableCell className="text-center">
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: ann.id, type: 'announcement'})}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
+                                            <div className="flex items-center justify-center gap-1">
+                                                <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-lg h-8 w-8" onClick={() => setViewMessage({ ...ann, studentName: 'إعلان عام' })}>
+                                                    <Eye className="h-4 w-4" />
+                                                </Button>
+                                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: ann.id, type: 'announcement'})}>
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </div>
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -399,7 +398,7 @@ export default function AdminAnnouncementsPage() {
                                 <TableRow>
                                     <TableHead className="text-right font-bold">الطالب</TableHead>
                                     <TableHead className="text-right font-bold">محتوى الرسالة</TableHead>
-                                    <TableHead className="text-center font-bold w-[100px]">إجراء</TableHead>
+                                    <TableHead className="text-center font-bold w-[120px]">إجراء</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -418,9 +417,14 @@ export default function AdminAnnouncementsPage() {
                                                 <p className="line-clamp-1 text-sm font-medium opacity-80" dir="rtl">{msg.message}</p>
                                             </TableCell>
                                             <TableCell className="text-center">
-                                                <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: msg.id, type: 'notification', studentId: msg.studentId})}>
-                                                    <Trash2 className="h-4 w-4" />
-                                                </Button>
+                                                <div className="flex items-center justify-center gap-1">
+                                                    <Button variant="ghost" size="icon" className="text-primary hover:bg-primary/10 rounded-lg h-8 w-8" onClick={() => setViewMessage(msg)}>
+                                                        <Eye className="h-4 w-4" />
+                                                    </Button>
+                                                    <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: msg.id, type: 'notification', studentId: msg.studentId})}>
+                                                        <Trash2 className="h-4 w-4" />
+                                                    </Button>
+                                                </div>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -432,6 +436,32 @@ export default function AdminAnnouncementsPage() {
             </CardContent>
         </Card>
       </div>
+
+      {/* نافذة عرض محتوى الرسالة */}
+      <Dialog open={!!viewMessage} onOpenChange={(o) => !o && setViewMessage(null)}>
+        <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
+            <DialogHeader className="text-right">
+                <DialogTitle className="text-xl font-bold flex items-center gap-2 justify-start" dir="rtl">
+                    <MessageSquare className="h-5 w-5 text-primary" />
+                    محتوى الرسالة المرسلة
+                </DialogTitle>
+                <DialogDescription className="font-bold pt-2 text-right" dir="rtl">
+                    <div className="flex flex-col gap-1">
+                        <span className="text-foreground">مرسلة إلى: {viewMessage?.studentName}</span>
+                        <span className="text-[10px] text-muted-foreground">{viewMessage?.createdAt && toArabicDigits(format(new Date(viewMessage.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</span>
+                    </div>
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-6 px-1">
+                <div className="p-5 bg-muted/30 rounded-2xl border border-dashed border-primary/10 text-right leading-relaxed font-medium whitespace-pre-wrap text-sm md:text-base" dir="rtl">
+                    {viewMessage?.message}
+                </div>
+            </div>
+            <DialogFooter className="sm:justify-start">
+                <Button onClick={() => setViewMessage(null)} className="rounded-xl font-bold h-11 px-8">إغلاق</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
