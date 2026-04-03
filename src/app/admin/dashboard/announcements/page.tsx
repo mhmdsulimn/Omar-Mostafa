@@ -407,7 +407,7 @@ export default function AdminAnnouncementsPage() {
                                     return (
                                         <TableRow key={msg.id} className="hover:bg-muted/30">
                                             <TableCell className="text-right">
-                                                <div className='flex items-center gap-2 justify-end' dir="rtl">
+                                                <div className='flex items-center gap-2 justify-start' dir="rtl">
                                                     <div className='text-right'>
                                                         <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
                                                         <p className='text-[9px] text-muted-foreground font-bold' dir="rtl">{toArabicDigits(format(new Date(msg.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
