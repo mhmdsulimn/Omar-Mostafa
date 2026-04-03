@@ -18,11 +18,11 @@ import {
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking, useDoc } from '@/firebase';
-import { collection, doc, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
+import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Bell, Sparkles, AlertTriangle } from 'lucide-react';
-import type { Announcement, Student } from '@/lib/data';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Bell, Sparkles, Mail, MessageSquare, User } from 'lucide-react';
+import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
   DialogContent,
@@ -47,6 +47,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { format } from 'date-fns';
+import { arSA } from 'date-fns/locale/ar-SA';
+import { toArabicDigits } from '@/lib/utils';
 
 const gradeMap: Record<string, string> = {
   all: 'الكل',
@@ -107,7 +110,6 @@ function AnnouncementForm({
                     const fullName = `${firstName} ${lastName}`.trim();
                     const email = (s.email || '').toLowerCase();
                     
-                    // نظام البحث بالاسم الكامل المدمج لضمان دقة النتائج
                     return searchParts.every(part => 
                         fullName.includes(part) || email.includes(part)
                     );
@@ -134,22 +136,22 @@ function AnnouncementForm({
     return (
         <form onSubmit={handleSubmit}>
             <DialogHeader className="text-right">
-                <DialogTitle>إرسال رسالة جديدة</DialogTitle>
-                <DialogDescription>اختر نوع الرسالة والمستهدفين بالأسفل.</DialogDescription>
+                <DialogTitle className="text-xl font-bold">إرسال رسالة جديدة</DialogTitle>
+                <DialogDescription className="font-medium">اختر نوع الرسالة والمستهدفين بالأسفل.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-6">
                 <div className="space-y-3">
-                    <Label className="text-right block w-full font-bold">نوع الرسالة</Label>
+                    <Label className="text-right block w-full font-bold text-xs opacity-70">نوع الرسالة</Label>
                     <div className="grid grid-cols-2 gap-2">
-                        <Button type="button" variant={formData.targetType === 'global' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'global'}))} className="rounded-xl">إعلان عام</Button>
-                        <Button type="button" variant={formData.targetType === 'student' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'student'}))} className="rounded-xl">رسالة خاصة</Button>
+                        <Button type="button" variant={formData.targetType === 'global' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'global'}))} className="rounded-xl font-bold">إعلان عام (للجميع)</Button>
+                        <Button type="button" variant={formData.targetType === 'student' ? 'default' : 'outline'} onClick={() => setFormData(prev => ({...prev, targetType: 'student'}))} className="rounded-xl font-bold">رسالة خاصة (لطالب)</Button>
                     </div>
                 </div>
                 {formData.targetType === 'global' ? (
                     <div className="space-y-2 text-right">
                         <Label className="font-bold">توجيه الإعلان إلى</Label>
                         <Select dir="rtl" value={formData.targetGrade} onValueChange={(v) => setFormData(prev => ({...prev, targetGrade: v as any}))}>
-                            <SelectTrigger className="rounded-xl"><SelectValue /></SelectTrigger>
+                            <SelectTrigger className="rounded-xl h-11"><SelectValue /></SelectTrigger>
                             <SelectContent>
                                <SelectItem value="all">كل الصفوف</SelectItem>
                                <SelectItem value="first_secondary">الصف الأول الثانوي</SelectItem>
@@ -160,19 +162,19 @@ function AnnouncementForm({
                     </div>
                 ) : (
                     <div className="space-y-2 text-right">
-                        <Label className="font-bold">ابحث عن الطالب بالاسم</Label>
+                        <Label className="font-bold">ابحث عن الطالب</Label>
                         <div className="flex gap-2">
-                            <Button type="button" size="icon" onClick={handleSearchStudents} disabled={isSearching} className="rounded-xl shrink-0">
+                            <Button type="button" size="icon" onClick={handleSearchStudents} disabled={isSearching} className="rounded-xl shrink-0 h-11 w-11">
                                 {isSearching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
                             </Button>
-                            <Input placeholder="اكتب اسم الطالب بالكامل هنا..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())} className="text-right rounded-xl" />
+                            <Input placeholder="اكتب اسم الطالب هنا..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleSearchStudents())} className="text-right rounded-xl h-11" />
                         </div>
                         {searchResults.length > 0 && !selectedStudent && (
                             <div className="mt-2 rounded-xl border bg-muted/50 p-1 space-y-1 max-h-48 overflow-y-auto scrollbar-hide">
                                 {searchResults.map(s => (
                                     <div key={s.id} className="flex items-center justify-between p-3 hover:bg-background rounded-lg cursor-pointer border border-transparent hover:border-primary/10 transition-all" onClick={() => { setSelectedStudent(s); setSearchResults([]); setSearchTerm(''); }}>
                                         <Badge variant="outline" className="text-[10px] h-5">{gradeMap[s.grade]}</Badge>
-                                        <div className="flex items-center gap-2"><span className="text-xs font-bold">{s.firstName} {s.lastName}</span></div>
+                                        <div className="flex items-center gap-2 text-right"><span className="text-xs font-bold">{s.firstName} {s.lastName}</span></div>
                                     </div>
                                 ))}
                             </div>
@@ -180,7 +182,10 @@ function AnnouncementForm({
                         {selectedStudent && (
                             <div className="flex items-center justify-between p-3 bg-primary/10 rounded-xl border border-primary/20 animate-in zoom-in-95 duration-200">
                                 <Button type="button" variant="ghost" size="sm" onClick={() => setSelectedStudent(null)} className="h-7 text-destructive hover:bg-destructive/10 rounded-lg">تغيير</Button>
-                                <span className="text-sm font-bold">{selectedStudent.firstName} {selectedStudent.lastName}</span>
+                                <div className='flex items-center gap-2 font-bold text-sm'>
+                                    <span className='opacity-60 text-xs'>مرسل إلى:</span>
+                                    <span>{selectedStudent.firstName} {selectedStudent.lastName}</span>
+                                </div>
                             </div>
                         )}
                     </div>
@@ -191,11 +196,11 @@ function AnnouncementForm({
                 </div>
             </div>
              <DialogFooter className="gap-2 sm:justify-start">
-                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)} className="rounded-xl h-11 px-8 font-bold">
+                <Button type="submit" disabled={isSaving || !formData.message || (formData.targetType === 'student' && !selectedStudent)} className="rounded-xl h-11 px-8 font-bold flex-1 sm:flex-none">
                     {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
-                    إرسال الرسالة
+                    إرسال الآن
                 </Button>
-                <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="rounded-xl h-11">إلغاء</Button>
+                <Button type="button" variant="outline" onClick={onClose} disabled={isSaving} className="rounded-xl h-11 px-6">إلغاء</Button>
             </DialogFooter>
         </form>
     );
@@ -203,12 +208,25 @@ function AnnouncementForm({
 
 export default function AdminAnnouncementsPage() {
   const firestore = useFirestore();
+  const { user } = useUser();
   const { toast } = useToast();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
-  const [deleteDialogId, setDeleteDialogId] = React.useState<string | null>(null);
+  const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
 
+  // جلب الإعلانات العامة
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
   const { data: announcements, isLoading: isLoadingAnn } = useCollection<Announcement>(announcementsQuery, { ignorePermissionErrors: true });
+
+  // جلب الرسائل الخاصة غير المقروءة عبر جميع الطلاب
+  const privateMessagesQuery = useMemoFirebase(
+    () => (firestore && user ? query(
+        collectionGroup(firestore, 'notifications'),
+        where('fromAdmin', '==', true),
+        where('isRead', '==', false)
+    ) : null),
+    [firestore, user]
+  );
+  const { data: privateMessages, isLoading: isLoadingPrivate } = useCollection<Notification>(privateMessagesQuery, { ignorePermissionErrors: true });
 
   const handleSave = async (formData: any) => {
     if (!firestore) return;
@@ -220,7 +238,13 @@ export default function AdminAnnouncementsPage() {
             toast({ title: 'تم إرسال الإعلان العام بنجاح.' });
         } else {
             await addDocumentNonBlocking(collection(firestore, `users/${formData.studentId}/notifications`), {
-                message: formData.message, createdAt: new Date().toISOString(), isRead: false, type: formData.category === 'normal' ? 'general' : formData.category, fromAdmin: true, studentId: formData.studentId, studentName: formData.studentName,
+                message: formData.message, 
+                createdAt: new Date().toISOString(), 
+                isRead: false, 
+                type: 'general', 
+                fromAdmin: true, 
+                studentId: formData.studentId, 
+                studentName: formData.studentName,
             });
             toast({ title: `تم إرسال الرسالة إلى ${formData.studentName} بنجاح.` });
         }
@@ -231,14 +255,18 @@ export default function AdminAnnouncementsPage() {
   }
 
   const handleDelete = async () => {
-    if (!firestore || !deleteDialogId) return;
+    if (!firestore || !deleteDialog) return;
     try {
-        await deleteDocumentNonBlocking(doc(firestore, 'announcements', deleteDialogId));
-        toast({ title: 'تم حذف الإعلان بنجاح.' });
+        if (deleteDialog.type === 'announcement') {
+            await deleteDocumentNonBlocking(doc(firestore, 'announcements', deleteDialog.id));
+        } else if (deleteDialog.studentId) {
+            await deleteDocumentNonBlocking(doc(firestore, `users/${deleteDialog.studentId}/notifications`, deleteDialog.id));
+        }
+        toast({ title: 'تم حذف الرسالة بنجاح.' });
     } catch (error) {
         toast({ title: 'فشل الحذف', variant: 'destructive' });
     } finally {
-        setDeleteDialogId(null);
+        setDeleteDialog(null);
     }
   }
 
@@ -247,60 +275,145 @@ export default function AdminAnnouncementsPage() {
     await updateDocumentNonBlocking(doc(firestore, 'announcements', announcement.id), { isActive: !announcement.isActive, updatedAt: new Date().toISOString() });
   }
 
-  if (isLoadingAnn) {
+  if (isLoadingAnn || isLoadingPrivate) {
     return <div className="flex h-[60vh] w-full items-center justify-center"><LoadingAnimation size="md" /></div>;
   }
 
   return (
     <>
       <div className="flex items-center gap-4 mb-6">
-        <h1 className="text-xl font-bold md:text-3xl tracking-tight">قسم المراسلات</h1>
-        <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
+        <h1 className="text-xl font-bold md:text-3xl tracking-tight">إدارة المراسلات</h1>
+        <div className="mr-auto"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2 font-bold h-10 px-5 shadow-lg shadow-primary/20"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
       </div>
-      <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
-          <CardHeader className="bg-muted/10 border-b"><CardTitle className="text-right text-lg">الإعلانات المثبتة (للجميع)</CardTitle></CardHeader>
-          <CardContent className="p-0 md:p-6">
-              {(!announcements || announcements.length === 0) ? (
-                  <div className="text-center py-20 opacity-50 font-bold">لا توجد إعلانات مثبتة حالياً.</div>
-              ) : (
-                  <div className="overflow-x-auto">
-                      <Table>
-                          <TableHeader className="bg-muted/20">
-                              <TableRow>
-                                  <TableHead className="text-center font-bold">الحالة</TableHead>
-                                  <TableHead className="text-right font-bold">الرسالة</TableHead>
-                                  <TableHead className="text-center font-bold">الصف</TableHead>
-                                  <TableHead className="text-center font-bold">إجراء</TableHead>
-                              </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                              {announcements.map((ann) => (
-                                <TableRow key={ann.id} className="hover:bg-muted/30">
-                                    <TableCell className="text-center"><Switch checked={ann.isActive} onCheckedChange={() => handleToggleActive(ann)} /></TableCell>
-                                    <TableCell className="text-right"><p className="line-clamp-1 text-sm font-medium">{ann.message}</p></TableCell>
-                                    <TableCell className="text-center"><Badge variant="outline" className="rounded-lg">{gradeMap[ann.targetGrade]}</Badge></TableCell>
-                                    <TableCell className="text-center">
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg" onClick={() => setDeleteDialogId(ann.id)}><Trash2 className="h-4 w-4" /></Button>
-                                    </TableCell>
+
+      <div className="grid gap-8">
+        {/* جدول الإعلانات العامة */}
+        <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
+            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
+                <div className='text-right'>
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-end">الإعلانات العامة <Megaphone className='h-4 w-4 text-primary' /></CardTitle>
+                    <CardDescription className='font-medium text-xs'>تظهر لجميع الطلاب المشتركين في الصف المحدد.</CardDescription>
+                </div>
+            </CardHeader>
+            <CardContent className="p-0">
+                {(!announcements || announcements.length === 0) ? (
+                    <div className="text-center py-16 opacity-50 font-bold">لا توجد إعلانات عامة حالياً.</div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-muted/20">
+                                <TableRow>
+                                    <TableHead className="text-center font-bold">الحالة</TableHead>
+                                    <TableHead className="text-right font-bold">محتوى الإعلان</TableHead>
+                                    <TableHead className="text-center font-bold">الصف</TableHead>
+                                    <TableHead className="text-center font-bold w-[100px]">إجراء</TableHead>
                                 </TableRow>
-                              ))}
-                          </TableBody>
-                      </Table>
-                  </div>
-              )}
-          </CardContent>
-      </Card>
+                            </TableHeader>
+                            <TableBody>
+                                {announcements.map((ann) => (
+                                    <TableRow key={ann.id} className="hover:bg-muted/30">
+                                        <TableCell className="text-center">
+                                            <Switch checked={ann.isActive} onCheckedChange={() => handleToggleActive(ann)} />
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <p className="line-clamp-1 text-sm font-bold opacity-80" dir="rtl">{ann.message}</p>
+                                            <p className='text-[10px] text-muted-foreground font-bold mt-1'>{toArabicDigits(format(new Date(ann.updatedAt), 'pp - d MMM', { locale: arSA }))}</p>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant="outline" className="rounded-lg font-bold text-[10px]">{gradeMap[ann.targetGrade]}</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: ann.id, type: 'announcement'})}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+
+        {/* جدول الرسائل الخاصة غير المقروءة */}
+        <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
+            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
+                <div className='text-right'>
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-end">الرسائل الخاصة (قيد الانتظار) <Mail className='h-4 w-4 text-amber-500' /></CardTitle>
+                    <CardDescription className='font-medium text-xs'>رسائل فردية أرسلت لطلاب محددين ولم يفتحوها بعد.</CardDescription>
+                </div>
+                {privateMessages && privateMessages.length > 0 && <Badge className='bg-amber-100 text-amber-700 hover:bg-amber-100 font-bold border-amber-200'>{privateMessages.length} رسالة</Badge>}
+            </CardHeader>
+            <CardContent className="p-0">
+                {(!privateMessages || privateMessages.length === 0) ? (
+                    <div className="text-center py-16 opacity-50 font-bold flex flex-col items-center gap-2">
+                        <MessageSquare className='h-8 w-8 opacity-20' />
+                        <span>لا توجد رسائل خاصة غير مقروءة حالياً.</span>
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto">
+                        <Table>
+                            <TableHeader className="bg-muted/20">
+                                <TableRow>
+                                    <TableHead className="text-right font-bold">الطالب</TableHead>
+                                    <TableHead className="text-right font-bold">محتوى الرسالة</TableHead>
+                                    <TableHead className="text-center font-bold">الحالة</TableHead>
+                                    <TableHead className="text-center font-bold w-[100px]">إجراء</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {privateMessages.map((msg) => (
+                                    <TableRow key={msg.id} className="hover:bg-muted/30">
+                                        <TableCell className="text-right">
+                                            <div className='flex items-center gap-2 justify-end'>
+                                                <div className='text-right'>
+                                                    <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
+                                                    <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp', { locale: arSA }))}</p>
+                                                </div>
+                                                <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center'><User className='h-4 w-4 opacity-40' /></div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <p className="line-clamp-1 text-sm font-medium opacity-80" dir="rtl">{msg.message}</p>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Badge variant="outline" className="rounded-lg bg-amber-50 text-amber-600 border-amber-100 font-bold text-[10px]">غير مقروءة</Badge>
+                                        </TableCell>
+                                        <TableCell className="text-center">
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 rounded-lg h-8 w-8" onClick={() => setDeleteDialog({id: msg.id, type: 'notification', studentId: msg.studentId})}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+      </div>
+
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
             <AnnouncementForm onSave={handleSave} onClose={() => setIsAddDialogOpen(false)} />
         </DialogContent>
       </Dialog>
-      <AlertDialog open={!!deleteDialogId} onOpenChange={(o) => !o && setDeleteDialogId(null)}>
+
+      <AlertDialog open={!!deleteDialog} onOpenChange={(o) => !o && setDeleteDialog(null)}>
         <AlertDialogContent className="rounded-2xl max-w-md">
-            <AlertDialogHeader><AlertDialogTitle className="text-right">تأكيد الحذف</AlertDialogTitle><AlertDialogDescription className="text-right font-medium">سيتم حذف هذا الإعلان نهائياً ولن يظهر للطلاب مجدداً.</AlertDialogDescription></AlertDialogHeader>
-            <AlertDialogFooter className="gap-2">
-                <AlertDialogCancel className="rounded-xl">إلغاء</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDelete} className="bg-destructive rounded-xl">حذف نهائي</AlertDialogAction>
+            <AlertDialogHeader className="text-right">
+                <AlertDialogTitle className="font-bold">تأكيد الحذف النهائي</AlertDialogTitle>
+                <AlertDialogDescription className="text-right font-medium leading-relaxed">
+                    {deleteDialog?.type === 'announcement' 
+                        ? 'سيتم حذف هذا الإعلان العام نهائياً ولن يظهر لأي طالب مجدداً.' 
+                        : 'سيتم مسح هذه الرسالة الخاصة من صندوق الوارد الخاص بالطالب.'}
+                </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter className="gap-2 sm:justify-start">
+                <AlertDialogCancel className="rounded-xl font-bold">إلغاء</AlertDialogCancel>
+                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90 rounded-xl font-bold">تأكيد الحذف</AlertDialogAction>
             </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

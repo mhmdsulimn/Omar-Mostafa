@@ -91,6 +91,10 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    match /{allPaths=**}/notifications/{id} {
+      allow read: if isAdmin();
+    }
+
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
     }
