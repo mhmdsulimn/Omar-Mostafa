@@ -54,22 +54,33 @@ export function GradeSelectionDialog({
   const { toast } = useToast();
 
   React.useEffect(() => {
-    if (isOpen && initialData) {
-      if (initialData.grade) setGrade(initialData.grade);
-      if (initialData.firstName || initialData.lastName) {
-        setFullName(`${initialData.firstName} ${initialData.lastName}`.trim());
-      } else if (user?.displayName) {
-        setFullName(user.displayName);
+    if (isOpen) {
+      if (initialData) {
+        // إذا كان هناك بيانات مسجلة مسبقاً في Firestore، نقوم بتعبئتها
+        if (initialData.grade) setGrade(initialData.grade);
+        
+        // نستخدم الاسم المسجل في Firestore فقط، ولا نسحب اسم جوجل
+        if (initialData.firstName || initialData.lastName) {
+          setFullName(`${initialData.firstName} ${initialData.lastName}`.trim());
+        } else {
+          setFullName(''); // نتركه فارغاً إذا لم يكن مسجلاً في Firestore
+        }
+        
+        if (initialData.phoneNumber) setPhoneNumber(initialData.phoneNumber);
+        if (initialData.parentPhoneNumber) setParentPhoneNumber(initialData.parentPhoneNumber);
+      } else {
+        // حساب جديد تماماً: نترك كل الحقول فارغة لإجبار الطالب على إدخال بياناته بالعربية
+        setGrade('');
+        setFullName('');
+        setPhoneNumber('');
+        setParentPhoneNumber('');
       }
-      if (initialData.phoneNumber) setPhoneNumber(initialData.phoneNumber);
-      if (initialData.parentPhoneNumber) setParentPhoneNumber(initialData.parentPhoneNumber);
-    } else if (isOpen && user?.displayName) {
-      setFullName(user.displayName);
     }
-  }, [isOpen, initialData, user]);
+  }, [isOpen, initialData]);
 
   const handleFullNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
+    // قبول الحروف العربية والمسافات فقط ومنع الاقتراحات الإنجليزية
     const filteredValue = value.replace(/[^\u0600-\u06FF\s]/g, '');
     setFullName(filteredValue);
   };
@@ -96,7 +107,7 @@ export function GradeSelectionDialog({
       toast({
         variant: 'destructive',
         title: 'اسم غير مكتمل',
-        description: 'يرجى كتابة الاسم ثنائياً على الأقل.',
+        description: 'يرجى كتابة الاسم ثنائياً باللغة العربية على الأقل.',
       });
       return;
     }
@@ -147,7 +158,7 @@ export function GradeSelectionDialog({
         <DialogHeader className="text-right">
           <DialogTitle className="font-bold">إكمال بيانات الطالب</DialogTitle>
           <DialogDescription className="font-medium">
-            أهلاً بك! يرجى إدخال بياناتك بدقة للانضمام لمنصة الأستاذ عمر مصطفى.
+            أهلاً بك! يرجى إدخال اسمك <span className="text-primary font-black">باللغة العربية</span> وبياناتك بدقة للانضمام.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-5 py-4">
@@ -160,7 +171,7 @@ export function GradeSelectionDialog({
               <Input
                 value={fullName}
                 onChange={handleFullNameChange}
-                placeholder="مثال: محمد احمد علي"
+                placeholder="اكتب اسمك الثلاثي بالعربي هنا..."
                 disabled={isSaving}
                 autoComplete="off"
                 className="text-right h-11 rounded-xl"
@@ -171,7 +182,7 @@ export function GradeSelectionDialog({
           <div className="space-y-2 text-right">
             <Label className="font-bold">الصف الدراسي</Label>
             <Select dir="rtl" value={grade} onValueChange={(v) => setGrade(v as any)} disabled={isSaving}>
-              <SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue placeholder="اختر صفك" /></SelectTrigger>
+              <SelectTrigger className="h-11 rounded-xl font-bold"><SelectValue placeholder="اختر صفك الدراسي" /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="first_secondary" className="font-bold">الصف الأول الثانوي</SelectItem>
                 <SelectItem value="second_secondary" className="font-bold">الصف الثاني الثانوي</SelectItem>
