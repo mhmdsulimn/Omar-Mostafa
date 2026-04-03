@@ -415,7 +415,6 @@ export default function AdminAnnouncementsPage() {
                                                         <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
                                                         <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
                                                     </div>
-                                                    <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center'><User className='h-4 w-4 opacity-40' /></div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
