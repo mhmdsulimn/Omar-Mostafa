@@ -397,7 +397,6 @@ export default function AdminAnnouncementsPage() {
                             <TableHeader className="bg-muted/20">
                                 <TableRow>
                                     <TableHead className="text-right font-bold">الطالب</TableHead>
-                                    <TableHead className="text-right font-bold">محتوى الرسالة</TableHead>
                                     <TableHead className="text-center font-bold w-[120px]">إجراء</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -412,9 +411,6 @@ export default function AdminAnnouncementsPage() {
                                                         <p className='text-[9px] text-muted-foreground font-bold' dir="rtl">{toArabicDigits(format(new Date(msg.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
                                                     </div>
                                                 </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                <p className="line-clamp-1 text-sm font-medium opacity-80" dir="rtl">{msg.message}</p>
                                             </TableCell>
                                             <TableCell className="text-center">
                                                 <div className="flex items-center justify-center gap-1">
