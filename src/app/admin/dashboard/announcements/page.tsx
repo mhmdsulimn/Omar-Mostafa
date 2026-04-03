@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Bell, Sparkles, Mail, MessageSquare, User } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
@@ -139,7 +139,7 @@ function AnnouncementForm({
                 <DialogTitle className="text-xl font-bold">إرسال رسالة جديدة</DialogTitle>
                 <DialogDescription className="font-medium">اختر نوع الرسالة والمستهدفين بالأسفل.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-6">
+            <div className="grid gap-4 py-6" dir="rtl">
                 <div className="space-y-3">
                     <Label className="text-right block w-full font-bold text-xs opacity-70">نوع الرسالة</Label>
                     <div className="grid grid-cols-2 gap-2">
@@ -290,9 +290,12 @@ export default function AdminAnnouncementsPage() {
         {/* جدول الإعلانات العامة */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
             <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
-                <div className='text-right'>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-end">الإعلانات العامة <Megaphone className='h-4 w-4 text-primary' /></CardTitle>
-                    <CardDescription className='font-medium text-xs'>تظهر لجميع الطلاب المشتركين في الصف المحدد.</CardDescription>
+                <div className='text-right w-full' dir="rtl">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-start">
+                        <Megaphone className='h-4 w-4 text-primary' />
+                        الإعلانات العامة
+                    </CardTitle>
+                    <CardDescription className='font-medium text-xs pr-6'>تظهر لجميع الطلاب المشتركين في الصف المحدد.</CardDescription>
                 </div>
             </CardHeader>
             <CardContent className="p-0">
@@ -339,9 +342,12 @@ export default function AdminAnnouncementsPage() {
         {/* جدول الرسائل الخاصة غير المقروءة */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
             <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6">
-                <div className='text-right'>
-                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-end">الرسائل الخاصة (قيد الانتظار) <Mail className='h-4 w-4 text-amber-500' /></CardTitle>
-                    <CardDescription className='font-medium text-xs'>رسائل فردية أرسلت لطلاب محددين ولم يفتحوها بعد.</CardDescription>
+                <div className='text-right w-full' dir="rtl">
+                    <CardTitle className="text-lg font-bold flex items-center gap-2 justify-start">
+                        <Mail className='h-4 w-4 text-amber-500' />
+                        الرسائل الخاصة (قيد الانتظار)
+                    </CardTitle>
+                    <CardDescription className='font-medium text-xs pr-6'>رسائل فردية أرسلت لطلاب محددين ولم يفتحوها بعد.</CardDescription>
                 </div>
                 {privateMessages && privateMessages.length > 0 && <Badge className='bg-amber-100 text-amber-700 hover:bg-amber-100 font-bold border-amber-200'>{privateMessages.length} رسالة</Badge>}
             </CardHeader>
