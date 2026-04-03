@@ -135,6 +135,17 @@ function AddBalanceToAllDialog({ students }: { students: Student[] }) {
             let amountToAdd = tab === "fixed" ? fixedAmount : Math.floor(Math.random() * (maxAmount - minAmount + 1)) + minAmount;
             if(amountToAdd > 0) {
                 batch.update(userDocRef, { balance: (student.balance || 0) + amountToAdd });
+                
+                const notificationRef = doc(collection(firestore, 'users', student.id, 'notifications'));
+                batch.set(notificationRef, {
+                    message: `تمت إضافة ${amountToAdd} جنيه لرصيدك كهدية.`,
+                    createdAt: new Date().toISOString(),
+                    isRead: false,
+                    type: 'wallet',
+                    link: '/dashboard/wallet',
+                    studentId: student.id,
+                    studentName: `${student.firstName} ${student.lastName}`
+                });
                 studentsAffected++;
             }
         });
@@ -206,7 +217,12 @@ function StudentProfileDialog({ student }: { student: Student }) {
                 const notificationRef = doc(collection(firestore, 'users', student.id, 'notifications'));
                 transaction.set(notificationRef, {
                     message: type === 'add' ? `تمت إضافة ${amount} جنيه لرصيدك كهدية.` : `تم سحب مبلغ ${amount} جنيه من رصيدك.`,
-                    createdAt: new Date().toISOString(), isRead: false, type: 'wallet', link: '/dashboard/wallet'
+                    createdAt: new Date().toISOString(), 
+                    isRead: false, 
+                    type: 'wallet', 
+                    link: '/dashboard/wallet',
+                    studentId: student.id,
+                    studentName: `${student.firstName} ${student.lastName}`
                 });
             });
             toast({ title: `تم ${type === 'add' ? 'شحن' : 'سحب'} الرصيد بنجاح` });
@@ -446,7 +462,7 @@ export default function AdminStudentsPage() {
         </div>
         <div className="space-y-0.5">
             <h1 className="text-lg font-bold md:text-3xl tracking-tight text-right">إدارة الطلاب</h1>
-            <p className="text-[10px] md:text-sm text-muted-foreground font-bold text-right hidden xs:block">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
+            <p className="text-[10px] md:sm text-muted-foreground font-bold text-right hidden xs:block">متابعة حسابات الطلاب، التحكم في الأرصدة والتواصل السريع.</p>
         </div>
         <div className="ml-auto"><AddBalanceToAllDialog students={filteredUsers} /></div>
       </div>

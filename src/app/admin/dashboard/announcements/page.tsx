@@ -244,10 +244,12 @@ export default function AdminAnnouncementsPage() {
     return allNotifications
         .filter(n => !n.isRead)
         .map(n => {
-            // محاولة جلب اسم الطالب الحقيقي إذا لم يكن مسجلاً في وثيقة التنبيه
-            const student = usersMap.get(n.studentId || '');
+            // محاولة جلب صاحب الرسالة إما من الحقل المخزن أو من معرف المجلد الأب (parentId) الذي يوفره الـ hook المطور
+            const sId = n.studentId || (n as any).parentId;
+            const student = usersMap.get(sId || '');
             return {
                 ...n,
+                studentId: sId, // نمرر الـ id لعملية الحذف
                 studentName: student ? `${student.firstName} ${student.lastName}` : (n.studentName || 'طالب غير معروف')
             };
         })
@@ -348,7 +350,7 @@ export default function AdminAnnouncementsPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <p className="line-clamp-1 text-sm font-bold opacity-80" dir="rtl">{ann.message}</p>
-                                            <p className='text-[10px] text-muted-foreground font-bold mt-1'>{toArabicDigits(format(new Date(ann.updatedAt), 'pp - d MMM', { locale: arSA }))}</p>
+                                            <p className='text-[10px] text-muted-foreground font-bold mt-1'>{toArabicDigits(format(new Date(ann.updatedAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
                                         </TableCell>
                                         <TableCell className="text-center">
                                             <Badge variant="outline" className="rounded-lg font-bold text-[10px]">{gradeMap[ann.targetGrade]}</Badge>
@@ -411,7 +413,7 @@ export default function AdminAnnouncementsPage() {
                                                 <div className='flex items-center gap-2 justify-end'>
                                                     <div className='text-right'>
                                                         <p className='text-xs font-bold whitespace-nowrap'>{msg.studentName || 'طالب'}</p>
-                                                        <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp', { locale: arSA }))}</p>
+                                                        <p className='text-[9px] text-muted-foreground font-bold' dir="ltr">{toArabicDigits(format(new Date(msg.createdAt), 'pp - d MMMM yyyy', { locale: arSA }))}</p>
                                                     </div>
                                                     <div className='h-8 w-8 rounded-full bg-muted flex items-center justify-center'><User className='h-4 w-4 opacity-40' /></div>
                                                 </div>

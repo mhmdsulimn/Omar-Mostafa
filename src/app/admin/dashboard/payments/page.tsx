@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -159,7 +158,9 @@ function RequestRow({ request }: { request: DepositRequest & { studentEmail: str
                 createdAt: new Date().toISOString(),
                 isRead: false,
                 type: 'wallet',
-                link: '/dashboard/wallet'
+                link: '/dashboard/wallet',
+                studentId: request.studentId, // Ensuring studentId is stored for group queries
+                studentName: `${studentData.firstName} ${studentData.lastName}`
             });
 
             toast({ title: 'تم القبول', description: `تم قبول الطلب وشحن الرصيد بمبلغ ${approvedAmount} جنيه.` });
@@ -206,6 +207,10 @@ function RequestRow({ request }: { request: DepositRequest & { studentEmail: str
                 reviewerNotes: rejectionReason,
             });
 
+            const studentRef = doc(firestore, 'users', request.studentId);
+            const studentSnap = await getDoc(studentRef);
+            const studentData = studentSnap.data() as Student;
+
             const notificationsColRef = collection(firestore, 'users', request.studentId, 'notifications');
             const notificationMessage = `تم رفض طلب الشحن الخاص بك. السبب: ${rejectionReason}`;
             await addDocumentNonBlocking(notificationsColRef, {
@@ -213,7 +218,9 @@ function RequestRow({ request }: { request: DepositRequest & { studentEmail: str
                 createdAt: new Date().toISOString(),
                 isRead: false,
                 type: 'wallet',
-                link: '/dashboard/wallet/charge'
+                link: '/dashboard/wallet/charge',
+                studentId: request.studentId,
+                studentName: studentData ? `${studentData.firstName} ${studentData.lastName}` : request.studentName
             });
 
             toast({ title: 'تم الرفض', description: 'تم رفض الطلب بنجاح.' });

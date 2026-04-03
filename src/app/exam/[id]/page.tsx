@@ -134,26 +134,27 @@ function ExamComponent({ examId, courseId, lectureContentId }: { examId: string,
     const timeTakenInSeconds = startTimeRef.current ? Math.floor((Date.now() - startTimeRef.current) / 1000) : (exam.duration * 60) - (timeRemaining || 0);
 
     let rewardAmountGiven: number | undefined;
+    let currentStudentName = "";
     
-    if (exam.rewardThreshold && exam.rewardAmount && percentage >= exam.rewardThreshold) {
-      try {
-        const studentDocRef = doc(firestore, 'users', user.uid);
-        await runTransaction(firestore, async (transaction) => {
-          const studentDoc = await transaction.get(studentDocRef);
-          if (!studentDoc.exists()) throw new Error("Student document does not exist!");
-          const studentData = studentDoc.data() as Student;
-          const hasBeenRewardedBefore = studentData.rewardedExams?.includes(examId);
-          if (!hasBeenRewardedBefore) {
-            const currentBalance = studentData.balance || 0;
-            const newBalance = currentBalance + exam.rewardAmount!;
-            const newRewardedExams = [...(studentData.rewardedExams || []), examId];
-            transaction.update(studentDocRef, { balance: newBalance, rewardedExams: newRewardedExams });
-            rewardAmountGiven = exam.rewardAmount!;
-          }
-        });
-      } catch (e) {
-        console.error("Reward logic failed: ", e);
-      }
+    try {
+      const studentDocRef = doc(firestore, 'users', user.uid);
+      await runTransaction(firestore, async (transaction) => {
+        const studentDoc = await transaction.get(studentDocRef);
+        if (!studentDoc.exists()) throw new Error("Student document does not exist!");
+        const studentData = studentDoc.data() as Student;
+        currentStudentName = `${studentData.firstName} ${studentData.lastName}`;
+        
+        const hasBeenRewardedBefore = studentData.rewardedExams?.includes(examId);
+        if (exam.rewardThreshold && exam.rewardAmount && percentage >= exam.rewardThreshold && !hasBeenRewardedBefore) {
+          const currentBalance = studentData.balance || 0;
+          const newBalance = currentBalance + exam.rewardAmount!;
+          const newRewardedExams = [...(studentData.rewardedExams || []), examId];
+          transaction.update(studentDocRef, { balance: newBalance, rewardedExams: newRewardedExams });
+          rewardAmountGiven = exam.rewardAmount!;
+        }
+      });
+    } catch (e) {
+      console.error("Reward logic failed: ", e);
     }
 
     const studentExamData = {
@@ -188,7 +189,9 @@ function ExamComponent({ examId, courseId, lectureContentId }: { examId: string,
             createdAt: new Date().toISOString(),
             isRead: false,
             type: 'reward',
-            link: '/dashboard/wallet'
+            link: '/dashboard/wallet',
+            studentId: user.uid,
+            studentName: currentStudentName
           });
         }
 

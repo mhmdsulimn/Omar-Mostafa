@@ -12,7 +12,7 @@ import {
 import { errorEmitter } from '@/firebase/error-emitter';
 import { FirestorePermissionError } from '@/firebase/errors';
 
-export type WithId<T> = T & { id: string };
+export type WithId<T> = T & { id: string; parentId?: string };
 
 export interface UseCollectionResult<T> {
   data: WithId<T>[] | null;
@@ -23,6 +23,7 @@ export interface UseCollectionResult<T> {
 /**
  * React hook to subscribe to a Firestore collection or query in real-time.
  * Optimized with a small delay to prevent Firebase Target ID conflicts (ID: ca9).
+ * Now automatically extracts parentId for collectionGroup queries.
  */
 export function useCollection<T = any>(
   memoizedTargetRefOrQuery:
@@ -60,7 +61,15 @@ export function useCollection<T = any>(
           (snapshot: QuerySnapshot<DocumentData>) => {
             if (!isMounted) return;
             
-            const results = snapshot.docs.map(doc => ({ ...(doc.data() as T), id: doc.id }));
+            const results = snapshot.docs.map(doc => {
+                const data = doc.data() as T;
+                return { 
+                    ...data, 
+                    id: doc.id,
+                    // Extracting parent document ID (e.g., from /users/{userId}/notifications/{notifId} we get userId)
+                    parentId: doc.ref.parent.parent?.id 
+                };
+            });
             setState({ data: results, isLoading: false, error: null });
           },
           (err: FirestoreError) => {
