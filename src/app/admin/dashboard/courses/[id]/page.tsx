@@ -65,6 +65,26 @@ import { ImageUpload, uploadToImgBB } from '@/components/common/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
 
+/**
+ * دالة ذكية لتحويل روابط اليوتيوب العادية إلى روابط تضمين (Embed)
+ */
+function convertToEmbedUrl(url: string): string {
+  if (!url) return '';
+  
+  // إذا كان الرابط بالفعل يحتوي على /embed/ لا نغيره
+  if (url.includes('/embed/')) return url;
+
+  // نمط البحث عن معرف فيديو يوتيوب من مختلف أنواع الروابط
+  const youtubeRegex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+  const match = url.match(youtubeRegex);
+
+  if (match && match[1]) {
+    return `https://www.youtube.com/embed/${match[1]}`;
+  }
+
+  return url;
+}
+
 type CourseFormData = {
     title: string;
     description: string;
@@ -385,8 +405,22 @@ function LectureContentForm({
                         <Label htmlFor="videoUrl">رابط الفيديو</Label>
                         <div className="relative">
                             <LinkIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="videoUrl" value={formData.videoUrl || ''} onChange={e => setFormData(p => ({ ...p, videoUrl: e.target.value }))} required disabled={isSaving} className="text-left" dir="ltr" placeholder="https://www.youtube.com/embed/..." />
+                            <Input 
+                                id="videoUrl" 
+                                value={formData.videoUrl || ''} 
+                                onChange={e => {
+                                    const val = e.target.value;
+                                    const converted = convertToEmbedUrl(val);
+                                    setFormData(p => ({ ...p, videoUrl: converted }));
+                                }} 
+                                required 
+                                disabled={isSaving} 
+                                className="text-left" 
+                                dir="ltr" 
+                                placeholder="https://www.youtube.com/embed/..." 
+                            />
                         </div>
+                        <p className="text-[10px] text-muted-foreground">سيتم تحويل روابط اليوتيوب العادية إلى روابط تضمين تلقائياً.</p>
                     </div>
                 )}
                 {formData.type === 'pdf' && (
