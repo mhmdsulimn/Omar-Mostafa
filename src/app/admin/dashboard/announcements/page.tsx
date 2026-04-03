@@ -378,7 +378,11 @@ export default function AdminAnnouncementsPage() {
                     </CardTitle>
                     <CardDescription className='font-medium text-xs pr-6'>كافة التنبيهات التي وصلت للطلاب ولم يفتحوها بعد.</CardDescription>
                 </div>
-                {privateMessages && privateMessages.length > 0 && <Badge className='bg-amber-100 text-amber-700 hover:bg-amber-100 font-bold border-amber-200'>{privateMessages.length} تنبيه</Badge>}
+                {privateMessages && privateMessages.length > 0 && (
+                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-black px-3 py-1 rounded-full shadow-sm shadow-amber-500/5 animate-in zoom-in-50 duration-300">
+                    {toArabicDigits(String(privateMessages.length))} تنبيه قيد الانتظار
+                  </Badge>
+                )}
             </CardHeader>
             <CardContent className="p-0">
                 {(!privateMessages || privateMessages.length === 0) ? (
