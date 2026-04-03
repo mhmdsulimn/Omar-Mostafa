@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -370,8 +369,8 @@ export default function AdminAnnouncementsPage() {
 
         {/* جدول مراقبة إشعارات الطلاب */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
-            <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6" dir="rtl">
-                <div className='text-right w-full'>
+            <CardHeader className="bg-muted/10 border-b flex flex-col md:flex-row items-center justify-between gap-4 p-4 md:p-6" dir="rtl">
+                <div className='text-right'>
                     <CardTitle className="text-lg font-bold flex items-center gap-2 justify-start">
                         <Mail className='h-4 w-4 text-amber-500' />
                         مراقب إشعارات الطلاب (غير مقروءة)
@@ -379,8 +378,8 @@ export default function AdminAnnouncementsPage() {
                     <CardDescription className='font-medium text-xs pr-6'>كافة التنبيهات التي وصلت للطلاب ولم يفتحوها بعد.</CardDescription>
                 </div>
                 {privateMessages && privateMessages.length > 0 && (
-                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-black px-3 py-1 rounded-full shadow-sm shadow-amber-500/5 animate-in zoom-in-50 duration-300">
-                    {toArabicDigits(String(privateMessages.length))} تنبيه قيد الانتظار
+                  <Badge className="bg-amber-500/10 text-amber-600 border-amber-500/20 font-black px-4 py-1.5 rounded-full shadow-sm shadow-amber-500/5 animate-in zoom-in-50 duration-300 whitespace-nowrap text-center">
+                    {privateMessages.length} تنبيه قيد الانتظار
                   </Badge>
                 )}
             </CardHeader>
