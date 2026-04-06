@@ -382,7 +382,7 @@ function LectureContentForm({
                 <DialogTitle>{content ? 'تعديل محتوى' : 'إضافة محتوى جديد'}</DialogTitle>
                 <DialogDescription>املأ تفاصيل المحتوى.</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[70vh] overflow-y-auto px-1">
                 <div className="space-y-2">
                     <Label htmlFor="content-title">عنوان المحتوى</Label>
                     <Input id="content-title" value={formData.title} onChange={e => setFormData(p => ({ ...p, title: e.target.value }))} required disabled={isSaving} />
@@ -401,26 +401,47 @@ function LectureContentForm({
                     </Select>
                 </div>
                  {formData.type === 'video' && (
-                    <div className="space-y-2">
-                        <Label htmlFor="videoUrl">رابط الفيديو</Label>
-                        <div className="relative">
-                            <LinkIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                id="videoUrl" 
-                                value={formData.videoUrl || ''} 
-                                onChange={e => {
-                                    const val = e.target.value;
-                                    const converted = convertToEmbedUrl(val);
-                                    setFormData(p => ({ ...p, videoUrl: converted }));
-                                }} 
-                                required 
-                                disabled={isSaving} 
-                                className="text-left" 
-                                dir="ltr" 
-                                placeholder="https://www.youtube.com/embed/..." 
-                            />
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="videoUrl">رابط الفيديو</Label>
+                            <div className="relative">
+                                <LinkIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input 
+                                    id="videoUrl" 
+                                    value={formData.videoUrl || ''} 
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        const converted = convertToEmbedUrl(val);
+                                        setFormData(p => ({ ...p, videoUrl: converted }));
+                                    }} 
+                                    required 
+                                    disabled={isSaving} 
+                                    className="text-left" 
+                                    dir="ltr" 
+                                    placeholder="https://www.youtube.com/embed/..." 
+                                />
+                            </div>
+                            <p className="text-[10px] text-muted-foreground">سيتم تحويل روابط اليوتيوب العادية إلى روابط تضمين تلقائياً.</p>
                         </div>
-                        <p className="text-[10px] text-muted-foreground">سيتم تحويل روابط اليوتيوب العادية إلى روابط تضمين تلقائياً.</p>
+
+                        {/* Video Preview Section */}
+                        {formData.videoUrl && (
+                            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <Label className="text-[10px] font-bold text-primary flex items-center gap-1">
+                                    <Video className="h-3 w-3" />
+                                    معاينة الفيديو
+                                </Label>
+                                <div className="relative aspect-video w-full rounded-xl overflow-hidden bg-black shadow-lg border-2 border-primary/10">
+                                    <iframe
+                                        src={formData.videoUrl}
+                                        className="absolute inset-0 w-full h-full border-none"
+                                        title="Video Preview"
+                                        sandbox="allow-scripts allow-same-origin"
+                                        allow="autoplay; fullscreen"
+                                    ></iframe>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
                 {formData.type === 'pdf' && (
@@ -463,7 +484,7 @@ function LectureContentForm({
                     </div>
                 )}
             </div>
-            <DialogFooter>
+            <DialogFooter className="mt-4">
                 <Button type="button" variant="outline" onClick={onClose} disabled={isSaving}>إلغاء</Button>
                 <Button type="submit" disabled={isSaving || !formData.title}>
                     {isSaving && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
@@ -606,7 +627,7 @@ function LectureAccordionItem({
             </AccordionItem>
 
             <Dialog open={dialogState?.type === 'addContent' || dialogState?.type === 'editContent'} onOpenChange={(open) => !open && setDialogState(null)}>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                      <LectureContentForm
                         key={dialogState?.content?.id || 'add'}
                         content={dialogState?.content}
