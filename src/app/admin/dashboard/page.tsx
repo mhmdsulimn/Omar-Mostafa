@@ -134,7 +134,7 @@ export default function AdminDashboardPage() {
     const { data: allSubmissionsData, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
     
     const allCoursesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'courses') : null), [firestore, user]);
-    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesDataQuery, { ignorePermissionErrors: true });
+    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery, { ignorePermissionErrors: true });
 
     const allPaymentsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'depositRequests')) : null), [firestore, user]);
     const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
