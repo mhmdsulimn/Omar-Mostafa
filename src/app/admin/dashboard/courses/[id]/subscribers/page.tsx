@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -27,7 +28,8 @@ import {
   ArrowRight, 
   UserCircle2,
   Mail,
-  GraduationCap
+  RefreshCcw,
+  AlertCircle
 } from 'lucide-react';
 import {
   useUser,
@@ -87,15 +89,20 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
   const { data: course, isLoading: isLoadingCourse } = useDoc<Course>(courseRef);
 
   // 2. جلب الاشتراكات الخاصة بهذا الكورس فقط (استعلام محسن)
+  // ملاحظة: قد يتطلب هذا الاستعلام إنشاء Index في Firebase Console إذا لم يكن موجوداً
   const subscriptionsQuery = useMemoFirebase(
     () => (firestore && courseId ? query(collectionGroup(firestore, 'studentCourses'), where('courseId', '==', courseId)) : null),
     [firestore, courseId]
   );
-  const { data: subscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
+  const { data: subscriptions, isLoading: isLoadingSubs, error: subsError } = useCollection<StudentCourse>(subscriptionsQuery);
 
-  const studentIds = React.useMemo(() => subscriptions?.map(s => s.studentId) || [], [subscriptions]);
+  const studentIds = React.useMemo(() => {
+    if (!subscriptions) return [];
+    // نستخدم studentId أو parentId لضمان الحصول على المعرّف حتى لو فقدت البيانات الداخلية
+    return Array.from(new Set(subscriptions.map(s => s.studentId || s.parentId).filter(id => !!id)));
+  }, [subscriptions]);
 
-  // 3. جلب بيانات الطلاب (فقط من هم في القائمة)
+  // 3. جلب بيانات الطلاب (فقط من هم في القائمة - بحد أقصى 30 في المرة الواحدة)
   const studentsQuery = useMemoFirebase(
     () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
     [firestore, studentIds]
@@ -121,11 +128,11 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
       const batch = writeBatch(firestore);
       const studentId = studentToRemove.id;
       
-      // 1. مسح سجلات التقدم
+      // 1. مسح سجلات التقدم داخل الكورس
       const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${courseId}/progress`));
       progressSnap.docs.forEach(d => batch.delete(d.ref));
       
-      // 2. مسح الاشتراك
+      // 2. مسح وثيقة الاشتراك
       batch.delete(doc(firestore, `users/${studentId}/studentCourses/${courseId}`));
       
       // 3. إشعار للطالب
@@ -143,6 +150,7 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
       toast({ title: 'تم إلغاء الاشتراك بنجاح.' });
       setStudentToRemove(null);
     } catch (error: any) {
+      console.error("Subscription removal error:", error);
       const permissionError = new FirestorePermissionError({
         path: `users/${studentToRemove.id}/studentCourses/${courseId}`,
         operation: 'delete',
@@ -157,6 +165,23 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
 
   if (isLoading) {
     return <div className="flex h-[60vh] w-full items-center justify-center"><LoadingAnimation size="md" /></div>;
+  }
+
+  // معالجة حالة الخطأ (مثل الحاجة لإنشاء فهرس)
+  if (subsError) {
+      return (
+          <div className="flex flex-col items-center justify-center h-[60vh] gap-4 p-6 text-center">
+              <AlertCircle className="h-16 w-16 text-destructive opacity-50" />
+              <h2 className="text-xl font-bold">حدث خطأ في جلب البيانات</h2>
+              <p className="text-muted-foreground max-w-sm">
+                  قد يتطلب هذا الاستعلام إنشاء فهرس في قاعدة البيانات. إذا كنت المطور، يرجى مراجعة Console المتصفح.
+              </p>
+              <Button onClick={() => window.location.reload()} variant="outline" className='rounded-xl gap-2'>
+                  <RefreshCcw className='h-4 w-4' />
+                  إعادة تحميل الصفحة
+              </Button>
+          </div>
+      )
   }
 
   if (!course) {
@@ -196,13 +221,13 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
         </Card>
 
         <Card className="md:col-span-3 border-none shadow-md">
-          <CardHeader className="p-4 flex flex-row items-center justify-between space-y-0">
+          <CardHeader className="p-4 flex flex-col sm:flex-row items-center justify-between gap-4 space-y-0">
             <CardTitle className="text-sm font-bold">البحث في القائمة</CardTitle>
-            <div className="relative w-64">
+            <div className="relative w-full sm:w-64">
               <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="ابحث بالاسم أو البريد..." 
-                className="pr-9 h-9 rounded-xl text-right"
+                className="pr-9 h-9 rounded-xl text-right bg-muted/20"
                 value={searchTerm}
                 onChange={e => setSearchTerm(e.target.value)}
               />
@@ -221,8 +246,11 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
                 <TableBody>
                   {filteredStudents.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center py-10 text-muted-foreground italic">
-                        {searchTerm ? 'لا توجد نتائج مطابقة لبحثك' : 'لا يوجد مشتركون في هذا الكورس بعد'}
+                      <TableCell colSpan={3} className="text-center py-16 text-muted-foreground italic">
+                        <div className='flex flex-col items-center gap-3 opacity-40'>
+                            <Users className='h-10 w-10' />
+                            <span>{searchTerm ? 'لا توجد نتائج مطابقة لبحثك' : 'لا يوجد مشتركون في هذا الكورس بعد'}</span>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ) : (
