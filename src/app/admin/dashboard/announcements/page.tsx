@@ -60,7 +60,7 @@ const gradeMap: Record<string, string> = {
 };
 
 /**
- * كارت الإحصائيات مع دعم الحذف الجماعي
+ * كارت الإحصائيات مع دعم الحذف الجماعي المستقر
  */
 function StatCard({ title, value, icon: Icon, colorClass, description, onDelete, isDeleting }: { title: string, value: number, icon: any, colorClass: string, description: string, onDelete?: () => void, isDeleting?: boolean }) {
     return (
@@ -68,7 +68,6 @@ function StatCard({ title, value, icon: Icon, colorClass, description, onDelete,
             <CardContent className="p-5 flex items-center justify-between flex-1">
                 <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
-                    {/* عرض القيمة بالأرقام الإنجليزية دائماً */}
                     <p className="text-2xl font-black">{value}</p>
                     <p className="text-[9px] text-muted-foreground font-medium">{description}</p>
                 </div>
@@ -82,12 +81,7 @@ function StatCard({ title, value, icon: Icon, colorClass, description, onDelete,
                         variant="ghost" 
                         size="sm" 
                         className="w-full h-7 text-[10px] font-bold text-destructive hover:bg-destructive/10 rounded-lg gap-1.5"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            if (window.confirm(`هل أنت متأكد من حذف ${value} من السجلات بشكل نهائي؟`)) {
-                                onDelete();
-                            }
-                        }}
+                        onClick={onDelete}
                         disabled={isDeleting || value === 0}
                     >
                         {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
@@ -356,44 +350,61 @@ export default function AdminAnnouncementsPage() {
   }
 
   /**
-   * ميزة الحذف الجماعي المحدثة والمصلحة
+   * ميزة الحذف الجماعي المحدثة والمصلحة بشكل نهائي
    */
-  const handleBulkDelete = async (type: 'all' | 'unread' | 'read' | 'active_ann') => {
+  const handleBulkDelete = React.useCallback(async (type: 'all' | 'unread' | 'read' | 'active_ann') => {
     if (!firestore || !user) return;
+
+    // تأكيد الحذف من المسؤول أولاً
+    const confirmMsg = type === 'active_ann' 
+        ? "هل أنت متأكد من حذف كافة الإعلانات العامة النشطة؟" 
+        : "هل أنت متأكد من مسح هذه المجموعة من الإشعارات نهائياً؟";
+    
+    if (!window.confirm(confirmMsg)) return;
+
     setIsBulkDeleting(type);
     
     try {
         const batch = writeBatch(firestore);
+        let deletedCount = 0;
         
         if (type === 'active_ann') {
             const activeAnn = announcements?.filter(a => a.isActive) || [];
-            activeAnn.forEach(a => batch.delete(doc(firestore, 'announcements', a.id)));
+            activeAnn.forEach(a => {
+                batch.delete(doc(firestore, 'announcements', a.id));
+                deletedCount++;
+            });
         } else {
             let toDelete = allNotifications || [];
             if (type === 'unread') toDelete = toDelete.filter(n => !n.isRead);
             if (type === 'read') toDelete = toDelete.filter(n => n.isRead);
             
-            // الحد الأقصى لكل batch هو 500
+            // الحد الأقصى لكل batch هو 500، نأخذ 450 للأمان
             const chunk = toDelete.slice(0, 450);
             
             chunk.forEach(n => {
-                // محاولة الحصول على معرّف الطالب من أكثر من مصدر لضمان عمل المسار
-                const sId = n.parentId || (n as any).studentId || (n as any).parentId;
-                if (sId) {
+                // استخراج معرف الطالب بدقة من مسار الوثيقة أو البيانات
+                const sId = n.parentId || (n as any).studentId || (n as any).userId;
+                if (sId && n.id) {
                     batch.delete(doc(firestore, 'users', sId, 'notifications', n.id));
+                    deletedCount++;
                 }
             });
         }
 
-        await batch.commit();
-        toast({ title: 'تم التطهير بنجاح' });
-    } catch (error) {
+        if (deletedCount > 0) {
+            await batch.commit();
+            toast({ title: 'تم التطهير بنجاح', description: `تم مسح ${deletedCount} سجل من قاعدة البيانات.` });
+        } else {
+            toast({ title: 'لا توجد سجلات لمسحها حالياً.' });
+        }
+    } catch (error: any) {
         console.error("Bulk delete failed:", error);
-        toast({ variant: 'destructive', title: 'فشل المسح الجماعي - تأكد من الاتصال' });
+        toast({ variant: 'destructive', title: 'فشل المسح الجماعي', description: error.message });
     } finally {
         setIsBulkDeleting(null);
     }
-  };
+  }, [firestore, user, announcements, allNotifications, toast]);
 
   const isLoading = isLoadingAnn || isLoadingUsers || isLoadingAllNotifs;
 
