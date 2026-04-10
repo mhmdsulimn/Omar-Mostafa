@@ -112,6 +112,7 @@ export type Lecture = {
   title: string;
   description: string;
   order: number;
+  isHidden?: boolean;
 };
 
 export type LectureContent = {
@@ -124,6 +125,7 @@ export type LectureContent = {
   pdfUrl?: string;
   linkedExamId?: string;
   externalUrl?: string;
+  isHidden?: boolean;
 };
 
 export type StudentContentProgress = {

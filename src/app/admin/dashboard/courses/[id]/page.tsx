@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -23,6 +24,8 @@ import {
   Trash2,
   Loader2,
   Link as LinkIcon,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   useFirestore,
@@ -64,6 +67,7 @@ import { Switch } from '@/components/ui/switch';
 import { ImageUpload, uploadToImgBB } from '@/components/common/image-upload';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
+import { cn } from '@/lib/utils';
 
 /**
  * دالة ذكية لتحويل روابط اليوتيوب العادية إلى روابط تضمين (Embed)
@@ -495,15 +499,20 @@ function LectureContentForm({
     );
 }
 
-function LectureContentItem({ content, onEdit, onDelete }: { content: LectureContent, onEdit: () => void, onDelete: () => void }) {
+function LectureContentItem({ content, onEdit, onDelete, onToggleVisibility }: { content: LectureContent, onEdit: () => void, onDelete: () => void, onToggleVisibility: () => void }) {
     const Icon = contentIconMap[content.type] || Book;
+    const isHidden = content.isHidden === true;
+
     return (
-        <div className="flex justify-between items-center bg-card p-3 rounded-lg border">
+        <div className={cn("flex justify-between items-center bg-card p-3 rounded-lg border transition-opacity", isHidden && "opacity-60")}>
             <div className="flex items-center gap-3">
-                <Icon className="h-5 w-5 text-primary" />
-                <span className="font-semibold">{content.title}</span>
+                <Icon className={cn("h-5 w-5", isHidden ? "text-muted-foreground" : "text-primary")} />
+                <span className={cn("font-semibold", isHidden && "italic")}>{content.title} {isHidden && "(مخفي)"}</span>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-1 sm:gap-2">
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onToggleVisibility} title={isHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب"}>
+                    {isHidden ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-green-600" />}
+                </Button>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onEdit}><Pencil className="h-4 w-4" /></Button>
                 <Button variant="destructive" size="icon" className="h-8 w-8" onClick={onDelete}><Trash2 className="h-4 w-4" /></Button>
             </div>
@@ -555,7 +564,7 @@ function LectureAccordionItem({
                 toast({ title: 'تم تحديث المحتوى' });
             } else {
                 const newOrder = (contents?.length || 0) + 1;
-                await addDocumentNonBlocking(collection(firestore, `courses/${courseId}/lectures/${lectureId}/contents`), { ...data, lectureId, order: newOrder });
+                await addDocumentNonBlocking(collection(firestore, `courses/${courseId}/lectures/${lectureId}/contents`), { ...data, lectureId, order: newOrder, isHidden: false });
                 toast({ title: 'تمت إضافة المحتوى' });
             }
             setDialogState(null);
@@ -580,20 +589,44 @@ function LectureAccordionItem({
         }
     }
 
+    const handleToggleLectureVisibility = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (!firestore) return;
+        const newStatus = !lecture.isHidden;
+        try {
+            await updateDocumentNonBlocking(doc(firestore, `courses/${courseId}/lectures`, lecture.id), { isHidden: newStatus });
+            toast({ title: newStatus ? 'تم إخفاء المحاضرة عن الطلاب' : 'المحاضرة الآن ظاهرة للطلاب' });
+        } catch (e) {}
+    }
+
+    const handleToggleContentVisibility = async (content: LectureContent) => {
+        if (!firestore) return;
+        const newStatus = !content.isHidden;
+        try {
+            await updateDocumentNonBlocking(doc(firestore, `courses/${courseId}/lectures/${lecture.id}/contents`, content.id), { isHidden: newStatus });
+            toast({ title: newStatus ? 'تم إخفاء المحتوى عن الطلاب' : 'المحتوى الآن ظاهر للطلاب' });
+        } catch (e) {}
+    }
+
+    const isLectureHidden = lecture.isHidden === true;
+
     return (
         <>
-            <AccordionItem value={lecture.id} key={lecture.id}>
+            <AccordionItem value={lecture.id} key={lecture.id} className={cn(isLectureHidden && "opacity-75")}>
                  <div className="flex items-center justify-between w-full p-4 hover:bg-muted/50 rounded-lg">
                     <AccordionTrigger className="w-full hover:no-underline p-0 flex-grow text-right">
                         <div className="flex items-center gap-4">
-                            <LayoutList className="h-6 w-6 text-primary" />
-                            <div className="flex-grow">
-                                <h4 className="font-bold">{lecture.title}</h4>
+                            <LayoutList className={cn("h-6 w-6", isLectureHidden ? "text-muted-foreground" : "text-primary")} />
+                            <div className="flex-grow text-right">
+                                <h4 className={cn("font-bold", isLectureHidden && "italic")}>{lecture.title} {isLectureHidden && "(مخفية)"}</h4>
                                 <p className="text-xs text-muted-foreground">{lecture.description}</p>
                             </div>
                         </div>
                     </AccordionTrigger>
-                    <div className="flex gap-2 pr-4">
+                    <div className="flex gap-1 sm:gap-2 pr-4">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleToggleLectureVisibility} title={isLectureHidden ? "إظهار للطلاب" : "إخفاء عن الطلاب"}>
+                            {isLectureHidden ? <EyeOff className="h-4 w-4 text-muted-foreground" /> : <Eye className="h-4 w-4 text-green-600" />}
+                        </Button>
                         <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditLectureDialog(lecture)}><Pencil className="h-4 w-4" /></Button>
                         <Button variant="destructive" size="icon" className="h-8 w-8" onClick={() => openDeleteLectureDialog(lecture)}><Trash2 className="h-4 w-4" /></Button>
                     </div>
@@ -611,6 +644,7 @@ function LectureAccordionItem({
                                   content={content}
                                   onEdit={() => setDialogState({ type: 'editContent', lectureId: lecture.id, content })}
                                   onDelete={() => setDialogState({ type: 'deleteContent', lectureId: lecture.id, content })}
+                                  onToggleVisibility={() => handleToggleContentVisibility(content)}
                                 />
                             ))}
                         </div>
@@ -690,7 +724,7 @@ function CourseContentAccordion({ course }: { course: Course }) {
                 toast({ title: 'تم تحديث المحاضرة' });
             } else {
                 const newOrder = (lectures?.length || 0) + 1;
-                await addDocumentNonBlocking(collection(firestore, `courses/${course.id}/lectures`), { ...data, courseId: course.id, order: newOrder });
+                await addDocumentNonBlocking(collection(firestore, `courses/${course.id}/lectures`), { ...data, courseId: course.id, order: newOrder, isHidden: false });
                 toast({ title: 'تمت إضافة المحاضرة' });
             }
             setDialogState(null);

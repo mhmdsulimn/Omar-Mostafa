@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -11,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Book, FileText, Video, Award, LayoutList, Loader2, Link as LinkIcon, Lock } from 'lucide-react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { doc, collection, query, orderBy, writeBatch } from 'firebase/firestore';
+import { doc, collection, query, orderBy, writeBatch, where } from 'firebase/firestore';
 import type { Course, Lecture, LectureContent, Student, StudentCourse } from '@/lib/data';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useToast } from '@/hooks/use-toast';
@@ -51,8 +52,14 @@ function LectureAccordionItem({
     const firestore = useFirestore();
     const { user } = useUser();
     const router = useRouter();
+    
+    // جلب المحتويات مع فلترة العناصر المخفية للطلاب
     const contentsQuery = useMemoFirebase(
-        () => (firestore && user) ? query(collection(firestore, `courses/${courseId}/lectures/${lecture.id}/contents`), orderBy('order')) : null,
+        () => (firestore && user) ? query(
+            collection(firestore, `courses/${courseId}/lectures/${lecture.id}/contents`), 
+            where('isHidden', '==', false),
+            orderBy('order')
+        ) : null,
         [firestore, user, courseId, lecture.id]
     );
     const { data: contents, isLoading: isLoadingContents } = useCollection<LectureContent>(contentsQuery, { ignorePermissionErrors: true });
@@ -129,8 +136,13 @@ function CourseCurriculum({
     const firestore = useFirestore();
     const { user } = useUser();
     
+    // جلب المحاضرات مع فلترة العناصر المخفية للطلاب
     const lecturesQuery = useMemoFirebase(
-        () => (firestore && user && courseId) ? query(collection(firestore, `courses/${courseId}/lectures`), orderBy('order')) : null,
+        () => (firestore && user && courseId) ? query(
+            collection(firestore, `courses/${courseId}/lectures`), 
+            where('isHidden', '==', false),
+            orderBy('order')
+        ) : null,
         [firestore, user, courseId]
     );
     const { data: lectures, isLoading: isLoadingLectures } = useCollection<Lecture>(lecturesQuery, { ignorePermissionErrors: true });
@@ -346,7 +358,7 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                                         {hasDiscount && <span className="text-sm font-medium text-muted-foreground/60 diagonal-strike whitespace-nowrap">{course.price.toFixed(0)} ج</span>}
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl text-white font-bold text-lg p-3">
+                                    <div className="flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 rounded-xl text-white font-black text-lg p-3">
                                         <span>كورس مجاني!</span>
                                     </div>
                                 )}
