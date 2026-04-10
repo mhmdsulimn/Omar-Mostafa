@@ -28,14 +28,13 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Database, Activity, Zap, Trash2, FileText, HardDrive, MousePointer2, PlusCircle, ExternalLink, Info, Wind, Sparkles, Wand2, ListChecks, Bell } from 'lucide-react';
-import { format, startOfDay, subDays } from 'date-fns';
+import { Users, BookOpen, GraduationCap, BookMarked, Activity, Trash2, Wind, Sparkles, Wand2, ListChecks, Bell, Loader2, Zap } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
 import { ChartConfig, ChartContainer, ChartLegend, ChartLegendContent, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
-import { cn, toArabicDigits } from '@/lib/utils';
-import { Progress } from '@/components/ui/progress';
+import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -137,9 +136,6 @@ export default function AdminDashboardPage() {
     const allCoursesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'courses') : null), [firestore, user]);
     const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery, { ignorePermissionErrors: true });
 
-    const allQuestionsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'questions')) : null), [firestore, user]);
-    const { data: allQuestionsData } = useCollection<Question>(allQuestionsQuery, { ignorePermissionErrors: true });
-
     const allPaymentsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'depositRequests')) : null), [firestore, user]);
     const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
 
@@ -156,16 +152,13 @@ export default function AdminDashboardPage() {
     
     const {
         studentsCount, examsCount, coursesCount, averageScore, recentSubmissions, studentsMap, examsMap, gradeDistributionData, gradePerformanceData,
-        dbStats, dailyActivity, garbageData, totalNotifsCount, readNotifsCount, unreadNotifsCount
+        garbageData
     } = React.useMemo(() => {
         if (isLoading || !allUsersData || !adminRoles || !allExamsData || !allSubmissionsData || !allCoursesData) {
             return {
                 studentsCount: 0, examsCount: 0, coursesCount: 0,
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
-                dbStats: { totalDocs: 0, writeLoad: 'منخفض', readLoad: 'منخفض', consumedMB: 0, remainingMB: 1024, usagePercentage: 0 },
-                dailyActivity: { reads: 0, writes: 0, deletes: 0 },
-                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0, items: [] as any[] },
-                totalNotifsCount: 0, readNotifsCount: 0, unreadNotifsCount: 0
+                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0 }
             };
         }
 
@@ -214,28 +207,6 @@ export default function AdminDashboardPage() {
             { name: 'ثالثة ثانوي', averageScore: gradePerformance.third_secondary.count > 0 ? Math.round(gradePerformance.third_secondary.totalScore / gradePerformance.third_secondary.count) : 0 },
         ].filter(item => item.averageScore > 0);
 
-        const today = startOfDay(new Date());
-        
-        const currentAdminReads = 
-            allUsersData.length + 
-            allExamsData.length + 
-            allCoursesData.length + 
-            (allSubmissionsData.length) + 
-            (allPaymentsData?.length || 0) + 
-            (allNotifsData?.length || 0) +
-            (allAnnouncements?.length || 0) +
-            (allDeletionRequests?.length || 0);
-
-        const studentsActivityReads = filteredStudents.length * 20; 
-        const dailyReads = currentAdminReads + studentsActivityReads;
-
-        const todaySubmissions = allSubmissionsData.filter(s => new Date(s.submissionDate) >= today).length;
-        const todayPayments = allPaymentsData?.filter(p => new Date(p.requestDate) >= today).length || 0;
-        const todayNotifs = allNotifsData?.filter(n => new Date(n.createdAt) >= today).length || 0;
-        const dailyWrites = todaySubmissions + todayPayments + todayNotifs;
-
-        const dailyDeletes = Math.floor(todayPayments * 0.1); 
-
         const sevenDaysAgo = subDays(new Date(), 7);
 
         const garbageNotifs = allNotifsData?.filter(n => n.isRead && new Date(n.createdAt) < sevenDaysAgo) || [];
@@ -245,41 +216,6 @@ export default function AdminDashboardPage() {
         const garbageDeletionReqs = allDeletionRequests || [];
         
         const garbageCount = garbageNotifs.length + garbagePayments.length + garbageIncompleteUsers.length + garbageAnnouncements.length + garbageDeletionReqs.length;
-        const garbageItems = [...garbageNotifs, ...garbagePayments, ...garbageIncompleteUsers, ...garbageAnnouncements, ...garbageDeletionReqs];
-
-        const docsCount = {
-            users: allUsersData.length,
-            exams: allExamsData.length,
-            courses: allCoursesData.length,
-            questions: allQuestionsData?.length || 0,
-            submissions: allSubmissionsData.length,
-            payments: allPaymentsData?.length || 0,
-            notifs: allNotifsData?.length || 0,
-            deletions: allDeletionRequests?.length || 0
-        };
-
-        const totalDocs = Object.values(docsCount).reduce((a, b) => a + b, 0);
-
-        const estSizeKB = 
-            (docsCount.users * 0.8) + 
-            (docsCount.exams * 1.5) + 
-            (docsCount.courses * 2.0) + 
-            (docsCount.questions * 4.0) + 
-            (docsCount.submissions * 8.5) + 
-            (docsCount.payments * 1.0) +
-            (docsCount.notifs * 0.4) +
-            (docsCount.deletions * 0.5);
-
-        const estimatedConsumedMB = Number((estSizeKB / 1024).toFixed(2));
-        const limitMB = 1024;
-        const usagePercentage = Math.min(100, (estimatedConsumedMB / limitMB) * 100);
-
-        const writeLoad = dailyWrites > 150 ? 'مرتفع جداً' : dailyWrites > 80 ? 'مرتفع' : 'منخفض';
-        const readLoad = dailyReads > 1500 ? 'مرتفع جداً' : dailyReads > 800 ? 'مرتفع' : 'منخفض';
-
-        const totalN = allNotifsData?.length || 0;
-        const readN = allNotifsData?.filter(n => n.isRead).length || 0;
-        const unreadN = totalN - readN;
 
         return {
             studentsCount: filteredStudents.length,
@@ -291,34 +227,17 @@ export default function AdminDashboardPage() {
             examsMap: eMap,
             gradeDistributionData: gradeData,
             gradePerformanceData: performanceData,
-            dbStats: { 
-                totalDocs, 
-                writeLoad, 
-                readLoad, 
-                consumedMB: estimatedConsumedMB, 
-                remainingMB: Math.max(0, limitMB - estimatedConsumedMB),
-                usagePercentage
-            },
-            dailyActivity: {
-                reads: dailyReads,
-                writes: dailyWrites,
-                deletes: dailyDeletes
-            },
             garbageData: {
                 count: garbageCount,
                 notifs: garbageNotifs.length,
                 payments: garbagePayments.length,
                 users: garbageIncompleteUsers.length,
                 announcements: garbageAnnouncements.length,
-                deletions: garbageDeletionReqs.length,
-                items: garbageItems
-            },
-            totalNotifsCount: totalN,
-            readNotifsCount: readN,
-            unreadNotifsCount: unreadN
+                deletions: garbageDeletionReqs.length
+            }
         };
 
-    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allQuestionsData, allPaymentsData, allNotifsData, allAnnouncements, allDeletionRequests]);
+    }, [isLoading, allUsersData, adminRoles, allExamsData, allSubmissionsData, allCoursesData, allPaymentsData, allNotifsData, allAnnouncements, allDeletionRequests]);
     
     const handleCleanup = async () => {
         if (!firestore || garbageData.count === 0) return;
@@ -327,16 +246,13 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
-            // Clean deletion logs specifically
             if (allDeletionRequests && allDeletionRequests.length > 0) {
                 allDeletionRequests.forEach(req => {
                     batch.delete(doc(firestore, 'students_to_delete', req.id));
                 });
             }
 
-            // Simulate deep cleaning process for UX
             await new Promise(resolve => setTimeout(resolve, 2000));
-            
             await batch.commit();
 
             toast({
@@ -375,149 +291,7 @@ export default function AdminDashboardPage() {
                     <StatCard title="متوسط الدرجات" value={`${averageScore}%`} icon={GraduationCap} description="أداء الطلاب العام" />
                 </div>
 
-                <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
-                    <Card className="lg:col-span-2 shadow-sm border-primary/10 overflow-hidden">
-                        <CardHeader className="bg-muted/30 p-4 border-b">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <Database className="h-5 w-5 text-primary" />
-                                    <CardTitle className="text-base">مراقب استخدام قاعدة البيانات (Firestore)</CardTitle>
-                                </div>
-                                <a 
-                                    href="https://console.firebase.google.com/project/studio-8343614197-d2c5b/firestore/usage" 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="text-[10px] flex items-center gap-1 text-primary hover:underline font-bold"
-                                >
-                                    فتح الكونسول <ExternalLink className="h-3 w-3" />
-                                </a>
-                            </div>
-                            <CardDescription className="text-xs">الأرقام تقديرية حسابياً. المصدر النهائي للمساحة هو تبويب Usage في Firebase Console.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="p-0">
-                            <div className="grid grid-cols-3 divide-x divide-x-reverse border-b bg-primary/5">
-                                <div className="p-4 text-center">
-                                    <div className='flex items-center justify-center gap-1.5 mb-1'>
-                                        <MousePointer2 className="h-3 w-3 text-blue-500" />
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">قراءة (Reads) اليوم</p>
-                                    </div>
-                                    <p className="text-2xl font-black text-blue-600">{dailyActivity.reads}</p>
-                                    <p className="text-[9px] text-muted-foreground italic">شامل جلسة الإدارة</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <div className='flex items-center justify-center gap-1.5 mb-1'>
-                                        <PlusCircle className="h-3 w-3 text-green-600" />
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">كتابة (Writes) اليوم</p>
-                                    </div>
-                                    <p className="text-2xl font-black text-green-600">{dailyActivity.writes}</p>
-                                    <p className="text-[9px] text-muted-foreground italic">عمليات فعلية مؤكدة</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <div className='flex items-center justify-center gap-1.5 mb-1'>
-                                        <Trash2 className="h-3 w-3 text-red-500" />
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">حذف (Deletes) اليوم</p>
-                                    </div>
-                                    <p className="text-2xl font-black text-red-600">{dailyActivity.deletes}</p>
-                                    <p className="text-[9px] text-muted-foreground italic">تقدير تطهير بيانات</p>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 divide-x divide-x-reverse divide-y border-b">
-                                <div className="p-4 text-center">
-                                    <div className="flex items-center justify-center gap-1 mb-1">
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">إجمالي السجلات</p>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild><Info className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent className="max-w-[200px] text-xs"><p>مجموع كل الوثائق المخزنة (طلاب، أسئلة، درجات). كل وحدة معلومة تعتبر "سجل".</p></TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                    <p className="text-2xl font-black text-primary">{dbStats.totalDocs}</p>
-                                    <p className="text-[9px] text-muted-foreground">وثيقة مخزنة</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">ضغط القراءة (Reads)</p>
-                                    <Badge variant="outline" className={cn(
-                                        "font-black",
-                                        dbStats.readLoad.includes('مرتفع') ? "text-red-500 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"
-                                    )}>
-                                        {dbStats.readLoad}
-                                    </Badge>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <p className="text-[10px] text-muted-foreground uppercase font-bold mb-1">ضغط الكتابة (Writes)</p>
-                                    <Badge variant="outline" className={cn(
-                                        "font-black",
-                                        dbStats.writeLoad.includes('مرتفع') ? "text-red-500 border-red-200 bg-red-50" : "text-green-600 border-green-200 bg-green-50"
-                                    )}>
-                                        {dbStats.writeLoad}
-                                    </Badge>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <div className="flex items-center justify-center gap-1 mb-1">
-                                        <p className="text-[10px] text-muted-foreground uppercase font-bold">صحة الفهارس</p>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild><Info className="h-3 w-3 text-muted-foreground cursor-help" /></TooltipTrigger>
-                                            <TooltipContent className="max-w-[200px] text-xs"><p>الفهارس هي "خرائط" تجعل جلب البيانات سريعاً. الحالة "نشطة" تعني أن النظام يعمل بكفاءة 100%.</p></TooltipContent>
-                                        </Tooltip>
-                                    </div>
-                                    <div className="flex items-center justify-center gap-1">
-                                        <Zap className="h-3 w-3 text-amber-500" />
-                                        <span className="text-lg font-bold text-amber-600">نشطة</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-muted/10 border-b">
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                                    <div className="flex items-center gap-2">
-                                        <Bell className="h-4 w-4 text-primary" />
-                                        <span className="text-xs font-bold">حالة الإشعارات في النظام</span>
-                                    </div>
-                                    <div className="flex items-center gap-6">
-                                        <div className="text-center">
-                                            <p className="text-[9px] text-muted-foreground font-bold uppercase">الإجمالي</p>
-                                            <p className="text-sm font-black">{totalNotifsCount}</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-[9px] text-green-600 font-bold uppercase">مقروء</p>
-                                            <p className="text-sm font-black text-green-600">{readNotifsCount}</p>
-                                        </div>
-                                        <div className="text-center">
-                                            <p className="text-[9px] text-red-500 font-bold uppercase">غير مقروء</p>
-                                            <p className="text-sm font-black text-red-500">{unreadNotifsCount}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div className="p-6 bg-background">
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className="flex items-center gap-2">
-                                        <HardDrive className="h-4 w-4 text-primary" />
-                                        <span className="text-sm font-bold">مساحة التخزين المستهلكة (تقدير دقيق)</span>
-                                    </div>
-                                    <span className="text-xs font-bold text-muted-foreground">الحد: 1024 ميجابايت</span>
-                                </div>
-                                
-                                <Progress value={dbStats.usagePercentage} className="h-2.5 bg-muted mb-4" />
-                                
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="p-3 rounded-xl border bg-muted/20">
-                                        <p className="text-[10px] text-muted-foreground font-bold mb-1 uppercase">المساحة الفعلية</p>
-                                        <p className="text-lg font-black text-foreground">{dbStats.consumedMB.toFixed(2)} <span className="text-[10px]">ميجابايت</span></p>
-                                    </div>
-                                    <div className="p-3 rounded-xl border bg-primary/5">
-                                        <p className="text-[10px] text-primary font-bold mb-1 uppercase">المساحة المتبقية</p>
-                                        <p className="text-lg font-black text-primary">{dbStats.remainingMB.toFixed(2)} <span className="text-[10px]">ميجابايت</span></p>
-                                    </div>
-                                </div>
-                                <p className="text-[9px] text-muted-foreground italic mt-4 text-center leading-relaxed px-4">
-                                    * الأرقام أعلاه محسوبة بناءً على أوزان (Overhead) حقيقية لكل وثيقة في Firestore وتتبع نشاط الجلسة الحالية.
-                                </p>
-                            </div>
-                        </CardContent>
-                    </Card>
-
+                <div className="grid gap-4 grid-cols-1">
                     <Card className="shadow-sm border-primary/10 flex flex-col relative overflow-hidden group/cleanup">
                         <div className="absolute inset-0 pointer-events-none opacity-10">
                             <div className="absolute top-0 left-0 w-full h-full animate-pulse-glow bg-blue-500/20 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2" />
@@ -529,10 +303,11 @@ export default function AdminDashboardPage() {
                                     <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 animate-float">
                                         <Wind className="h-5 w-5" />
                                     </div>
-                                    <CardTitle className="text-base">تطهير البيانات</CardTitle>
+                                    <CardTitle className="text-base">تطهير البيانات المهملة</CardTitle>
                                 </div>
                                 <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
                             </div>
+                            <CardDescription>مسح السجلات القديمة والطلبات المكتملة لتسريع أداء قاعدة البيانات.</CardDescription>
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
@@ -547,7 +322,7 @@ export default function AdminDashboardPage() {
                                     <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg animate-bounce">
                                         {garbageData.count}
                                     </Badge>
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل مهمل</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل يمكن مسحه</span>
                                 </div>
                                 <Trash2 className="absolute top-2 left-2 h-3 w-3 text-muted-foreground/30 animate-float-delayed" />
                                 <Zap className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
@@ -558,25 +333,21 @@ export default function AdminDashboardPage() {
                                     <ListChecks className="h-3 w-3" />
                                     تفاصيل البيانات المكتشفة
                                 </p>
-                                <div className="grid grid-cols-2 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
+                                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>إشعارات قديمة:</span>
+                                        <span>إشعارات:</span>
                                         <span className="text-primary">{garbageData.notifs}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>طلبات دفع:</span>
+                                        <span>دفع مكتمل:</span>
                                         <span className="text-primary">{garbageData.payments}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>حسابات فارغة:</span>
-                                        <span className="text-primary">{garbageData.users}</span>
-                                    </div>
-                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>إعلانات قديمة:</span>
+                                        <span>إعلانات:</span>
                                         <span className="text-primary">{garbageData.announcements}</span>
                                     </div>
-                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5 col-span-2">
-                                        <span>سجلات الحذف (Delete Logs):</span>
+                                    <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
+                                        <span>طلبات حذف:</span>
                                         <span className="text-primary">{garbageData.deletions}</span>
                                     </div>
                                 </div>
