@@ -9,8 +9,8 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Book, FileText, Video, Award, LayoutList, Loader2, Link as LinkIcon } from 'lucide-react';
-import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase, setDocumentNonBlocking } from '@/firebase';
+import { ArrowLeft, Book, FileText, Video, Award, LayoutList, Loader2, Link as LinkIcon, Lock } from 'lucide-react';
+import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, query, orderBy, writeBatch } from 'firebase/firestore';
 import type { Course, Lecture, LectureContent, Student, StudentCourse } from '@/lib/data';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
@@ -37,7 +37,17 @@ const contentIconMap: Record<LectureContent['type'], React.ElementType> = {
     link: LinkIcon,
 };
 
-function LectureAccordionItem({ lecture, courseId, onContentClick }: { lecture: Lecture; courseId: string; onContentClick: (content: LectureContent) => void; }) {
+function LectureAccordionItem({ 
+    lecture, 
+    courseId, 
+    onContentClick, 
+    isSubscribed 
+}: { 
+    lecture: Lecture; 
+    courseId: string; 
+    onContentClick: (content: LectureContent) => void;
+    isSubscribed: boolean;
+}) {
     const firestore = useFirestore();
     const { user } = useUser();
     const router = useRouter();
@@ -48,6 +58,11 @@ function LectureAccordionItem({ lecture, courseId, onContentClick }: { lecture: 
     const { data: contents, isLoading: isLoadingContents } = useCollection<LectureContent>(contentsQuery, { ignorePermissionErrors: true });
     
     const handleContentClick = (content: LectureContent) => {
+        if (!isSubscribed) {
+            onContentClick(content); // This will trigger the subscription prompt in the parent
+            return;
+        }
+
         if ((content.type === 'quiz' || content.type === 'assignment') && content.linkedExamId) {
             router.push(`/exam/${content.linkedExamId}?courseId=${courseId}&lectureContentId=${content.id}`);
         } else {
@@ -82,7 +97,11 @@ function LectureAccordionItem({ lecture, courseId, onContentClick }: { lecture: 
                                 <span className="font-semibold">{content.title}</span>
                             </div>
                             <Button variant="ghost" size="sm" onClick={() => handleContentClick(content)}>
-                                {content.type === 'quiz' || content.type === 'assignment' ? 'بدء' : 'عرض'}
+                                {!isSubscribed ? (
+                                    <Lock className="h-4 w-4 text-muted-foreground" />
+                                ) : (
+                                    content.type === 'quiz' || content.type === 'assignment' ? 'بدء' : 'عرض'
+                                )}
                             </Button>
                         </div>
                     )
@@ -98,7 +117,15 @@ function LectureAccordionItem({ lecture, courseId, onContentClick }: { lecture: 
     );
 }
 
-function SubscribedCourseContent({ courseId, onContentSelect }: { courseId: string; onContentSelect: (content: LectureContent | null) => void; }) {
+function CourseCurriculum({ 
+    courseId, 
+    onContentSelect, 
+    isSubscribed 
+}: { 
+    courseId: string; 
+    onContentSelect: (content: LectureContent | null) => void;
+    isSubscribed: boolean;
+}) {
     const firestore = useFirestore();
     const { user } = useUser();
     
@@ -109,12 +136,17 @@ function SubscribedCourseContent({ courseId, onContentSelect }: { courseId: stri
     const { data: lectures, isLoading: isLoadingLectures } = useCollection<Lecture>(lecturesQuery, { ignorePermissionErrors: true });
 
     const handleContentClick = (content: LectureContent) => {
+        if (!isSubscribed) {
+            onContentSelect(null); // This triggers the subscribe dialog in the main component
+            return;
+        }
+
         if (content.type === 'pdf' && content.pdfUrl) {
             window.open(content.pdfUrl, '_blank', 'noopener,noreferrer');
-            onContentSelect(null); // don't show PDF in the player
+            onContentSelect(null);
         } else if (content.type === 'link' && content.externalUrl) {
             window.open(content.externalUrl, '_blank', 'noopener,noreferrer');
-            onContentSelect(null); // don't show link in the player
+            onContentSelect(null);
         } else {
             onContentSelect(content);
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -143,6 +175,7 @@ function SubscribedCourseContent({ courseId, onContentSelect }: { courseId: stri
                                 lecture={lecture}
                                 courseId={courseId}
                                 onContentClick={handleContentClick}
+                                isSubscribed={isSubscribed}
                             />
                         ))}
                     </Accordion>
@@ -151,21 +184,6 @@ function SubscribedCourseContent({ courseId, onContentSelect }: { courseId: stri
                         لا توجد محاضرات في هذا الكورس بعد.
                     </p>
                 )}
-            </CardContent>
-        </Card>
-    );
-}
-
-function UnsubscribedCourseContent() {
-   return (
-        <Card className="rounded-2xl shadow-lg mt-8">
-            <CardHeader>
-                <CardTitle>محتوى الكورس</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="text-center py-10 bg-muted rounded-lg">
-                    <p className="text-muted-foreground">يجب عليك الاشتراك في الكورس أولاً لعرض المحتوى.</p>
-                </div>
             </CardContent>
         </Card>
     );
@@ -348,7 +366,17 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
             </div>
         )}
 
-       {isSubscribed ? <SubscribedCourseContent courseId={courseId} onContentSelect={setSelectedContent} /> : <UnsubscribedCourseContent />}
+       <CourseCurriculum 
+            courseId={courseId} 
+            onContentSelect={(content) => {
+                if (!isSubscribed) {
+                    setShowSubscribeDialog(true);
+                } else if (content) {
+                    setSelectedContent(content);
+                }
+            }} 
+            isSubscribed={isSubscribed}
+        />
 
         <AlertDialog open={showSubscribeDialog} onOpenChange={setShowSubscribeDialog}>
             <AlertDialogContent>
