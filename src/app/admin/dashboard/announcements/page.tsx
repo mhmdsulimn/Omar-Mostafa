@@ -7,7 +7,6 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -20,9 +19,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, query, where, getDocs, orderBy, collectionGroup, writeBatch } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell, Eye, CheckCircle2, Inbox, MailWarning } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, Inbox, MailWarning, CheckCircle2, Eye } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
@@ -60,12 +59,12 @@ const gradeMap: Record<string, string> = {
 };
 
 /**
- * كارت الإحصائيات مع دعم الحذف الجماعي المستقر
+ * كارت الإحصائيات (نسخة مبسطة بدون أزرار حذف)
  */
-function StatCard({ title, value, icon: Icon, colorClass, description, onDelete, isDeleting }: { title: string, value: number, icon: any, colorClass: string, description: string, onDelete?: () => void, isDeleting?: boolean }) {
+function StatCard({ title, value, icon: Icon, colorClass, description }: { title: string, value: number, icon: any, colorClass: string, description: string }) {
     return (
-        <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group flex flex-col">
-            <CardContent className="p-5 flex items-center justify-between flex-1">
+        <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group">
+            <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
                     <p className="text-2xl font-black">{value}</p>
@@ -75,20 +74,6 @@ function StatCard({ title, value, icon: Icon, colorClass, description, onDelete,
                     <Icon className="h-5 w-5" />
                 </div>
             </CardContent>
-            {onDelete && (
-                <CardFooter className="p-2 pt-0 border-t border-dashed border-primary/5">
-                    <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        className="w-full h-7 text-[10px] font-bold text-destructive hover:bg-destructive/10 rounded-lg gap-1.5"
-                        onClick={onDelete}
-                        disabled={isDeleting || value === 0}
-                    >
-                        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
-                        <span>مسح السجلات</span>
-                    </Button>
-                </CardFooter>
-            )}
         </Card>
     );
 }
@@ -248,7 +233,6 @@ export default function AdminAnnouncementsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
   const [viewMessage, setViewMessage] = React.useState<any>(null);
-  const [isBulkDeleting, setIsBulkDeleting] = React.useState<string | null>(null);
 
   // جلب الإعلانات العامة
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
@@ -349,63 +333,6 @@ export default function AdminAnnouncementsPage() {
     await updateDocumentNonBlocking(doc(firestore, 'announcements', announcement.id), { isActive: !announcement.isActive, updatedAt: new Date().toISOString() });
   }
 
-  /**
-   * ميزة الحذف الجماعي المحدثة والمصلحة بشكل نهائي
-   */
-  const handleBulkDelete = React.useCallback(async (type: 'all' | 'unread' | 'read' | 'active_ann') => {
-    if (!firestore || !user) return;
-
-    // تأكيد الحذف من المسؤول أولاً
-    const confirmMsg = type === 'active_ann' 
-        ? "هل أنت متأكد من حذف كافة الإعلانات العامة النشطة؟" 
-        : "هل أنت متأكد من مسح هذه المجموعة من الإشعارات نهائياً؟";
-    
-    if (!window.confirm(confirmMsg)) return;
-
-    setIsBulkDeleting(type);
-    
-    try {
-        const batch = writeBatch(firestore);
-        let deletedCount = 0;
-        
-        if (type === 'active_ann') {
-            const activeAnn = announcements?.filter(a => a.isActive) || [];
-            activeAnn.forEach(a => {
-                batch.delete(doc(firestore, 'announcements', a.id));
-                deletedCount++;
-            });
-        } else {
-            let toDelete = allNotifications || [];
-            if (type === 'unread') toDelete = toDelete.filter(n => !n.isRead);
-            if (type === 'read') toDelete = toDelete.filter(n => n.isRead);
-            
-            // الحد الأقصى لكل batch هو 500، نأخذ 450 للأمان
-            const chunk = toDelete.slice(0, 450);
-            
-            chunk.forEach(n => {
-                // استخراج معرف الطالب بدقة من مسار الوثيقة أو البيانات
-                const sId = n.parentId || (n as any).studentId || (n as any).userId;
-                if (sId && n.id) {
-                    batch.delete(doc(firestore, 'users', sId, 'notifications', n.id));
-                    deletedCount++;
-                }
-            });
-        }
-
-        if (deletedCount > 0) {
-            await batch.commit();
-            toast({ title: 'تم التطهير بنجاح', description: `تم مسح ${deletedCount} سجل من قاعدة البيانات.` });
-        } else {
-            toast({ title: 'لا توجد سجلات لمسحها حالياً.' });
-        }
-    } catch (error: any) {
-        console.error("Bulk delete failed:", error);
-        toast({ variant: 'destructive', title: 'فشل المسح الجماعي', description: error.message });
-    } finally {
-        setIsBulkDeleting(null);
-    }
-  }, [firestore, user, announcements, allNotifications, toast]);
-
   const isLoading = isLoadingAnn || isLoadingUsers || isLoadingAllNotifs;
 
   if (isLoading) {
@@ -420,10 +347,10 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" dir="rtl">
-        <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" onDelete={() => handleBulkDelete('all')} isDeleting={isBulkDeleting === 'all'} />
-        <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" onDelete={() => handleBulkDelete('unread')} isDeleting={isBulkDeleting === 'unread'} />
-        <StatCard title="رسائل مقروءة" value={stats.read} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30" description="تمت مشاهدتها بنجاح" onDelete={() => handleBulkDelete('read')} isDeleting={isBulkDeleting === 'read'} />
-        <StatCard title="إعلانات نشطة" value={stats.activeAnn} icon={Megaphone} colorClass="bg-primary/10 text-primary" description="تظهر حالياً للطلاب" onDelete={() => handleBulkDelete('active_ann')} isDeleting={isBulkDeleting === 'active_ann'} />
+        <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" />
+        <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" />
+        <StatCard title="رسائل مقروءة" value={stats.read} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30" description="تمت مشاهدتها بنجاح" />
+        <StatCard title="إعلانات نشطة" value={stats.activeAnn} icon={Megaphone} colorClass="bg-primary/10 text-primary" description="تظهر حالياً للطلاب" />
       </div>
 
       <div className="grid gap-8">
