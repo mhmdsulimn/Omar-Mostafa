@@ -436,7 +436,7 @@ function LectureContentForm({
                                         src={formData.videoUrl}
                                         className="absolute inset-0 w-full h-full border-none"
                                         title="Video Preview"
-                                        sandbox="allow-scripts allow-same-origin"
+                                        sandbox="allow-scripts allow-same-origin allow-popups"
                                         allow="autoplay; fullscreen"
                                     ></iframe>
                                 </div>
@@ -869,7 +869,7 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                     </div>
                     <Button className="w-full h-12 text-base font-bold rounded-xl" onClick={() => setIsEditDialogOpen(true)}>
                         <Pencil className="ml-2 h-4 w-4" />
-                        تعديل الكورس
+                        تعديل
                     </Button>
                 </div>
             </Card>
