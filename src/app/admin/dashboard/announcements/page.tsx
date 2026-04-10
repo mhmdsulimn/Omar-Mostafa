@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
 import {
   Table,
@@ -19,7 +20,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
-import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
+import { collection, doc, query, where, getDocs, orderBy, collectionGroup, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell, Eye, CheckCircle2, Inbox, MailWarning } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
@@ -58,10 +59,10 @@ const gradeMap: Record<string, string> = {
   third_secondary: '3ث',
 };
 
-function StatCard({ title, value, icon: Icon, colorClass, description }: { title: string, value: number, icon: any, colorClass: string, description: string }) {
+function StatCard({ title, value, icon: Icon, colorClass, description, onDelete, isDeleting }: { title: string, value: number, icon: any, colorClass: string, description: string, onDelete?: () => void, isDeleting?: boolean }) {
     return (
-        <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group">
-            <CardContent className="p-5 flex items-center justify-between">
+        <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group flex flex-col">
+            <CardContent className="p-5 flex items-center justify-between flex-1">
                 <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
                     <p className="text-2xl font-black">{value}</p>
@@ -71,6 +72,25 @@ function StatCard({ title, value, icon: Icon, colorClass, description }: { title
                     <Icon className="h-5 w-5" />
                 </div>
             </CardContent>
+            {onDelete && (
+                <CardFooter className="p-2 pt-0 border-t border-dashed border-primary/5">
+                    <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        className="w-full h-7 text-[10px] font-bold text-destructive hover:bg-destructive/10 rounded-lg gap-1.5"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            if (window.confirm('هل أنت متأكد من حذف هذه البيانات بشكل جماعي؟')) {
+                                onDelete();
+                            }
+                        }}
+                        disabled={isDeleting || value === 0}
+                    >
+                        {isDeleting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Trash2 className="h-3 w-3" />}
+                        <span>مسح السجلات</span>
+                    </Button>
+                </CardFooter>
+            )}
         </Card>
     );
 }
@@ -230,6 +250,7 @@ export default function AdminAnnouncementsPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
   const [viewMessage, setViewMessage] = React.useState<any>(null);
+  const [isBulkDeleting, setIsBulkDeleting] = React.useState<string | null>(null);
 
   // جلب الإعلانات العامة
   const announcementsQuery = useMemoFirebase(() => (firestore ? query(collection(firestore, 'announcements'), orderBy('updatedAt', 'desc')) : null), [firestore]);
@@ -330,6 +351,37 @@ export default function AdminAnnouncementsPage() {
     await updateDocumentNonBlocking(doc(firestore, 'announcements', announcement.id), { isActive: !announcement.isActive, updatedAt: new Date().toISOString() });
   }
 
+  const handleBulkDelete = async (type: 'all' | 'unread' | 'read' | 'active_ann') => {
+    if (!firestore || !user) return;
+    setIsBulkDeleting(type);
+    
+    try {
+        const batch = writeBatch(firestore);
+        
+        if (type === 'active_ann') {
+            const activeAnn = announcements?.filter(a => a.isActive) || [];
+            activeAnn.forEach(a => batch.delete(doc(firestore, 'announcements', a.id)));
+        } else {
+            let toDelete = allNotifications || [];
+            if (type === 'unread') toDelete = toDelete.filter(n => !n.isRead);
+            if (type === 'read') toDelete = toDelete.filter(n => n.isRead);
+            
+            toDelete.forEach(n => {
+                if (n.parentId) {
+                    batch.delete(doc(firestore, 'users', n.parentId, 'notifications', n.id));
+                }
+            });
+        }
+
+        await batch.commit();
+        toast({ title: 'تم التطهير بنجاح' });
+    } catch (error) {
+        toast({ variant: 'destructive', title: 'فشل المسح الجماعي' });
+    } finally {
+        setIsBulkDeleting(null);
+    }
+  };
+
   const isLoading = isLoadingAnn || isLoadingUsers || isLoadingAllNotifs;
 
   if (isLoading) {
@@ -344,10 +396,10 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" dir="rtl">
-        <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" />
-        <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" />
-        <StatCard title="رسائل مقروءة" value={stats.read} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30" description="تمت مشاهدتها بنجاح" />
-        <StatCard title="إعلانات نشطة" value={stats.activeAnn} icon={Megaphone} colorClass="bg-primary/10 text-primary" description="تظهر حالياً للطلاب" />
+        <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" onDelete={() => handleBulkDelete('all')} isDeleting={isBulkDeleting === 'all'} />
+        <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" onDelete={() => handleBulkDelete('unread')} isDeleting={isBulkDeleting === 'unread'} />
+        <StatCard title="رسائل مقروءة" value={stats.read} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30" description="تمت مشاهدتها بنجاح" onDelete={() => handleBulkDelete('read')} isDeleting={isBulkDeleting === 'read'} />
+        <StatCard title="إعلانات نشطة" value={stats.activeAnn} icon={Megaphone} colorClass="bg-primary/10 text-primary" description="تظهر حالياً للطلاب" onDelete={() => handleBulkDelete('active_ann')} isDeleting={isBulkDeleting === 'active_ann'} />
       </div>
 
       <div className="grid gap-8">
