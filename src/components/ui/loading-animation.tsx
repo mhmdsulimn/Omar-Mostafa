@@ -42,9 +42,9 @@ export function LoadingAnimation({ className, size = 'md' }: LoadingAnimationPro
         {/* هالة ضوئية خلفية متوهجة تتبع لون السمة */}
         <div className="absolute inset-0 bg-primary/10 rounded-full blur-[50px] animate-pulse" />
         
-        {/* مشغل الأنيميشن Lottie 3D المباشر - تم تحديث الرابط للنسخة الأسرع */}
+        {/* مشغل الأنيميشن Lottie 3D المباشر - تم تحديث الرابط للنسخة الجديدة المطلوبة */}
         <DotLottieReact
-          src="https://lottie.host/16f4696d-4c5b-4871-865a-27e3f677cb26/iWSv2oF75k.lottie"
+          src="https://lottie.host/a7dad1e4-fcc7-4227-b1d3-b261cd327998/O5eXjXExfe.lottie"
           loop
           autoplay
           className="relative z-10 w-full h-full"
