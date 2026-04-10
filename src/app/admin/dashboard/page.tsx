@@ -252,7 +252,8 @@ export default function AdminDashboardPage() {
                 });
             }
 
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            // تأخير متعمد لإظهار الأنيميشن الفخم لمدة كافية
+            await new Promise(resolve => setTimeout(resolve, 3000));
             await batch.commit();
 
             toast({
@@ -276,6 +277,29 @@ export default function AdminDashboardPage() {
 
     return (
         <TooltipProvider>
+            {/* واجهة انيميشن التطهير الغامرة */}
+            {isCleaning && (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-500 overflow-hidden">
+                    <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-tr from-primary/30 to-transparent rounded-full blur-[120px] animate-pulse" />
+                    </div>
+                    <div className="relative flex flex-col items-center gap-8">
+                        <div className="relative scale-125 md:scale-150">
+                            <LoadingAnimation size="lg" />
+                            <div className="absolute -top-6 -right-6 bg-primary text-white p-4 rounded-full shadow-2xl animate-bounce">
+                                <Wind className="h-8 w-8" />
+                            </div>
+                        </div>
+                        <div className="text-center space-y-4 max-w-sm px-6">
+                            <h2 className="text-2xl md:text-4xl font-black tracking-tight text-primary">جارِ التطهير الذكي...</h2>
+                            <p className="text-muted-foreground text-sm md:text-lg font-bold animate-pulse leading-relaxed">
+                                نقوم الآن بمسح السجلات القديمة والمهملة لإعادة النشاط الكامل لقاعدة البيانات
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
                 <div className="flex items-center justify-between gap-3 px-2">
                     <div className='flex items-center gap-3'>
