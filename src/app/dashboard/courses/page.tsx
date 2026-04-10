@@ -276,14 +276,21 @@ export default function StudentCoursesPage() {
                               {course.description}
                            </p>
                         </div>
-                        <div className="grid grid-cols-2 gap-3 mt-4">
-                            <Button onClick={() => router.push(`/dashboard/courses/${course.id}`)} variant="outline" className='h-11 text-sm w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold'>التفاصيل</Button>
+                        <div className="mt-4">
                            {isSubscribed ? (
-                                <Button onClick={() => router.push(`/dashboard/courses/${course.id}`)} className="h-11 text-sm w-full font-bold">دخول</Button>
-                           ) : (
-                                <Button onClick={() => setDialogState({ type: 'subscribe', course })} className="h-11 text-sm w-full font-bold">
-                                    {effectivePrice > 0 ? 'اشترك الآن' : 'اشترك مجاناً'}
+                                <Button 
+                                    onClick={() => router.push(`/dashboard/courses/${course.id}`)} 
+                                    className="h-11 text-base w-full font-bold shadow-md animate-in fade-in zoom-in-95 duration-300"
+                                >
+                                    الدخول للكورس
                                 </Button>
+                           ) : (
+                                <div className="grid grid-cols-2 gap-3">
+                                    <Button onClick={() => router.push(`/dashboard/courses/${course.id}`)} variant="outline" className='h-11 text-sm w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold'>التفاصيل</Button>
+                                    <Button onClick={() => setDialogState({ type: 'subscribe', course })} className="h-11 text-sm w-full font-bold">
+                                        {effectivePrice > 0 ? 'اشترك الآن' : 'اشترك مجاناً'}
+                                    </Button>
+                                </div>
                            )}
                         </div>
                     </div>
