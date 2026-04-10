@@ -277,14 +277,15 @@ export default function AdminDashboardPage() {
 
     return (
         <TooltipProvider>
-            {/* واجهة انيميشن التطهير الغامرة - تم ضبط التموضع بدقة ملء الشاشة */}
+            {/* واجهة انيميشن التطهير الغامرة - تم ضبط التموضع ليظهر في مستوى أدنى قليلاً */}
             {isCleaning && (
                 <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-background/95 backdrop-blur-2xl animate-in fade-in duration-700 overflow-hidden" dir="rtl">
                     <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
                         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-tr from-primary/40 to-transparent rounded-full blur-[150px] animate-pulse" />
                     </div>
                     
-                    <div className="relative flex flex-col items-center gap-10 max-w-lg w-full px-6">
+                    {/* تمت إضافة translate-y-24 لإزاحة المحتوى للأسفل قليلاً */}
+                    <div className="relative flex flex-col items-center gap-10 max-w-lg w-full px-6 translate-y-24">
                         <div className="relative">
                             {/* تأثير هالة خلفية للأنيميشن */}
                             <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150 animate-pulse" />
@@ -353,7 +354,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
                             </div>
-                            <CardDescription>مسح الإشعارات المقروءة، طلبات الدفع القديمة، والحسابات غير المكتملة لزيادة سرعة المنصة.</CardDescription>
+                            <CardDescription>مسح الإشعارات المقروءة، طلبات الدفع القديمة، والحسابات التي لم تكتمل لزيادة سرعة المنصة.</CardDescription>
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
