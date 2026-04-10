@@ -64,7 +64,7 @@ function StatCard({ title, value, icon: Icon, colorClass, description }: { title
             <CardContent className="p-5 flex items-center justify-between">
                 <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
-                    <p className="text-2xl font-black">{toArabicDigits(String(value))}</p>
+                    <p className="text-2xl font-black">{value}</p>
                     <p className="text-[9px] text-muted-foreground font-medium">{description}</p>
                 </div>
                 <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110 duration-500", colorClass)}>
@@ -343,7 +343,6 @@ export default function AdminAnnouncementsPage() {
         <div className="mr-auto shrink-0"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2 font-bold h-10 px-5 shadow-lg shadow-primary/20"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
       </div>
 
-      {/* قسم الإحصائيات الجديد */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" dir="rtl">
         <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" />
         <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" />
