@@ -277,24 +277,46 @@ export default function AdminDashboardPage() {
 
     return (
         <TooltipProvider>
-            {/* واجهة انيميشن التطهير الغامرة */}
+            {/* واجهة انيميشن التطهير الغامرة - تم ضبط التموضع بدقة ملء الشاشة */}
             {isCleaning && (
-                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-background/80 backdrop-blur-md animate-in fade-in duration-500 overflow-hidden">
-                    <div className="absolute inset-0 pointer-events-none opacity-20 overflow-hidden">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-tr from-primary/30 to-transparent rounded-full blur-[120px] animate-pulse" />
+                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-background/95 backdrop-blur-2xl animate-in fade-in duration-700 overflow-hidden" dir="rtl">
+                    <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-tr from-primary/40 to-transparent rounded-full blur-[150px] animate-pulse" />
                     </div>
-                    <div className="relative flex flex-col items-center gap-8">
-                        <div className="relative scale-125 md:scale-150">
-                            <LoadingAnimation size="lg" />
-                            <div className="absolute -top-6 -right-6 bg-primary text-white p-4 rounded-full shadow-2xl animate-bounce">
-                                <Wind className="h-8 w-8" />
+                    
+                    <div className="relative flex flex-col items-center gap-10 max-w-lg w-full px-6">
+                        <div className="relative">
+                            {/* تأثير هالة خلفية للأنيميشن */}
+                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150 animate-pulse" />
+                            
+                            <div className="relative z-10 scale-[1.5] md:scale-[2]">
+                                <LoadingAnimation size="lg" />
+                            </div>
+                            
+                            {/* أيقونة طائرة تظهر بشكل مفاجئ فوق الأنيميشن */}
+                            <div className="absolute -top-10 -right-10 bg-primary text-primary-foreground p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(var(--primary),0.4)] animate-bounce border-4 border-background z-20">
+                                <Wind className="h-10 w-10 md:h-12 md:w-12" />
                             </div>
                         </div>
-                        <div className="text-center space-y-4 max-w-sm px-6">
-                            <h2 className="text-2xl md:text-4xl font-black tracking-tight text-primary">جارِ التطهير الذكي...</h2>
-                            <p className="text-muted-foreground text-sm md:text-lg font-bold animate-pulse leading-relaxed">
-                                نقوم الآن بمسح السجلات القديمة والمهملة لإعادة النشاط الكامل لقاعدة البيانات
-                            </p>
+
+                        <div className="text-center space-y-6 animate-in slide-in-from-bottom-10 duration-1000 delay-300">
+                            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-primary drop-shadow-xl">جارِ التطهير الذكي...</h2>
+                            
+                            <div className="flex flex-col gap-2 items-center">
+                                <p className="text-foreground text-lg md:text-2xl font-black opacity-90">
+                                    مسح <span className="text-blue-500">{garbageData.count}</span> سجل مهمل من النظام
+                                </p>
+                                <p className="text-muted-foreground text-sm md:text-lg font-bold animate-pulse leading-relaxed max-w-sm">
+                                    نقوم الآن بإعادة تنشيط كافة مفاصل قاعدة البيانات لضمان سرعة فائقة للطلاب
+                                </p>
+                            </div>
+
+                            <div className="pt-4 flex items-center justify-center gap-2">
+                                <div className="h-1.5 w-12 rounded-full bg-primary/20 overflow-hidden">
+                                    <div className="h-full bg-primary animate-progress-indefinite w-1/2 rounded-full" />
+                                </div>
+                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">System Optimization</span>
+                            </div>
                         </div>
                     </div>
                 </div>
