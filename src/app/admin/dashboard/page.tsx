@@ -29,7 +29,7 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Activity, Trash2, Wind, Sparkles, Wand2, ListChecks, Bell, Loader2, Zap, Info } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Activity, Trash2, Wind, Sparkles, ListChecks, Bell, Loader2, Zap, Info } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -159,7 +159,7 @@ export default function AdminDashboardPage() {
             return {
                 studentsCount: 0, examsCount: 0, coursesCount: 0,
                 averageScore: 0, recentSubmissions: [], studentsMap: new Map(), examsMap: new Map(), gradeDistributionData: [], gradePerformanceData: [],
-                garbageData: { count: 0, notifs: 0, payments: 0, users: 0, announcements: 0, deletions: 0 }
+                garbageData: { count: 0, notifs: [], payments: [], users: [], announcements: [], deletions: [] }
             };
         }
 
@@ -230,11 +230,11 @@ export default function AdminDashboardPage() {
             gradePerformanceData: performanceData,
             garbageData: {
                 count: garbageCount,
-                notifs: garbageNotifs.length,
-                payments: garbagePayments.length,
-                users: garbageIncompleteUsers.length,
-                announcements: garbageAnnouncements.length,
-                deletions: garbageDeletionReqs.length
+                notifs: garbageNotifs,
+                payments: garbagePayments,
+                users: garbageIncompleteUsers,
+                announcements: garbageAnnouncements,
+                deletions: garbageDeletionReqs
             }
         };
 
@@ -247,20 +247,44 @@ export default function AdminDashboardPage() {
         try {
             const batch = writeBatch(firestore);
             
-            if (allDeletionRequests && allDeletionRequests.length > 0) {
-                allDeletionRequests.forEach(req => {
-                    batch.delete(doc(firestore, 'students_to_delete', req.id));
-                });
-            }
+            // 1. مسح الإشعارات القديمة
+            garbageData.notifs.forEach(n => {
+                if (n.parentId) {
+                    batch.delete(doc(firestore, 'users', n.parentId, 'notifications', n.id));
+                }
+            });
+
+            // 2. مسح طلبات الدفع المكتملة القديمة
+            garbageData.payments.forEach(p => {
+                if (p.parentId) {
+                    batch.delete(doc(firestore, 'users', p.parentId, 'depositRequests', p.id));
+                }
+            });
+
+            // 3. مسح الحسابات غير المكتملة
+            garbageData.users.forEach(u => {
+                batch.delete(doc(firestore, 'users', u.id));
+            });
+
+            // 4. مسح الإعلانات المعطلة القديمة
+            garbageData.announcements.forEach(a => {
+                batch.delete(doc(firestore, 'announcements', a.id));
+            });
+
+            // 5. مسح طلبات الحذف المجمعة
+            garbageData.deletions.forEach(req => {
+                batch.delete(doc(firestore, 'students_to_delete', req.id));
+            });
 
             await batch.commit();
 
             toast({
                 title: 'تم التطهير بنجاح ✨',
-                description: `لقد قمت بمسح ${garbageData.count} سجل مهمل، قاعدة البيانات الآن أكثر رشاقة.`,
+                description: `لقد قمت بمسح ${garbageData.count} سجل مهمل، قاعدة البيانات الآن أكثر رشاقة وسرعة.`,
             });
         } catch (e) {
-            toast({ variant: 'destructive', title: 'فشل التنظيف' });
+            console.error("Cleanup failed:", e);
+            toast({ variant: 'destructive', title: 'فشل عملية التطهير' });
         } finally {
             setIsCleaning(false);
         }
@@ -316,7 +340,7 @@ export default function AdminDashboardPage() {
                                     <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg">
                                         {garbageData.count}
                                     </Badge>
-                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل يمكن مسحه</span>
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل مهمل مكتشف</span>
                                 </div>
                             </div>
 
@@ -324,7 +348,7 @@ export default function AdminDashboardPage() {
                                 <div className="flex items-center justify-between mb-2">
                                     <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase flex items-center gap-1.5">
                                         <ListChecks className="h-3 w-3" />
-                                        تفاصيل البيانات المكتشفة
+                                        تحليل البيانات المهملة
                                     </p>
                                     <Tooltip>
                                         <TooltipTrigger asChild>
@@ -340,19 +364,19 @@ export default function AdminDashboardPage() {
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>إشعارات:</span>
-                                        <span className="text-primary">{garbageData.notifs}</span>
+                                        <span className="text-primary">{garbageData.notifs.length}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>دفع مكتمل:</span>
-                                        <span className="text-primary">{garbageData.payments}</span>
+                                        <span>دفع مؤرشف:</span>
+                                        <span className="text-primary">{garbageData.payments.length}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>إعلانات:</span>
-                                        <span className="text-primary">{garbageData.announcements}</span>
+                                        <span className="text-primary">{garbageData.announcements.length}</span>
                                     </div>
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
-                                        <span>طلبات حذف:</span>
-                                        <span className="text-primary">{garbageData.deletions}</span>
+                                        <span>حسابات:</span>
+                                        <span className="text-primary">{garbageData.users.length + garbageData.deletions.length}</span>
                                     </div>
                                 </div>
                             </div>
@@ -371,7 +395,7 @@ export default function AdminDashboardPage() {
                                         variant={garbageData.count > 0 ? "default" : "outline"}
                                         disabled={garbageData.count === 0 || isCleaning}
                                     >
-                                        {isCleaning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                        {isCleaning ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wind className="h-4 w-4" />}
                                         تطهير قاعدة البيانات
                                     </Button>
                                 </AlertDialogTrigger>
@@ -431,13 +455,13 @@ export default function AdminDashboardPage() {
                                 <div className="flex items-center justify-center h-[250px] sm:h-[350px] text-muted-foreground text-sm italic">لا توجد بيانات أداء لعرضها.</div>
                             ) : (
                             <ChartContainer config={gradePerformanceChartConfig} className="w-full h-[300px] sm:h-[350px]">
-                                <BarChart data={gradePerformanceData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
+                                < BarChart data={gradePerformanceData} margin={{ top: 20, right: 10, left: -20, bottom: 5 }}>
                                     <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.5} />
                                     <XAxis dataKey="name" tickLine={false} tickMargin={10} axisLine={false} tick={{fontSize: 10}} />
                                     <YAxis unit="%" tick={{fontSize: 10}} />
                                     <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
                                     <Bar dataKey="averageScore" fill="var(--color-averageScore)" radius={6} barSize={40} />
-                                </BarChart>
+                                </ BarChart>
                             </ChartContainer>
                             )}
                         </CardContent>
