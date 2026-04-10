@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui/card';
 import type { Course, Student, StudentCourse } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2, Share2 } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2, Share2, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
 import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
@@ -53,7 +54,10 @@ const gradeMap: Record<string, string> = {
 function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Course | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const firestore = useFirestore();
     const router = useRouter();
+    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = React.useState('');
+    const [isDeletingId, setIsDeletingId] = React.useState<string | null>(null);
+    const [studentToUnsubscribe, setStudentToUnsubscribe] = React.useState<Student | null>(null);
 
     const subscriptionsQuery = useMemoFirebase(
         () => (firestore && course ? collectionGroup(firestore, 'studentCourses') : null),
@@ -93,72 +97,152 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
         });
     }, [students, searchTerm]);
 
+    const handleUnsubscribe = async () => {
+        if (!firestore || !course || !studentToUnsubscribe) return;
+        
+        const studentId = studentToUnsubscribe.id;
+        setIsDeletingId(studentId);
+        
+        try {
+            const batch = writeBatch(firestore);
+            
+            // 1. مرجع وثيقة الاشتراك الرئيسية
+            const subscriptionRef = doc(firestore, 'users', studentId, 'studentCourses', course.id);
+            
+            // 2. جلب وحذف سجلات التقدم (Progress) داخل الكورس لهذا الطالب
+            const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
+            progressSnap.docs.forEach(d => batch.delete(d.ref));
+            
+            // 3. حذف وثيقة الاشتراك
+            batch.delete(subscriptionRef);
+            
+            await batch.commit();
+            
+            toast({ 
+                title: 'تم إلغاء الاشتراك', 
+                description: `تم حذف اشتراك الطالب (${studentToUnsubscribe.firstName}) في هذا الكورس بنجاح.` 
+            });
+            setStudentToUnsubscribe(null);
+        } catch (error) {
+            console.error("Unsubscribe error:", error);
+            toast({ variant: 'destructive', title: 'فشل العملية', description: 'حدث خطأ أثناء محاولة إلغاء الاشتراك.' });
+        } finally {
+            setIsDeletingId(null);
+        }
+    };
+
     const isLoading = isLoadingSubs || (studentIds.length > 0 && isLoadingStudents);
 
     return (
-        <Dialog open={isOpen} onOpenChange={onOpenChange}>
-            <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
-                <DialogHeader className="p-6 bg-primary/5 border-b text-right">
-                    <div className="flex items-center justify-between flex-row-reverse mb-2">
-                        <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
-                        <DialogTitle className="text-xl font-bold">الطلاب المشتركين</DialogTitle>
-                    </div>
-                    <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
-                    <div className="relative mt-4">
-                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                        <Input 
-                            placeholder="ابحث عن طالب بالاسم الكامل..." 
-                            className="pr-9 bg-background h-11 rounded-xl text-right"
-                            value={searchTerm}
-                            onChange={e => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </DialogHeader>
-                <div className="p-0">
-                    <ScrollArea className="h-[400px]">
-                        {isLoading ? (
-                            <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
-                        ) : filteredStudents.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
-                                <Users className="h-10 w-10 opacity-10" />
-                                <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
-                            </div>
-                        ) : (
-                            <div className="divide-y" dir="rtl">
-                                {filteredStudents.map(student => (
-                                    <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                                        <div className="flex items-center gap-3 text-right">
-                                            <Avatar className="h-9 w-9 border">
-                                                <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex flex-col text-right">
-                                                <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
-                                                <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
+        <>
+            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+                <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
+                    <DialogHeader className="p-6 bg-primary/5 border-b text-right">
+                        <div className="flex items-center justify-between flex-row-reverse mb-2">
+                            <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
+                            <DialogTitle className="text-xl font-bold">الطلاب المشتركين</DialogTitle>
+                        </div>
+                        <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
+                        <div className="relative mt-4">
+                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input 
+                                placeholder="ابحث عن طالب بالاسم الكامل..." 
+                                className="pr-9 bg-background h-11 rounded-xl text-right"
+                                value={searchTerm}
+                                onChange={e => setSearchTerm(e.target.value)}
+                            />
+                        </div>
+                    </DialogHeader>
+                    <div className="p-0">
+                        <ScrollArea className="h-[400px]">
+                            {isLoading ? (
+                                <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
+                            ) : filteredStudents.length === 0 ? (
+                                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
+                                    <Users className="h-10 w-10 opacity-10" />
+                                    <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
+                                </div>
+                            ) : (
+                                <div className="divide-y" dir="rtl">
+                                    {filteredStudents.map(student => (
+                                        <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                            <div className="flex items-center gap-3 text-right">
+                                                <Avatar className="h-9 w-9 border">
+                                                    <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col text-right">
+                                                    <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <Button 
+                                                    variant="outline" 
+                                                    size="sm" 
+                                                    className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm"
+                                                    onClick={() => {
+                                                        onOpenChange(false);
+                                                        router.push(`/admin/dashboard/students?search=${student.email}`);
+                                                    }}
+                                                >
+                                                    <UserCircle2 className="h-4 w-4" />
+                                                    <span className="hidden sm:inline">عرض الملف</span>
+                                                </Button>
+                                                <TooltipProvider>
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button 
+                                                                variant="ghost" 
+                                                                size="icon" 
+                                                                className="h-9 w-9 rounded-xl text-destructive hover:bg-destructive/10"
+                                                                onClick={() => setStudentToUnsubscribe(student)}
+                                                                disabled={isDeletingId === student.id}
+                                                            >
+                                                                {isDeletingId === student.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent><p>إلغاء اشتراك الطالب</p></TooltipContent>
+                                                    </Tooltip>
+                                                </TooltipProvider>
                                             </div>
                                         </div>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm"
-                                            onClick={() => {
-                                                onOpenChange(false);
-                                                router.push(`/admin/dashboard/students?search=${student.email}`);
-                                            }}
-                                        >
-                                            <UserCircle2 className="h-4 w-4" />
-                                            <span>عرض الملف</span>
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </ScrollArea>
-                </div>
-                <div className="p-4 bg-muted/20 border-t text-center">
-                    <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
-                </div>
-            </DialogContent>
-        </Dialog>
+                                    ))}
+                                </div>
+                            )}
+                        </ScrollArea>
+                    </div>
+                    <div className="p-4 bg-muted/20 border-t text-center">
+                        <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* نافذة تأكيد إلغاء الاشتراك */}
+            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => !open && setStudentToUnsubscribe(null)}>
+                <AlertDialogContent className="rounded-3xl max-w-md">
+                    <AlertDialogHeader className="text-right">
+                        <div className="mx-auto bg-destructive/10 p-3 rounded-2xl w-fit mb-4">
+                            <AlertTriangle className="h-8 w-8 text-destructive" />
+                        </div>
+                        <AlertDialogTitle className="text-xl font-black">إلغاء اشتراك طالب</AlertDialogTitle>
+                        <AlertDialogDescription className="text-right font-bold leading-relaxed">
+                            هل أنت متأكد من إلغاء اشتراك الطالب <span className="text-destructive">({studentToUnsubscribe?.firstName} {studentToUnsubscribe?.lastName})</span> في هذا الكورس؟ 
+                            <br />
+                            <span className="text-xs font-medium opacity-70">سيتم مسح سجلات تقدمه في الكورس ولا يمكن التراجع عن هذا الإجراء.</span>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter className="flex-row-reverse gap-3 mt-4">
+                        <AlertDialogCancel className="rounded-xl font-bold">تراجع</AlertDialogCancel>
+                        <AlertDialogAction 
+                            onClick={handleUnsubscribe} 
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black h-11 px-8"
+                        >
+                            تأكيد الحذف
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+        </>
     );
 }
 
@@ -195,7 +279,7 @@ export default function AdminCoursesPage() {
     if (navigator.clipboard && navigator.clipboard.writeText) {
       navigator.clipboard.writeText(shareUrl).then(() => {
         toast({
-          title: 'تم نسخ الرابط!',
+          title: 'تم النسخ!',
           description: 'يمكنك الآن إرسال رابط الكورس المباشر للطلاب.',
         });
       });
@@ -206,7 +290,7 @@ export default function AdminCoursesPage() {
       textArea.select();
       try {
         document.execCommand('copy');
-        toast({ title: 'تم نسخ الرابط!' });
+        toast({ title: 'تم النسخ!' });
       } catch (err) {
         toast({ variant: 'destructive', title: 'فشل النسخ' });
       }
