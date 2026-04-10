@@ -14,7 +14,7 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2, Share2, AlertTriangle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId, deleteDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -52,12 +52,11 @@ const gradeMap: Record<string, string> = {
 };
 
 /**
- * دالة مطورة لتنظيف حالة الـ Body وضمان فك قفل الماوس والتمرير 
- * في حال حدوث أي تداخل في النوافذ المنبثقة.
+ * دالة مطورة جداً لتنظيف حالة الـ Body وضمان فك قفل المتصفح 
+ * تمنع تجمد الصفحة الناتج عن تداخل النوافذ المنبثقة.
  */
 const forceCleanupBody = () => {
   if (typeof document !== 'undefined') {
-    // إعادة تعيين الخصائص التي قد تعطل التفاعل
     document.body.style.pointerEvents = 'auto';
     document.body.style.overflow = 'auto';
     document.body.style.paddingRight = '0px';
@@ -78,12 +77,14 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
     const [isDeletingId, setIsDeletingId] = React.useState<string | null>(null);
     const [studentToUnsubscribe, setStudentToUnsubscribe] = React.useState<Student | null>(null);
 
+    // جلب كافة الاشتراكات في النظام
     const subscriptionsQuery = useMemoFirebase(
         () => (firestore && course ? collectionGroup(firestore, 'studentCourses') : null),
         [firestore, course?.id]
     );
     const { data: allSubscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
 
+    // استخراج معرفات الطلاب المشتركين في هذا الكورس تحديداً
     const studentIds = React.useMemo(() => {
         if (!allSubscriptions || !course) return [];
         return allSubscriptions
@@ -91,6 +92,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
             .map(s => s.studentId);
     }, [allSubscriptions, course?.id]);
 
+    // جلب بيانات الطلاب من مجموعة users
     const studentsQuery = useMemoFirebase(
         () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
         [firestore, studentIds]
@@ -116,46 +118,51 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
         });
     }, [students, searchTerm]);
 
+    /**
+     * تنفيذ عملية إلغاء الاشتراك باحترافية تمنع تجمد الواجهة
+     */
     const handleUnsubscribe = async () => {
         if (!firestore || !course || !studentToUnsubscribe) return;
         
         const studentId = studentToUnsubscribe.id;
         const studentName = `${studentToUnsubscribe.firstName} ${studentToUnsubscribe.lastName}`;
         
+        // 1. إظهار حالة التحميل لهذا الطالب
         setIsDeletingId(studentId);
         
-        // 1. إغلاق نافذة التأكيد فوراً
+        // 2. إغلاق نافذة التأكيد فوراً لتحرير موارد UI
         setStudentToUnsubscribe(null);
         
-        // 2. الانتظار قليلاً لضمان أن المتصفح قام بتحديث الـ DOM
-        await new Promise(resolve => setTimeout(resolve, 300));
+        // 3. انتظار أجزاء من الثانية لضمان انغلاق نافذة Radix وتحرير الـ DOM
+        await new Promise(resolve => setTimeout(resolve, 150));
         
-        // 3. تحرير الواجهة قسرياً لمنع التجمد
+        // 4. فك أي قفل متبقي على الشاشة قسرياً
         forceCleanupBody();
         
         try {
             const batch = writeBatch(firestore);
             const subscriptionRef = doc(firestore, 'users', studentId, 'studentCourses', course.id);
             
-            // جلب سجلات التقدم لحذفها أيضاً
+            // جلب سجلات تقدم الطالب في هذا الكورس لمسحها (نظام تطهير)
             const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
             progressSnap.docs.forEach(d => batch.delete(d.ref));
             
             // حذف وثيقة الاشتراك الرئيسية
             batch.delete(subscriptionRef);
             
+            // تنفيذ العملية بشكل دفعي (Batch) لضمان السرعة والأمان
             await batch.commit();
             
             toast({ 
                 title: 'تم إلغاء الاشتراك بنجاح', 
-                description: `تم حذف اشتراك الطالب (${studentName}) من هذا الكورس.` 
+                description: `تم حذف اشتراك الطالب (${studentName}) ومسح سجلاته.` 
             });
             
-            // تحرير الواجهة مرة أخرى بعد اكتمال العملية للتأكيد
+            // تأكيد تحرير الواجهة مرة أخرى
             forceCleanupBody();
         } catch (error) {
-            console.error("Unsubscribe error:", error);
-            toast({ variant: 'destructive', title: 'فشل العملية', description: 'حدث خطأ أثناء محاولة إلغاء الاشتراك.' });
+            console.error("Unsubscribe process failed:", error);
+            toast({ variant: 'destructive', title: 'فشل العملية', description: 'حدث خطأ تقني، يرجى المحاولة لاحقاً.' });
             forceCleanupBody();
         } finally {
             setIsDeletingId(null);
@@ -167,11 +174,11 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
     return (
         <>
             <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if(!open) forceCleanupBody(); }}>
-                <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
+                <DialogContent className="max-w-2xl rounded-[2rem] overflow-hidden p-0 border-none shadow-2xl bg-card">
                     <DialogHeader className="p-6 bg-primary/5 border-b text-right">
                         <div className="flex items-center justify-between flex-row-reverse mb-2">
                             <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
-                            <DialogTitle className="text-xl font-bold">الطلاب المشتركين</DialogTitle>
+                            <DialogTitle className="text-xl font-bold">إدارة المشتركين</DialogTitle>
                         </div>
                         <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
                         <div className="relative mt-4">
@@ -198,7 +205,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                                     {filteredStudents.map(student => (
                                         <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
                                             <div className="flex items-center gap-3 text-right">
-                                                <Avatar className="h-9 w-9 border">
+                                                <Avatar className="h-9 w-9 border shadow-sm">
                                                     <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
                                                 </Avatar>
                                                 <div className="flex flex-col text-right">
@@ -243,16 +250,16 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                         </ScrollArea>
                     </div>
                     <div className="p-4 bg-muted/20 border-t text-center">
-                        <p className="text-[10px] text-muted-foreground font-bold">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
+                        <p className="text-[10px] text-muted-foreground font-bold italic">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
                     </div>
                 </DialogContent>
             </Dialog>
 
             <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => { if(!open) { setStudentToUnsubscribe(null); forceCleanupBody(); } }}>
-                <AlertDialogContent className="rounded-3xl max-w-md">
+                <AlertDialogContent className="rounded-3xl max-w-md border-none shadow-2xl">
                     <AlertDialogHeader className="text-right">
                         <div className="mx-auto bg-destructive/10 p-3 rounded-2xl w-fit mb-4">
-                            <AlertTriangle className="h-8 w-8 text-destructive" />
+                            <AlertTriangle className="h-8 w-8 text-destructive animate-pulse" />
                         </div>
                         <AlertDialogTitle className="text-xl font-black">إلغاء اشتراك طالب</AlertDialogTitle>
                         <AlertDialogDescription className="text-right font-bold leading-relaxed">
@@ -262,10 +269,10 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex-row-reverse gap-3 mt-4">
-                        <AlertDialogCancel className="rounded-xl font-bold">تراجع</AlertDialogCancel>
+                        <AlertDialogCancel className="rounded-xl font-bold h-11 px-6">تراجع</AlertDialogCancel>
                         <AlertDialogAction 
                             onClick={handleUnsubscribe} 
-                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black h-11 px-8"
+                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black h-11 px-8 shadow-lg shadow-destructive/20"
                         >
                             تأكيد الحذف النهائي
                         </AlertDialogAction>
