@@ -21,7 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { useUser, useFirestore, useCollection, useMemoFirebase, addDocumentNonBlocking, deleteDocumentNonBlocking, updateDocumentNonBlocking } from '@/firebase';
 import { collection, doc, query, where, getDocs, orderBy, collectionGroup } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell, Eye } from 'lucide-react';
+import { Loader2, PlusCircle, Trash2, Search, Megaphone, Mail, MessageSquare, User, Wallet, Award, Bell, Eye, CheckCircle2, Inbox, MailWarning } from 'lucide-react';
 import type { Announcement, Student, Notification } from '@/lib/data';
 import {
   Dialog,
@@ -57,6 +57,23 @@ const gradeMap: Record<string, string> = {
   second_secondary: '2ث',
   third_secondary: '3ث',
 };
+
+function StatCard({ title, value, icon: Icon, colorClass, description }: { title: string, value: number, icon: any, colorClass: string, description: string }) {
+    return (
+        <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group">
+            <CardContent className="p-5 flex items-center justify-between">
+                <div className="space-y-1 text-right">
+                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
+                    <p className="text-2xl font-black">{toArabicDigits(String(value))}</p>
+                    <p className="text-[9px] text-muted-foreground font-medium">{description}</p>
+                </div>
+                <div className={cn("p-3 rounded-2xl transition-transform group-hover:scale-110 duration-500", colorClass)}>
+                    <Icon className="h-5 w-5" />
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
 
 function AnnouncementForm({
   onSave,
@@ -210,7 +227,6 @@ export default function AdminAnnouncementsPage() {
   const firestore = useFirestore();
   const { user } = useUser();
   const { toast } = useToast();
-  const [isMarking, setIsMarking] = React.useState(false);
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [deleteDialog, setDeleteDialog] = React.useState<{id: string, type: 'announcement' | 'notification', studentId?: string} | null>(null);
   const [viewMessage, setViewMessage] = React.useState<any>(null);
@@ -230,14 +246,31 @@ export default function AdminAnnouncementsPage() {
   );
   const { data: allNotifications, isLoading: isLoadingAllNotifs } = useCollection<Notification>(notificationsQuery, { ignorePermissionErrors: true });
 
-  // تصفية الرسائل الخاصة المرسلة من المسؤول وغير المقروءة فقط
+  // حساب الإحصائيات
+  const stats = React.useMemo(() => {
+    if (!allNotifications || !announcements) return { total: 0, read: 0, unread: 0, activeAnn: 0 };
+    
+    const totalNotifs = allNotifications.length;
+    const readNotifs = allNotifications.filter(n => n.isRead).length;
+    const unreadNotifs = allNotifications.filter(n => !n.isRead).length;
+    const activeAnn = announcements.filter(a => a.isActive).length;
+    
+    return {
+      total: totalNotifs,
+      read: readNotifs,
+      unread: unreadNotifs,
+      activeAnn
+    };
+  }, [allNotifications, announcements]);
+
+  // تصفية الرسائل الخاصة المرسلة من المسؤول وغير المقروءة فقط للعرض في الجدول السفلي
   const privateMessages = React.useMemo(() => {
     if (!allNotifications || !allUsers) return [];
     
     const usersMap = new Map(allUsers.map(u => [u.id, u]));
     
     return allNotifications
-        .filter(n => !n.isRead && n.fromAdmin === true) // فلترة: غير مقروءة ومن المسؤول فقط
+        .filter(n => !n.isRead && n.fromAdmin === true) 
         .map(n => {
             const sId = n.studentId || (n as any).parentId;
             const student = usersMap.get(sId || '');
@@ -308,6 +341,14 @@ export default function AdminAnnouncementsPage() {
       <div className="flex items-center gap-4 mb-6" dir="rtl">
         <h1 className="text-xl font-bold md:text-3xl tracking-tight text-right w-full">إدارة المراسلات</h1>
         <div className="mr-auto shrink-0"><Button size="sm" onClick={() => setIsAddDialogOpen(true)} className="rounded-xl gap-2 font-bold h-10 px-5 shadow-lg shadow-primary/20"><PlusCircle className="h-4 w-4" /> إنشاء رسالة</Button></div>
+      </div>
+
+      {/* قسم الإحصائيات الجديد */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8" dir="rtl">
+        <StatCard title="إجمالي الإشعارات" value={stats.total} icon={Inbox} colorClass="bg-blue-100 text-blue-600 dark:bg-blue-900/30" description="كافة التنبيهات في النظام" />
+        <StatCard title="رسائل غير مقروءة" value={stats.unread} icon={MailWarning} colorClass="bg-amber-100 text-amber-600 dark:bg-amber-900/30" description="بانتظار فتح الطلاب" />
+        <StatCard title="رسائل مقروءة" value={stats.read} icon={CheckCircle2} colorClass="bg-green-100 text-green-600 dark:bg-green-900/30" description="تمت مشاهدتها بنجاح" />
+        <StatCard title="إعلانات نشطة" value={stats.activeAnn} icon={Megaphone} colorClass="bg-primary/10 text-primary" description="تظهر حالياً للطلاب" />
       </div>
 
       <div className="grid gap-8">
