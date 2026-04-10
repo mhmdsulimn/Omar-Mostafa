@@ -868,7 +868,6 @@ export default function CourseDetailsPage({ params }: { params: Promise<{ id: st
                         )}
                     </div>
                     <Button className="w-full h-12 text-base font-bold rounded-xl" onClick={() => setIsEditDialogOpen(true)}>
-                        <Pencil className="ml-2 h-4 w-4" />
                         تعديل
                     </Button>
                 </div>
