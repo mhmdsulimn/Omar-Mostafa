@@ -51,6 +51,18 @@ const gradeMap: Record<string, string> = {
   third_secondary: 'الصف الثالث الثانوي',
 };
 
+/**
+ * دالة لتنظيف حالة الـ Body في حال حدوث تجمد بسبب النوافذ المتداخلة
+ */
+const forceCleanupBody = () => {
+  if (typeof document !== 'undefined') {
+    document.body.style.pointerEvents = 'auto';
+    document.body.style.overflow = 'auto';
+    document.body.classList.remove('no-scroll');
+    document.documentElement.style.pointerEvents = 'auto';
+  }
+};
+
 function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Course | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const firestore = useFirestore();
     const router = useRouter();
@@ -103,17 +115,18 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
         const studentId = studentToUnsubscribe.id;
         setIsDeletingId(studentId);
         
+        // إغلاق النافذة المنبثقة أولاً لمنع التجمد
+        setStudentToUnsubscribe(null);
+        
         try {
+            // انتظار بسيط للتأكد من انغلاق الـ Dialog
+            await new Promise(resolve => setTimeout(resolve, 100));
+            
             const batch = writeBatch(firestore);
-            
-            // 1. مرجع وثيقة الاشتراك الرئيسية
             const subscriptionRef = doc(firestore, 'users', studentId, 'studentCourses', course.id);
-            
-            // 2. جلب وحذف سجلات التقدم (Progress) داخل الكورس لهذا الطالب
             const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
-            progressSnap.docs.forEach(d => batch.delete(d.ref));
             
-            // 3. حذف وثيقة الاشتراك
+            progressSnap.docs.forEach(d => batch.delete(d.ref));
             batch.delete(subscriptionRef);
             
             await batch.commit();
@@ -122,10 +135,11 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                 title: 'تم إلغاء الاشتراك', 
                 description: `تم حذف اشتراك الطالب (${studentToUnsubscribe.firstName}) في هذا الكورس بنجاح.` 
             });
-            setStudentToUnsubscribe(null);
+            forceCleanupBody();
         } catch (error) {
             console.error("Unsubscribe error:", error);
             toast({ variant: 'destructive', title: 'فشل العملية', description: 'حدث خطأ أثناء محاولة إلغاء الاشتراك.' });
+            forceCleanupBody();
         } finally {
             setIsDeletingId(null);
         }
@@ -217,8 +231,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                 </DialogContent>
             </Dialog>
 
-            {/* نافذة تأكيد إلغاء الاشتراك */}
-            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => !open && setStudentToUnsubscribe(null)}>
+            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => { if(!open) setStudentToUnsubscribe(null); }}>
                 <AlertDialogContent className="rounded-3xl max-w-md">
                     <AlertDialogHeader className="text-right">
                         <div className="mx-auto bg-destructive/10 p-3 rounded-2xl w-fit mb-4">
@@ -322,6 +335,7 @@ export default function AdminCoursesPage() {
             title: 'تم الحذف بنجاح', 
             description: 'تم حذف الكورس وجميع محتوياته المرتبطة به.' 
           });
+          forceCleanupBody();
         })
         .catch(async (e) => {
           const permissionError = new FirestorePermissionError({
@@ -329,6 +343,7 @@ export default function AdminCoursesPage() {
             operation: 'delete',
           });
           errorEmitter.emit('permission-error', permissionError);
+          forceCleanupBody();
         })
         .finally(() => {
           setIsProcessing(false);
@@ -346,6 +361,7 @@ export default function AdminCoursesPage() {
       }
       setIsProcessing(false);
       setDialogState(null);
+      forceCleanupBody();
     }
   };
 
@@ -465,7 +481,6 @@ export default function AdminCoursesPage() {
                           <div className="w-full mt-4 space-y-3">
                               <Button variant="outline" className='h-11 text-sm w-full border border-primary text-primary hover:bg-primary hover:text-primary-foreground font-bold' onClick={() => router.push(`/admin/dashboard/courses/${course.id}`)}>إدارة الكورس</Button>
                               
-                              {/* New Action Buttons Row */}
                               <div className="flex items-center justify-between gap-2">
                                   <Tooltip>
                                       <TooltipTrigger asChild>
@@ -540,10 +555,10 @@ export default function AdminCoursesPage() {
       <CourseSubscribersDialog 
         course={dialogState?.type === 'subscribers' ? dialogState.course : null} 
         isOpen={dialogState?.type === 'subscribers'} 
-        onOpenChange={(open) => !open && setDialogState(null)} 
+        onOpenChange={(open) => { if(!open) setDialogState(null); forceCleanupBody(); }} 
       />
 
-      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => !open && setDialogState(null)}>
+      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) setDialogState(null); forceCleanupBody(); }}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
