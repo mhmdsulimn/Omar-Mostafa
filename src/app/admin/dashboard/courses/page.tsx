@@ -52,14 +52,21 @@ const gradeMap: Record<string, string> = {
 };
 
 /**
- * دالة لتنظيف حالة الـ Body في حال حدوث تجمد بسبب النوافذ المتداخلة
+ * دالة مطورة لتنظيف حالة الـ Body وضمان فك قفل الماوس والتمرير 
+ * في حال حدوث أي تداخل في النوافذ المنبثقة.
  */
 const forceCleanupBody = () => {
   if (typeof document !== 'undefined') {
+    // إعادة تعيين الخصائص التي قد تعطل التفاعل
     document.body.style.pointerEvents = 'auto';
     document.body.style.overflow = 'auto';
+    document.body.style.paddingRight = '0px';
+    document.body.removeAttribute('data-radix-scroll-lock');
     document.body.classList.remove('no-scroll');
+    
+    // التأكد من أن عنصر الـ html أيضاً غير مقفل
     document.documentElement.style.pointerEvents = 'auto';
+    document.documentElement.style.overflow = 'auto';
   }
 };
 
@@ -113,28 +120,38 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
         if (!firestore || !course || !studentToUnsubscribe) return;
         
         const studentId = studentToUnsubscribe.id;
+        const studentName = `${studentToUnsubscribe.firstName} ${studentToUnsubscribe.lastName}`;
+        
         setIsDeletingId(studentId);
         
-        // إغلاق النافذة المنبثقة أولاً لمنع التجمد
+        // 1. إغلاق نافذة التأكيد فوراً
         setStudentToUnsubscribe(null);
         
+        // 2. الانتظار قليلاً لضمان أن المتصفح قام بتحديث الـ DOM
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // 3. تحرير الواجهة قسرياً لمنع التجمد
+        forceCleanupBody();
+        
         try {
-            // انتظار بسيط للتأكد من انغلاق الـ Dialog
-            await new Promise(resolve => setTimeout(resolve, 100));
-            
             const batch = writeBatch(firestore);
             const subscriptionRef = doc(firestore, 'users', studentId, 'studentCourses', course.id);
-            const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
             
+            // جلب سجلات التقدم لحذفها أيضاً
+            const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
             progressSnap.docs.forEach(d => batch.delete(d.ref));
+            
+            // حذف وثيقة الاشتراك الرئيسية
             batch.delete(subscriptionRef);
             
             await batch.commit();
             
             toast({ 
-                title: 'تم إلغاء الاشتراك', 
-                description: `تم حذف اشتراك الطالب (${studentToUnsubscribe.firstName}) في هذا الكورس بنجاح.` 
+                title: 'تم إلغاء الاشتراك بنجاح', 
+                description: `تم حذف اشتراك الطالب (${studentName}) من هذا الكورس.` 
             });
+            
+            // تحرير الواجهة مرة أخرى بعد اكتمال العملية للتأكيد
             forceCleanupBody();
         } catch (error) {
             console.error("Unsubscribe error:", error);
@@ -149,7 +166,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
 
     return (
         <>
-            <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if(!open) forceCleanupBody(); }}>
                 <DialogContent className="max-w-2xl rounded-3xl overflow-hidden p-0 border-none shadow-2xl">
                     <DialogHeader className="p-6 bg-primary/5 border-b text-right">
                         <div className="flex items-center justify-between flex-row-reverse mb-2">
@@ -231,7 +248,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                 </DialogContent>
             </Dialog>
 
-            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => { if(!open) setStudentToUnsubscribe(null); }}>
+            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => { if(!open) { setStudentToUnsubscribe(null); forceCleanupBody(); } }}>
                 <AlertDialogContent className="rounded-3xl max-w-md">
                     <AlertDialogHeader className="text-right">
                         <div className="mx-auto bg-destructive/10 p-3 rounded-2xl w-fit mb-4">
@@ -239,9 +256,9 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                         </div>
                         <AlertDialogTitle className="text-xl font-black">إلغاء اشتراك طالب</AlertDialogTitle>
                         <AlertDialogDescription className="text-right font-bold leading-relaxed">
-                            هل أنت متأكد من إلغاء اشتراك الطالب <span className="text-destructive">({studentToUnsubscribe?.firstName} {studentToUnsubscribe?.lastName})</span> في هذا الكورس؟ 
+                            هل أنت متأكد من إلغاء اشتراك الطالب <span className="text-destructive">({studentToUnsubscribe?.firstName} {studentToUnsubscribe?.lastName})</span> من هذا الكورس؟ 
                             <br />
-                            <span className="text-xs font-medium opacity-70">سيتم مسح سجلات تقدمه في الكورس ولا يمكن التراجع عن هذا الإجراء.</span>
+                            <span className="text-xs font-medium opacity-70">سيتم مسح كافة سجلات تقدمه. لا يمكن التراجع عن هذا الإجراء.</span>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter className="flex-row-reverse gap-3 mt-4">
@@ -250,7 +267,7 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
                             onClick={handleUnsubscribe} 
                             className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black h-11 px-8"
                         >
-                            تأكيد الحذف
+                            تأكيد الحذف النهائي
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -555,10 +572,10 @@ export default function AdminCoursesPage() {
       <CourseSubscribersDialog 
         course={dialogState?.type === 'subscribers' ? dialogState.course : null} 
         isOpen={dialogState?.type === 'subscribers'} 
-        onOpenChange={(open) => { if(!open) setDialogState(null); forceCleanupBody(); }} 
+        onOpenChange={(open) => { if(!open) { setDialogState(null); forceCleanupBody(); } }} 
       />
 
-      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) setDialogState(null); forceCleanupBody(); }}>
+      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) { setDialogState(null); forceCleanupBody(); } }}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
