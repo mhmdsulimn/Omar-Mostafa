@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -277,46 +278,47 @@ export default function AdminDashboardPage() {
 
     return (
         <TooltipProvider>
-            {/* واجهة انيميشن التطهير الغامرة - تم ضبط التموضع ليظهر في مستوى أدنى قليلاً */}
+            {/* واجهة انيميشن التطهير الغامرة بملء أبعاد الشاشة */}
             {isCleaning && (
-                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-background/95 backdrop-blur-2xl animate-in fade-in duration-700 overflow-hidden" dir="rtl">
-                    <div className="absolute inset-0 pointer-events-none opacity-30 overflow-hidden">
-                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[150%] h-[150%] bg-gradient-to-tr from-primary/40 to-transparent rounded-full blur-[150px] animate-pulse" />
+                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-background/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden" dir="rtl">
+                    {/* طبقات الهالة الضوئية الخلفية - ممتدة للشاشة كاملة */}
+                    <div className="absolute inset-0 pointer-events-none opacity-40 overflow-hidden">
+                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-primary/30 via-transparent to-blue-500/20 rounded-full blur-[180px] animate-pulse" />
+                        <div className="absolute bottom-0 right-0 w-[80%] h-[80%] bg-gradient-to-bl from-cyan-500/20 via-transparent to-transparent rounded-full blur-[150px] animate-blob" />
                     </div>
                     
-                    {/* تمت إضافة translate-y-24 لإزاحة المحتوى للأسفل قليلاً */}
-                    <div className="relative flex flex-col items-center gap-10 max-w-lg w-full px-6 translate-y-24">
+                    <div className="relative flex flex-col items-center justify-center gap-12 w-full h-full px-6 text-center">
                         <div className="relative">
-                            {/* تأثير هالة خلفية للأنيميشن */}
-                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-3xl scale-150 animate-pulse" />
+                            {/* تأثير هالة خلفية عملاقة للأنيميشن */}
+                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-[80px] scale-[2] animate-pulse" />
                             
-                            <div className="relative z-10 scale-[1.5] md:scale-[2]">
+                            <div className="relative z-10 scale-[1.8] md:scale-[2.5] transform transition-transform">
                                 <LoadingAnimation size="lg" />
                             </div>
                             
-                            {/* أيقونة طائرة تظهر بشكل مفاجئ فوق الأنيميشن */}
-                            <div className="absolute -top-10 -right-10 bg-primary text-primary-foreground p-5 rounded-[2rem] shadow-[0_20px_50px_rgba(var(--primary),0.4)] animate-bounce border-4 border-background z-20">
-                                <Wind className="h-10 w-10 md:h-12 md:w-12" />
+                            {/* أيقونة الطائرة في موضع مركزي متأرجح */}
+                            <div className="absolute -top-16 -right-16 bg-primary text-primary-foreground p-6 rounded-[2.5rem] shadow-[0_25px_60px_rgba(var(--primary),0.5)] animate-bounce border-4 border-background z-20">
+                                <Wind className="h-12 w-12 md:h-16 md:w-16" />
                             </div>
                         </div>
 
-                        <div className="text-center space-y-6 animate-in slide-in-from-bottom-10 duration-1000 delay-300">
-                            <h2 className="text-3xl md:text-5xl font-black tracking-tight text-primary drop-shadow-xl">جارِ التطهير الذكي...</h2>
+                        <div className="space-y-8 animate-in slide-in-from-bottom-12 duration-1000 delay-300 max-w-2xl">
+                            <h2 className="text-4xl md:text-7xl font-black tracking-tight text-primary drop-shadow-2xl">جارِ التطهير الذكي</h2>
                             
-                            <div className="flex flex-col gap-2 items-center">
-                                <p className="text-foreground text-lg md:text-2xl font-black opacity-90">
-                                    مسح <span className="text-blue-500">{garbageData.count}</span> سجل مهمل من النظام
+                            <div className="flex flex-col gap-4 items-center">
+                                <p className="text-foreground text-2xl md:text-4xl font-black opacity-95">
+                                    جاري مسح <span className="text-blue-500 underline underline-offset-8">{garbageData.count}</span> سجل مهمل
                                 </p>
-                                <p className="text-muted-foreground text-sm md:text-lg font-bold animate-pulse leading-relaxed max-w-sm">
-                                    نقوم الآن بإعادة تنشيط كافة مفاصل قاعدة البيانات لضمان سرعة فائقة للطلاب
+                                <p className="text-muted-foreground text-lg md:text-2xl font-bold animate-pulse leading-relaxed max-w-xl">
+                                    قاعدة بيانات المنصة الآن تخضع لعملية "تصفية" عميقة لضمان أفضل سرعة استجابة للطلاب
                                 </p>
                             </div>
 
-                            <div className="pt-4 flex items-center justify-center gap-2">
-                                <div className="h-1.5 w-12 rounded-full bg-primary/20 overflow-hidden">
-                                    <div className="h-full bg-primary animate-progress-indefinite w-1/2 rounded-full" />
+                            <div className="pt-10 flex flex-col items-center gap-4">
+                                <div className="h-2.5 w-64 md:w-96 rounded-full bg-primary/10 overflow-hidden border border-primary/20 shadow-inner">
+                                    <div className="h-full bg-primary animate-progress-indefinite w-1/3 rounded-full shadow-[0_0_15px_rgba(var(--primary),0.6)]" />
                                 </div>
-                                <span className="text-[10px] font-black text-primary uppercase tracking-widest">System Optimization</span>
+                                <span className="text-xs md:text-sm font-black text-primary uppercase tracking-[0.4em] opacity-70">System Performance Optimized</span>
                             </div>
                         </div>
                     </div>
