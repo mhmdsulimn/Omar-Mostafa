@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -51,31 +50,10 @@ const gradeMap: Record<string, string> = {
   third_secondary: 'الصف الثالث الثانوي',
 };
 
-/**
- * دالة مطورة جداً لتنظيف حالة الـ Body وضمان فك قفل المتصفح 
- * تمنع تجمد الصفحة الناتج عن تداخل النوافذ المنبثقة.
- */
-const forceCleanupBody = () => {
-  if (typeof document !== 'undefined') {
-    document.body.style.pointerEvents = 'auto';
-    document.body.style.overflow = 'auto';
-    document.body.style.paddingRight = '0px';
-    document.body.removeAttribute('data-radix-scroll-lock');
-    document.body.classList.remove('no-scroll');
-    
-    // التأكد من أن عنصر الـ html أيضاً غير مقفل
-    document.documentElement.style.pointerEvents = 'auto';
-    document.documentElement.style.overflow = 'auto';
-  }
-};
-
 function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Course | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
     const firestore = useFirestore();
     const router = useRouter();
-    const { toast } = useToast();
     const [searchTerm, setSearchTerm] = React.useState('');
-    const [isDeletingId, setIsDeletingId] = React.useState<string | null>(null);
-    const [studentToUnsubscribe, setStudentToUnsubscribe] = React.useState<Student | null>(null);
 
     // جلب كافة الاشتراكات في النظام
     const subscriptionsQuery = useMemoFirebase(
@@ -118,168 +96,72 @@ function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Cou
         });
     }, [students, searchTerm]);
 
-    /**
-     * تنفيذ عملية إلغاء الاشتراك باحترافية تمنع تجمد الواجهة
-     */
-    const handleUnsubscribe = async () => {
-        if (!firestore || !course || !studentToUnsubscribe) return;
-        
-        const studentId = studentToUnsubscribe.id;
-        const studentName = `${studentToUnsubscribe.firstName} ${studentToUnsubscribe.lastName}`;
-        
-        // 1. إظهار حالة التحميل لهذا الطالب
-        setIsDeletingId(studentId);
-        
-        // 2. إغلاق نافذة التأكيد فوراً لتحرير موارد UI
-        setStudentToUnsubscribe(null);
-        
-        // 3. انتظار أجزاء من الثانية لضمان انغلاق نافذة Radix وتحرير الـ DOM
-        await new Promise(resolve => setTimeout(resolve, 150));
-        
-        // 4. فك أي قفل متبقي على الشاشة قسرياً
-        forceCleanupBody();
-        
-        try {
-            const batch = writeBatch(firestore);
-            const subscriptionRef = doc(firestore, 'users', studentId, 'studentCourses', course.id);
-            
-            // جلب سجلات تقدم الطالب في هذا الكورس لمسحها (نظام تطهير)
-            const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
-            progressSnap.docs.forEach(d => batch.delete(d.ref));
-            
-            // حذف وثيقة الاشتراك الرئيسية
-            batch.delete(subscriptionRef);
-            
-            // تنفيذ العملية بشكل دفعي (Batch) لضمان السرعة والأمان
-            await batch.commit();
-            
-            toast({ 
-                title: 'تم إلغاء الاشتراك بنجاح', 
-                description: `تم حذف اشتراك الطالب (${studentName}) ومسح سجلاته.` 
-            });
-            
-            // تأكيد تحرير الواجهة مرة أخرى
-            forceCleanupBody();
-        } catch (error) {
-            console.error("Unsubscribe process failed:", error);
-            toast({ variant: 'destructive', title: 'فشل العملية', description: 'حدث خطأ تقني، يرجى المحاولة لاحقاً.' });
-            forceCleanupBody();
-        } finally {
-            setIsDeletingId(null);
-        }
-    };
-
     const isLoading = isLoadingSubs || (studentIds.length > 0 && isLoadingStudents);
 
     return (
-        <>
-            <Dialog open={isOpen} onOpenChange={(open) => { onOpenChange(open); if(!open) forceCleanupBody(); }}>
-                <DialogContent className="max-w-2xl rounded-[2rem] overflow-hidden p-0 border-none shadow-2xl bg-card">
-                    <DialogHeader className="p-6 bg-primary/5 border-b text-right">
-                        <div className="flex items-center justify-between flex-row-reverse mb-2">
-                            <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
-                            <DialogTitle className="text-xl font-bold">إدارة المشتركين</DialogTitle>
-                        </div>
-                        <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
-                        <div className="relative mt-4">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="ابحث عن طالب بالاسم الكامل..." 
-                                className="pr-9 bg-background h-11 rounded-xl text-right"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </DialogHeader>
-                    <div className="p-0">
-                        <ScrollArea className="h-[400px]">
-                            {isLoading ? (
-                                <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
-                            ) : filteredStudents.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
-                                    <Users className="h-10 w-10 opacity-10" />
-                                    <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y" dir="rtl">
-                                    {filteredStudents.map(student => (
-                                        <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center gap-3 text-right">
-                                                <Avatar className="h-9 w-9 border shadow-sm">
-                                                    <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col text-right">
-                                                    <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
-                                                    <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="sm" 
-                                                    className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm"
-                                                    onClick={() => {
-                                                        onOpenChange(false);
-                                                        router.push(`/admin/dashboard/students?search=${student.email}`);
-                                                    }}
-                                                >
-                                                    <UserCircle2 className="h-4 w-4" />
-                                                    <span className="hidden sm:inline">عرض الملف</span>
-                                                </Button>
-                                                <TooltipProvider>
-                                                    <Tooltip>
-                                                        <TooltipTrigger asChild>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="icon" 
-                                                                className="h-9 w-9 rounded-xl text-destructive hover:bg-destructive/10"
-                                                                onClick={() => setStudentToUnsubscribe(student)}
-                                                                disabled={isDeletingId === student.id}
-                                                            >
-                                                                {isDeletingId === student.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                                                            </Button>
-                                                        </TooltipTrigger>
-                                                        <TooltipContent><p>إلغاء اشتراك الطالب</p></TooltipContent>
-                                                    </Tooltip>
-                                                </TooltipProvider>
+        <Dialog open={isOpen} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl rounded-[2rem] overflow-hidden p-0 border-none shadow-2xl bg-card">
+                <DialogHeader className="p-6 bg-primary/5 border-b text-right">
+                    <div className="flex items-center justify-between flex-row-reverse mb-2">
+                        <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
+                        <DialogTitle className="text-xl font-bold">إدارة المشتركين</DialogTitle>
+                    </div>
+                    <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
+                    <div className="relative mt-4">
+                        <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input 
+                            placeholder="ابحث عن طالب بالاسم الكامل..." 
+                            className="pr-9 bg-background h-11 rounded-xl text-right"
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+                </DialogHeader>
+                <div className="p-0">
+                    <ScrollArea className="h-[400px]">
+                        {isLoading ? (
+                            <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
+                        ) : filteredStudents.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
+                                <Users className="h-10 w-10 opacity-10" />
+                                <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
+                            </div>
+                        ) : (
+                            <div className="divide-y" dir="rtl">
+                                {filteredStudents.map(student => (
+                                    <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
+                                        <div className="flex items-center gap-3 text-right">
+                                            <Avatar className="h-9 w-9 border shadow-sm">
+                                                <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex flex-col text-right">
+                                                <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
+                                                <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-                    <div className="p-4 bg-muted/20 border-t text-center">
-                        <p className="text-[10px] text-muted-foreground font-bold italic">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <AlertDialog open={!!studentToUnsubscribe} onOpenChange={(open) => { if(!open) { setStudentToUnsubscribe(null); forceCleanupBody(); } }}>
-                <AlertDialogContent className="rounded-3xl max-w-md border-none shadow-2xl">
-                    <AlertDialogHeader className="text-right">
-                        <div className="mx-auto bg-destructive/10 p-3 rounded-2xl w-fit mb-4">
-                            <AlertTriangle className="h-8 w-8 text-destructive animate-pulse" />
-                        </div>
-                        <AlertDialogTitle className="text-xl font-black">إلغاء اشتراك طالب</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right font-bold leading-relaxed">
-                            هل أنت متأكد من إلغاء اشتراك الطالب <span className="text-destructive">({studentToUnsubscribe?.firstName} {studentToUnsubscribe?.lastName})</span> من هذا الكورس؟ 
-                            <br />
-                            <span className="text-xs font-medium opacity-70">سيتم مسح كافة سجلات تقدمه. لا يمكن التراجع عن هذا الإجراء.</span>
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-row-reverse gap-3 mt-4">
-                        <AlertDialogCancel className="rounded-xl font-bold h-11 px-6">تراجع</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={handleUnsubscribe} 
-                            className="bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl font-black h-11 px-8 shadow-lg shadow-destructive/20"
-                        >
-                            تأكيد الحذف النهائي
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            className="h-9 gap-2 text-primary hover:text-primary-foreground hover:bg-primary border-primary/20 rounded-xl font-bold transition-all shadow-sm"
+                                            onClick={() => {
+                                                onOpenChange(false);
+                                                router.push(`/admin/dashboard/students?search=${student.email}`);
+                                            }}
+                                        >
+                                            <UserCircle2 className="h-4 w-4" />
+                                            <span className="hidden sm:inline">عرض الملف</span>
+                                        </Button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </ScrollArea>
+                </div>
+                <div className="p-4 bg-muted/20 border-t text-center">
+                    <p className="text-[10px] text-muted-foreground font-bold italic">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
+                </div>
+            </DialogContent>
+        </Dialog>
     );
 }
 
@@ -359,7 +241,6 @@ export default function AdminCoursesPage() {
             title: 'تم الحذف بنجاح', 
             description: 'تم حذف الكورس وجميع محتوياته المرتبطة به.' 
           });
-          forceCleanupBody();
         })
         .catch(async (e) => {
           const permissionError = new FirestorePermissionError({
@@ -367,7 +248,6 @@ export default function AdminCoursesPage() {
             operation: 'delete',
           });
           errorEmitter.emit('permission-error', permissionError);
-          forceCleanupBody();
         })
         .finally(() => {
           setIsProcessing(false);
@@ -385,7 +265,6 @@ export default function AdminCoursesPage() {
       }
       setIsProcessing(false);
       setDialogState(null);
-      forceCleanupBody();
     }
   };
 
@@ -579,10 +458,10 @@ export default function AdminCoursesPage() {
       <CourseSubscribersDialog 
         course={dialogState?.type === 'subscribers' ? dialogState.course : null} 
         isOpen={dialogState?.type === 'subscribers'} 
-        onOpenChange={(open) => { if(!open) { setDialogState(null); forceCleanupBody(); } }} 
+        onOpenChange={(open) => { if(!open) setDialogState(null); }} 
       />
 
-      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) { setDialogState(null); forceCleanupBody(); } }}>
+      <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) setDialogState(null); }}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-right">هل أنت متأكد؟</AlertDialogTitle>
