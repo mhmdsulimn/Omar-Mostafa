@@ -95,6 +95,14 @@ service cloud.firestore {
       allow read: if isAdmin();
     }
 
+    match /{allPaths=**}/depositRequests/{id} {
+      allow read: if isAdmin();
+    }
+
+    match /students_to_delete/{id} {
+      allow read, write: if isAdmin();
+    }
+
     match /roles_admin/{userId} {
       allow read: if isSignedIn();
     }

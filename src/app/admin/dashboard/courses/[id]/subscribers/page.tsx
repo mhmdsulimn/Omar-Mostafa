@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -88,21 +87,19 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
   const courseRef = useMemoFirebase(() => (firestore && courseId ? doc(firestore, 'courses', courseId) : null), [firestore, courseId]);
   const { data: course, isLoading: isLoadingCourse } = useDoc<Course>(courseRef);
 
-  // 2. جلب الاشتراكات الخاصة بهذا الكورس فقط (استعلام محسن)
-  // ملاحظة: قد يتطلب هذا الاستعلام إنشاء Index في Firebase Console إذا لم يكن موجوداً
+  // 2. جلب الاشتراكات الخاصة بهذا الكورس فقط
   const subscriptionsQuery = useMemoFirebase(
     () => (firestore && courseId ? query(collectionGroup(firestore, 'studentCourses'), where('courseId', '==', courseId)) : null),
     [firestore, courseId]
   );
-  const { data: subscriptions, isLoading: isLoadingSubs, error: subsError } = useCollection<StudentCourse>(subscriptionsQuery);
+  const { data: subscriptions, isLoading: isLoadingSubs, error: subsError } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
 
   const studentIds = React.useMemo(() => {
     if (!subscriptions) return [];
-    // نستخدم studentId أو parentId لضمان الحصول على المعرّف حتى لو فقدت البيانات الداخلية
     return Array.from(new Set(subscriptions.map(s => s.studentId || s.parentId).filter(id => !!id)));
   }, [subscriptions]);
 
-  // 3. جلب بيانات الطلاب (فقط من هم في القائمة - بحد أقصى 30 في المرة الواحدة)
+  // 3. جلب بيانات الطلاب (فقط من هم في القائمة)
   const studentsQuery = useMemoFirebase(
     () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
     [firestore, studentIds]
@@ -151,11 +148,10 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
       setStudentToRemove(null);
     } catch (error: any) {
       console.error("Subscription removal error:", error);
-      const permissionError = new FirestorePermissionError({
+      errorEmitter.emit('permission-error', new FirestorePermissionError({
         path: `users/${studentToRemove.id}/studentCourses/${courseId}`,
         operation: 'delete',
-      });
-      errorEmitter.emit('permission-error', permissionError);
+      }));
     } finally {
       setIsRemoving(false);
     }
@@ -167,14 +163,13 @@ export default function CourseSubscribersPage({ params }: { params: Promise<{ id
     return <div className="flex h-[60vh] w-full items-center justify-center"><LoadingAnimation size="md" /></div>;
   }
 
-  // معالجة حالة الخطأ (مثل الحاجة لإنشاء فهرس)
   if (subsError) {
       return (
           <div className="flex flex-col items-center justify-center h-[60vh] gap-4 p-6 text-center">
               <AlertCircle className="h-16 w-16 text-destructive opacity-50" />
-              <h2 className="text-xl font-bold">حدث خطأ في جلب البيانات</h2>
+              <h2 className="text-xl font-bold">عذراً، لا توجد صلاحية لجلب المشتركين</h2>
               <p className="text-muted-foreground max-w-sm">
-                  قد يتطلب هذا الاستعلام إنشاء فهرس في قاعدة البيانات. إذا كنت المطور، يرجى مراجعة Console المتصفح.
+                  يرجى التأكد من أنك تملك صلاحيات المسؤول الكاملة. إذا استمر الخطأ، قد يحتاج النظام لإنشاء فهرس (Index) جديد.
               </p>
               <Button onClick={() => window.location.reload()} variant="outline" className='rounded-xl gap-2'>
                   <RefreshCcw className='h-4 w-4' />
