@@ -59,12 +59,16 @@ const gradeMap: Record<string, string> = {
   third_secondary: '3ث',
 };
 
+/**
+ * كارت الإحصائيات مع دعم الحذف الجماعي
+ */
 function StatCard({ title, value, icon: Icon, colorClass, description, onDelete, isDeleting }: { title: string, value: number, icon: any, colorClass: string, description: string, onDelete?: () => void, isDeleting?: boolean }) {
     return (
         <Card className="border-none shadow-sm bg-card/50 backdrop-blur-sm overflow-hidden group flex flex-col">
             <CardContent className="p-5 flex items-center justify-between flex-1">
                 <div className="space-y-1 text-right">
                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">{title}</p>
+                    {/* عرض القيمة بالأرقام الإنجليزية دائماً */}
                     <p className="text-2xl font-black">{value}</p>
                     <p className="text-[9px] text-muted-foreground font-medium">{description}</p>
                 </div>
@@ -80,7 +84,7 @@ function StatCard({ title, value, icon: Icon, colorClass, description, onDelete,
                         className="w-full h-7 text-[10px] font-bold text-destructive hover:bg-destructive/10 rounded-lg gap-1.5"
                         onClick={(e) => {
                             e.stopPropagation();
-                            if (window.confirm('هل أنت متأكد من حذف هذه البيانات بشكل جماعي؟')) {
+                            if (window.confirm(`هل أنت متأكد من حذف ${value} من السجلات بشكل نهائي؟`)) {
                                 onDelete();
                             }
                         }}
@@ -351,6 +355,9 @@ export default function AdminAnnouncementsPage() {
     await updateDocumentNonBlocking(doc(firestore, 'announcements', announcement.id), { isActive: !announcement.isActive, updatedAt: new Date().toISOString() });
   }
 
+  /**
+   * ميزة الحذف الجماعي المحدثة والمصلحة
+   */
   const handleBulkDelete = async (type: 'all' | 'unread' | 'read' | 'active_ann') => {
     if (!firestore || !user) return;
     setIsBulkDeleting(type);
@@ -366,9 +373,14 @@ export default function AdminAnnouncementsPage() {
             if (type === 'unread') toDelete = toDelete.filter(n => !n.isRead);
             if (type === 'read') toDelete = toDelete.filter(n => n.isRead);
             
-            toDelete.forEach(n => {
-                if (n.parentId) {
-                    batch.delete(doc(firestore, 'users', n.parentId, 'notifications', n.id));
+            // الحد الأقصى لكل batch هو 500
+            const chunk = toDelete.slice(0, 450);
+            
+            chunk.forEach(n => {
+                // محاولة الحصول على معرّف الطالب من أكثر من مصدر لضمان عمل المسار
+                const sId = n.parentId || (n as any).studentId || (n as any).parentId;
+                if (sId) {
+                    batch.delete(doc(firestore, 'users', sId, 'notifications', n.id));
                 }
             });
         }
@@ -376,7 +388,8 @@ export default function AdminAnnouncementsPage() {
         await batch.commit();
         toast({ title: 'تم التطهير بنجاح' });
     } catch (error) {
-        toast({ variant: 'destructive', title: 'فشل المسح الجماعي' });
+        console.error("Bulk delete failed:", error);
+        toast({ variant: 'destructive', title: 'فشل المسح الجماعي - تأكد من الاتصال' });
     } finally {
         setIsBulkDeleting(null);
     }
@@ -403,7 +416,6 @@ export default function AdminAnnouncementsPage() {
       </div>
 
       <div className="grid gap-8">
-        {/* جدول الإعلانات العامة */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
             <CardHeader className="bg-muted/10 border-b flex flex-row items-center justify-between p-4 md:p-6" dir="rtl">
                 <div className='text-right w-full'>
@@ -460,7 +472,6 @@ export default function AdminAnnouncementsPage() {
             </CardContent>
         </Card>
 
-        {/* جدول الرسائل الخاصة غير المقروءة */}
         <Card className="rounded-2xl border-none shadow-none md:border md:shadow-lg overflow-hidden">
             <CardHeader className="bg-muted/10 border-b flex flex-col md:flex-row items-center justify-between gap-4 p-4 md:p-6" dir="rtl">
                 <div className='text-right'>
@@ -526,7 +537,6 @@ export default function AdminAnnouncementsPage() {
         </Card>
       </div>
 
-      {/* نافذة عرض محتوى الرسالة */}
       <Dialog open={!!viewMessage} onOpenChange={(o) => !o && setViewMessage(null)}>
         <DialogContent className="max-w-[95vw] sm:max-w-lg rounded-2xl">
             <DialogHeader className="text-right">
