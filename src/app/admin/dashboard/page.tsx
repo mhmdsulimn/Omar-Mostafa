@@ -28,7 +28,7 @@ import { collection, query, collectionGroup, doc, writeBatch } from 'firebase/fi
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { Student, Exam, StudentExam, Course, Question, DepositRequest, Notification, Announcement } from '@/lib/data';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
-import { Users, BookOpen, GraduationCap, BookMarked, Activity, Trash2, Wind, Sparkles, Wand2, ListChecks, Bell, Loader2, Zap } from 'lucide-react';
+import { Users, BookOpen, GraduationCap, BookMarked, Activity, Trash2, Wind, Sparkles, Wand2, ListChecks, Bell, Loader2, Zap, Info } from 'lucide-react';
 import { format, subDays } from 'date-fns';
 import { arSA } from 'date-fns/locale/ar-SA';
 import { Badge } from '@/components/ui/badge';
@@ -134,7 +134,7 @@ export default function AdminDashboardPage() {
     const { data: allSubmissionsData, isLoading: isLoadingSubmissions } = useCollection<StudentExam>(allSubmissionsQuery, { ignorePermissionErrors: true });
     
     const allCoursesQuery = useMemoFirebase(() => (firestore && user ? collection(firestore, 'courses') : null), [firestore, user]);
-    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesQuery, { ignorePermissionErrors: true });
+    const { data: allCoursesData, isLoading: isLoadingCourses } = useCollection<Course>(allCoursesDataQuery, { ignorePermissionErrors: true });
 
     const allPaymentsQuery = useMemoFirebase(() => (firestore && user ? query(collectionGroup(firestore, 'depositRequests')) : null), [firestore, user]);
     const { data: allPaymentsData } = useCollection<DepositRequest>(allPaymentsQuery, { ignorePermissionErrors: true });
@@ -307,7 +307,7 @@ export default function AdminDashboardPage() {
                                 </div>
                                 <Sparkles className="h-4 w-4 text-amber-400 animate-pulse" />
                             </div>
-                            <CardDescription>مسح السجلات القديمة والطلبات المكتملة لتسريع أداء قاعدة البيانات.</CardDescription>
+                            <CardDescription>مسح الإشعارات المقروءة، طلبات الدفع القديمة، والحسابات غير المكتملة لزيادة سرعة المنصة.</CardDescription>
                         </CardHeader>
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
@@ -329,10 +329,22 @@ export default function AdminDashboardPage() {
                             </div>
 
                             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
-                                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 mb-2 uppercase flex items-center gap-1.5">
-                                    <ListChecks className="h-3 w-3" />
-                                    تفاصيل البيانات المكتشفة
-                                </p>
+                                <div className="flex items-center justify-between mb-2">
+                                    <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300 uppercase flex items-center gap-1.5">
+                                        <ListChecks className="h-3 w-3" />
+                                        تفاصيل البيانات المكتشفة
+                                    </p>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Info className="h-3 w-3 text-blue-400 cursor-help" />
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-xs text-right">
+                                            <p className="text-[10px] leading-relaxed">
+                                                تشمل المهملات: الإشعارات المقروءة والطلبات المالية التي مضى عليها أسبوع، والحسابات التي لم تكتمل، والإعلانات المعطلة القديمة.
+                                            </p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </div>
                                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[9px] font-black text-blue-600 dark:text-blue-400">
                                     <div className="flex items-center justify-between bg-white/50 dark:bg-black/20 p-1.5 rounded-lg px-2 shadow-sm border border-blue-100/50 dark:border-white/5">
                                         <span>إشعارات:</span>
