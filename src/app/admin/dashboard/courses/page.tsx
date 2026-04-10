@@ -7,13 +7,14 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter,
 } from '@/components/ui/card';
-import type { Course, Student, StudentCourse } from '@/lib/data';
+import type { Course } from '@/lib/data';
 import { Button } from '@/components/ui/button';
-import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, ArrowRight, UserCircle2, Share2, AlertTriangle, UserMinus } from 'lucide-react';
+import { PlusCircle, Loader2, Clock, ImageIcon, Search, Eye, EyeOff, Trash2, Users, Share2 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useUser, useFirestore, useCollection, useMemoFirebase, updateDocumentNonBlocking, errorEmitter, FirestorePermissionError } from '@/firebase';
-import { collection, doc, getDocs, writeBatch, query, collectionGroup, where, documentId, deleteDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, writeBatch } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -33,216 +34,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { LoadingAnimation } from '@/components/ui/loading-animation';
-import { ScrollArea } from '@/components/ui/scroll-area';
-
-const gradeMap: Record<string, string> = {
-  first_secondary: 'الصف الأول الثانوي',
-  second_secondary: 'الصف الثاني الثانوي',
-  third_secondary: 'الصف الثالث الثانوي',
-};
-
-function CourseSubscribersDialog({ course, isOpen, onOpenChange }: { course: Course | null, isOpen: boolean, onOpenChange: (open: boolean) => void }) {
-    const firestore = useFirestore();
-    const router = useRouter();
-    const { toast } = useToast();
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const [studentToRemove, setStudentToRemove] = React.useState<Student | null>(null);
-    const [isRemoving, setIsRemoving] = React.useState(false);
-
-    // جلب كافة الاشتراكات في النظام
-    const subscriptionsQuery = useMemoFirebase(
-        () => (firestore && course ? collectionGroup(firestore, 'studentCourses') : null),
-        [firestore, course?.id]
-    );
-    const { data: allSubscriptions, isLoading: isLoadingSubs } = useCollection<StudentCourse>(subscriptionsQuery, { ignorePermissionErrors: true });
-
-    // استخراج معرفات الطلاب المشتركين في هذا الكورس تحديداً
-    const studentIds = React.useMemo(() => {
-        if (!allSubscriptions || !course) return [];
-        return allSubscriptions
-            .filter(sub => sub.courseId === course.id)
-            .map(s => s.studentId);
-    }, [allSubscriptions, course?.id]);
-
-    // جلب بيانات الطلاب من مجموعة users
-    const studentsQuery = useMemoFirebase(
-        () => (firestore && studentIds.length > 0 ? query(collection(firestore, 'users'), where(documentId(), 'in', studentIds.slice(0, 30))) : null),
-        [firestore, studentIds]
-    );
-    const { data: students, isLoading: isLoadingStudents } = useCollection<Student>(studentsQuery, { ignorePermissionErrors: true });
-
-    const filteredStudents = React.useMemo(() => {
-        if (!students) return [];
-        const term = searchTerm.toLowerCase().trim();
-        if (!term) return students;
-        
-        const searchParts = term.split(/\s+/).filter(p => p.length > 0);
-
-        return students.filter(s => {
-            const firstName = (s.firstName || '').toLowerCase();
-            const lastName = (s.lastName || '').toLowerCase();
-            const fullName = `${firstName} ${lastName}`.trim();
-            const email = (s.email || '').toLowerCase();
-            
-            return searchParts.every(part => 
-                fullName.includes(part) || email.includes(part)
-            );
-        });
-    }, [students, searchTerm]);
-
-    const handleRemoveSubscription = async () => {
-        if (!firestore || !course || !studentToRemove) return;
-        
-        setIsRemoving(true);
-        try {
-            const batch = writeBatch(firestore);
-            const studentId = studentToRemove.id;
-            
-            // 1. حذف سجلات التقدم لضمان نظافة البيانات
-            const progressSnap = await getDocs(collection(firestore, `users/${studentId}/studentCourses/${course.id}/progress`));
-            progressSnap.docs.forEach(d => batch.delete(d.ref));
-            
-            // 2. حذف وثيقة الاشتراك الأساسية
-            batch.delete(doc(firestore, `users/${studentId}/studentCourses/${course.id}`));
-            
-            // 3. إضافة إشعار للطالب
-            const notificationRef = doc(collection(firestore, `users/${studentId}/notifications`));
-            batch.set(notificationRef, {
-                message: `تم إلغاء اشتراكك في كورس "${course.title}" من قبل الإدارة.`,
-                createdAt: new Date().toISOString(),
-                isRead: false,
-                type: 'warning',
-                studentId: studentId,
-                studentName: `${studentToRemove.firstName} ${studentToRemove.lastName}`
-            });
-
-            await batch.commit();
-            toast({ title: 'تم إلغاء الاشتراك بنجاح.' });
-            setStudentToRemove(null);
-        } catch (error) {
-            toast({ variant: 'destructive', title: 'فشل إلغاء الاشتراك' });
-        } finally {
-            setIsRemoving(false);
-        }
-    };
-
-    const isLoading = isLoadingSubs || (studentIds.length > 0 && isLoadingStudents);
-
-    return (
-        <>
-            <Dialog open={isOpen} onOpenChange={onOpenChange}>
-                <DialogContent className="max-w-2xl rounded-[2rem] overflow-hidden p-0 border-none shadow-2xl bg-card">
-                    <DialogHeader className="p-6 bg-primary/5 border-b text-right">
-                        <div className="flex items-center justify-between flex-row-reverse mb-2">
-                            <div className="bg-primary/10 p-2 rounded-xl"><Users className="h-5 w-5 text-primary" /></div>
-                            <DialogTitle className="text-xl font-bold">إدارة المشتركين</DialogTitle>
-                        </div>
-                        <DialogDescription className="text-right font-medium">كورس: {course?.title}</DialogDescription>
-                        <div className="relative mt-4">
-                            <Search className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input 
-                                placeholder="ابحث عن طالب بالاسم الكامل..." 
-                                className="pr-9 bg-background h-11 rounded-xl text-right"
-                                value={searchTerm}
-                                onChange={e => setSearchTerm(e.target.value)}
-                            />
-                        </div>
-                    </DialogHeader>
-                    <div className="p-0">
-                        <ScrollArea className="h-[400px]">
-                            {isLoading ? (
-                                <div className="flex h-40 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary opacity-30" /></div>
-                            ) : filteredStudents.length === 0 ? (
-                                <div className="flex flex-col items-center justify-center h-40 text-muted-foreground gap-2">
-                                    <Users className="h-10 w-10 opacity-10" />
-                                    <p className="text-sm font-bold">{searchTerm ? 'لم يتم العثور على نتائج' : 'لا يوجد مشتركون في هذا الكورس بعد'}</p>
-                                </div>
-                            ) : (
-                                <div className="divide-y" dir="rtl">
-                                    {filteredStudents.map(student => (
-                                        <div key={student.id} className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors">
-                                            <div className="flex items-center gap-3 text-right">
-                                                <Avatar className="h-9 w-9 border shadow-sm">
-                                                    <AvatarFallback className="font-bold text-xs">{student.firstName?.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div className="flex flex-col text-right">
-                                                    <span className="font-bold text-sm">{student.firstName} {student.lastName}</span>
-                                                    <span className="text-[10px] text-muted-foreground">{gradeMap[student.grade] || 'غير محدد'} • {student.email}</span>
-                                                </div>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="icon" 
-                                                    className="h-9 w-9 text-destructive hover:bg-destructive/10 border-destructive/20 rounded-xl transition-all"
-                                                    onClick={() => setStudentToRemove(student)}
-                                                    title="إلغاء الاشتراك"
-                                                >
-                                                    <UserMinus className="h-4 w-4" />
-                                                </Button>
-                                                <Button 
-                                                    variant="outline" 
-                                                    size="icon" 
-                                                    className="h-9 w-9 text-primary hover:bg-primary/10 border-primary/20 rounded-xl transition-all"
-                                                    onClick={() => {
-                                                        onOpenChange(false);
-                                                        router.push(`/admin/dashboard/students?search=${student.email}`);
-                                                    }}
-                                                    title="عرض الملف"
-                                                >
-                                                    <UserCircle2 className="h-4 w-4" />
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </ScrollArea>
-                    </div>
-                    <div className="p-4 bg-muted/20 border-t text-center">
-                        <p className="text-[10px] text-muted-foreground font-bold italic">إجمالي المشتركين الفعليين: {studentIds.length} طالب</p>
-                    </div>
-                </DialogContent>
-            </Dialog>
-
-            <AlertDialog open={!!studentToRemove} onOpenChange={(o) => !o && setStudentToRemove(null)}>
-                <AlertDialogContent className="rounded-[2rem] border-none shadow-2xl">
-                    <AlertDialogHeader>
-                        <div className="mx-auto bg-destructive/10 p-4 rounded-full w-fit mb-2">
-                            <UserMinus className="h-8 w-8 text-destructive" />
-                        </div>
-                        <AlertDialogTitle className="text-right text-xl font-bold">إلغاء اشتراك الطالب</AlertDialogTitle>
-                        <AlertDialogDescription className="text-right font-medium leading-relaxed">
-                            هل أنت متأكد من إلغاء اشتراك الطالب <span className="font-black text-foreground underline">{studentToRemove?.firstName} {studentToRemove?.lastName}</span> في كورس <span className="font-black text-foreground">"{course?.title}"</span>؟ 
-                            <br />
-                            سيتم مسح سجل التقدم الخاص به ولن يتمكن من مشاهدة المحتوى إلا بعد الاشتراك مجدداً.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter className="flex-row-reverse gap-3">
-                        <AlertDialogCancel className="rounded-xl font-bold">تراجع</AlertDialogCancel>
-                        <AlertDialogAction 
-                            onClick={handleRemoveSubscription} 
-                            disabled={isRemoving}
-                            className="bg-destructive hover:bg-destructive/90 rounded-xl font-bold gap-2"
-                        >
-                            {isRemoving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            تأكيد الإلغاء
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
-        </>
-    );
-}
 
 export default function AdminCoursesPage() {
   const firestore = useFirestore();
@@ -251,7 +43,7 @@ export default function AdminCoursesPage() {
   const { user } = useUser();
   const [searchTerm, setSearchTerm] = React.useState('');
   const [gradeFilter, setGradeFilter] = React.useState('all');
-  const [dialogState, setDialogState] = React.useState<{ type: 'delete' | 'subscribers'; course: Course } | null>(null);
+  const [dialogState, setDialogState] = React.useState<{ type: 'delete'; course: Course } | null>(null);
   const [isProcessing, setIsProcessing] = React.useState(false);
   
   const coursesCollection = useMemoFirebase(
@@ -482,7 +274,7 @@ export default function AdminCoursesPage() {
                                   </Tooltip>
                                   <Tooltip>
                                       <TooltipTrigger asChild>
-                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-muted text-primary' onClick={() => setDialogState({ type: 'subscribers', course })}>
+                                        <Button variant="outline" size="icon" className='flex-1 h-10 border-muted hover:bg-muted text-primary' onClick={() => router.push(`/admin/dashboard/courses/${course.id}/subscribers`)}>
                                               <Users className="h-4 w-4" />
                                           </Button>
                                       </TooltipTrigger>
@@ -533,12 +325,6 @@ export default function AdminCoursesPage() {
           })}
         </div>
       )}
-
-      <CourseSubscribersDialog 
-        course={dialogState?.type === 'subscribers' ? dialogState.course : null} 
-        isOpen={dialogState?.type === 'subscribers'} 
-        onOpenChange={(open) => { if(!open) setDialogState(null); }} 
-      />
 
       <AlertDialog open={dialogState?.type === 'delete'} onOpenChange={(open) => { if(!open) setDialogState(null); }}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-[425px]">
