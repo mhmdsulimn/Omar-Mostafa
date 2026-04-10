@@ -253,8 +253,6 @@ export default function AdminDashboardPage() {
                 });
             }
 
-            // تأخير متعمد لإظهار الأنيميشن الفخم لمدة كافية
-            await new Promise(resolve => setTimeout(resolve, 3000));
             await batch.commit();
 
             toast({
@@ -278,53 +276,6 @@ export default function AdminDashboardPage() {
 
     return (
         <TooltipProvider>
-            {/* واجهة انيميشن التطهير الغامرة بملء أبعاد الشاشة */}
-            {isCleaning && (
-                <div className="fixed inset-0 z-[1000] flex flex-col items-center justify-center bg-background/95 backdrop-blur-3xl animate-in fade-in duration-700 overflow-hidden" dir="rtl">
-                    {/* طبقات الهالة الضوئية الخلفية - ممتدة للشاشة كاملة */}
-                    <div className="absolute inset-0 pointer-events-none opacity-40 overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-primary/30 via-transparent to-blue-500/20 rounded-full blur-[180px] animate-pulse" />
-                        <div className="absolute bottom-0 right-0 w-[80%] h-[80%] bg-gradient-to-bl from-cyan-500/20 via-transparent to-transparent rounded-full blur-[150px] animate-blob" />
-                    </div>
-                    
-                    <div className="relative flex flex-col items-center justify-center gap-12 w-full h-full px-6 text-center">
-                        <div className="relative">
-                            {/* تأثير هالة خلفية عملاقة للأنيميشن */}
-                            <div className="absolute inset-0 bg-primary/20 rounded-full blur-[80px] scale-[2] animate-pulse" />
-                            
-                            <div className="relative z-10 scale-[1.8] md:scale-[2.5] transform transition-transform">
-                                <LoadingAnimation size="lg" />
-                            </div>
-                            
-                            {/* أيقونة الطائرة في موضع مركزي متأرجح */}
-                            <div className="absolute -top-16 -right-16 bg-primary text-primary-foreground p-6 rounded-[2.5rem] shadow-[0_25px_60px_rgba(var(--primary),0.5)] animate-bounce border-4 border-background z-20">
-                                <Wind className="h-12 w-12 md:h-16 md:w-16" />
-                            </div>
-                        </div>
-
-                        <div className="space-y-8 animate-in slide-in-from-bottom-12 duration-1000 delay-300 max-w-2xl">
-                            <h2 className="text-4xl md:text-7xl font-black tracking-tight text-primary drop-shadow-2xl">جارِ التطهير الذكي</h2>
-                            
-                            <div className="flex flex-col gap-4 items-center">
-                                <p className="text-foreground text-2xl md:text-4xl font-black opacity-95">
-                                    جاري مسح <span className="text-blue-500 underline underline-offset-8">{garbageData.count}</span> سجل مهمل
-                                </p>
-                                <p className="text-muted-foreground text-lg md:text-2xl font-bold animate-pulse leading-relaxed max-w-xl">
-                                    قاعدة بيانات المنصة الآن تخضع لعملية "تصفية" عميقة لضمان أفضل سرعة استجابة للطلاب
-                                </p>
-                            </div>
-
-                            <div className="pt-10 flex flex-col items-center gap-4">
-                                <div className="h-2.5 w-64 md:w-96 rounded-full bg-primary/10 overflow-hidden border border-primary/20 shadow-inner">
-                                    <div className="h-full bg-primary animate-progress-indefinite w-1/3 rounded-full shadow-[0_0_15px_rgba(var(--primary),0.6)]" />
-                                </div>
-                                <span className="text-xs md:text-sm font-black text-primary uppercase tracking-[0.4em] opacity-70">System Performance Optimized</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
             <div className="space-y-6 max-w-full overflow-x-hidden pb-10">
                 <div className="flex items-center justify-between gap-3 px-2">
                     <div className='flex items-center gap-3'>
@@ -349,7 +300,7 @@ export default function AdminDashboardPage() {
                         <CardHeader className="p-4 relative z-10">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
-                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600 animate-float">
+                                    <div className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-600">
                                         <Wind className="h-5 w-5" />
                                     </div>
                                     <CardTitle className="text-base">تطهير البيانات المهملة</CardTitle>
@@ -361,20 +312,12 @@ export default function AdminDashboardPage() {
 
                         <CardContent className="p-4 pt-0 space-y-4 flex-grow relative z-10">
                             <div className="relative h-28 w-full flex items-center justify-center overflow-hidden rounded-2xl bg-muted/30 border border-dashed border-primary/20 mb-2">
-                                <div className="absolute inset-0 opacity-20 overflow-hidden">
-                                    <div className="w-full h-full relative">
-                                        <Wind className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-32 w-32 text-primary animate-spin-slow" />
-                                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-primary/20 via-transparent to-transparent animate-pulse" />
-                                    </div>
-                                </div>
                                 <div className="relative z-20 flex flex-col items-center gap-1">
-                                    <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg animate-bounce">
+                                    <Badge className="bg-primary text-[14px] font-black px-3 py-1 shadow-lg">
                                         {garbageData.count}
                                     </Badge>
                                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">سجل يمكن مسحه</span>
                                 </div>
-                                <Trash2 className="absolute top-2 left-2 h-3 w-3 text-muted-foreground/30 animate-float-delayed" />
-                                <Zap className="absolute bottom-3 right-3 h-3 w-3 text-muted-foreground/30 animate-float" />
                             </div>
 
                             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800">
@@ -422,7 +365,7 @@ export default function AdminDashboardPage() {
                                         className={cn(
                                             "w-full h-12 font-black gap-2 rounded-2xl transition-all shadow-md active:scale-95",
                                             garbageData.count > 0 
-                                                ? "bg-blue-600 hover:bg-blue-700 text-white animate-pulse-glow shadow-blue-500/20" 
+                                                ? "bg-blue-600 hover:bg-blue-700 text-white shadow-blue-500/20" 
                                                 : "variant-outline"
                                         )}
                                         variant={garbageData.count > 0 ? "default" : "outline"}
@@ -435,7 +378,7 @@ export default function AdminDashboardPage() {
                                 <AlertDialogContent className="rounded-[2.5rem] border-primary/20 backdrop-blur-2xl">
                                     <AlertDialogHeader>
                                         <div className="mx-auto p-4 rounded-full bg-blue-100 text-blue-600 mb-2">
-                                            <Wind className="h-8 w-8 animate-spin-slow" />
+                                            <Wind className="h-8 w-8" />
                                         </div>
                                         <AlertDialogTitle className="text-right text-xl font-black">تأكيد التطهير الذكي</AlertDialogTitle>
                                         <AlertDialogDescription className="text-right leading-relaxed font-bold">
@@ -445,7 +388,6 @@ export default function AdminDashboardPage() {
                                     <AlertDialogFooter className="flex-row-reverse gap-3 pt-4">
                                         <AlertDialogCancel className="rounded-xl font-bold">تراجع</AlertDialogCancel>
                                         <AlertDialogAction onClick={handleCleanup} className="rounded-xl bg-blue-600 hover:bg-blue-700 font-black gap-2">
-                                            <Wand2 className="h-4 w-4" />
                                             ابدأ التطهير الآن
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
