@@ -21,16 +21,22 @@ export function LoadingAnimation({ className, size = 'md' }: LoadingAnimationPro
   }, []);
 
   const sizeMap = {
-    sm: 'w-24 h-24',
-    md: 'w-48 h-48',
-    lg: 'w-72 h-72'
+    sm: 'w-16 h-16',
+    md: 'w-32 h-32',
+    lg: 'w-56 h-56'
+  };
+
+  const blurMap = {
+    sm: 'blur-[20px]',
+    md: 'blur-[35px]',
+    lg: 'blur-[50px]'
   };
 
   // عرض حاوية فارغة بنفس الحجم أثناء مرحلة الـ Mounting لمنع الـ Hydration Error
   if (!isMounted) {
     return (
       <div className={cn("flex items-center justify-center", sizeMap[size], className)}>
-        <div className="absolute inset-0 bg-primary/5 rounded-full blur-[40px]" />
+        <div className={cn("absolute inset-0 bg-primary/5 rounded-full", blurMap[size])} />
       </div>
     );
   }
@@ -40,7 +46,7 @@ export function LoadingAnimation({ className, size = 'md' }: LoadingAnimationPro
       <div className={cn("relative flex items-center justify-center overflow-visible", sizeMap[size])}>
         
         {/* هالة ضوئية خلفية متوهجة تتبع لون السمة */}
-        <div className="absolute inset-0 bg-primary/10 rounded-full blur-[50px] animate-pulse" />
+        <div className={cn("absolute inset-0 bg-primary/10 rounded-full animate-pulse", blurMap[size])} />
         
         {/* مشغل الأنيميشن Lottie 3D المباشر - تم تحديث الرابط للنسخة الجديدة المطلوبة */}
         <DotLottieReact
